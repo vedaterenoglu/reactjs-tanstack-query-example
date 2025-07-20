@@ -1,11 +1,11 @@
 {
-  "name": "reactjs-clerk-template",
+  "name": "reactjs-redux-thunk-example",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vedaterenoglu/reactjs-clerk-template.git"
+    "url": "https://github.com/vedaterenoglu/reactjs-redux-thunk-example.git"
   },
   "keywords": [
     "Node.js",
