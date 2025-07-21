@@ -35,7 +35,7 @@ export class CityApiService {
   async getCities(options?: CitySearchOptions): Promise<CitiesApiResponse> {
     try {
       const params: Record<string, string | number> = {}
-      
+
       if (options?.query) {
         params['search'] = options.query
       }
@@ -46,19 +46,21 @@ export class CityApiService {
         params['offset'] = options.offset
       }
 
-      const response = await this.httpClient.get<{ count: number; cities: City[] }>(
-        `${this.apiBasePath}/cities`,
-        { params }
-      )
+      const response = await this.httpClient.get<{
+        count: number
+        cities: City[]
+      }>(`${this.apiBasePath}/cities`, { params })
 
       // Transform backend response to match our schema
       const transformedResponse: CitiesApiResponse = {
         data: response.data.cities || [],
-        pagination: response.data.count ? {
-          total: response.data.count,
-          limit: options?.limit || 50,
-          offset: options?.offset || 0
-        } : undefined
+        pagination: response.data.count
+          ? {
+              total: response.data.count,
+              limit: options?.limit || 50,
+              offset: options?.offset || 0,
+            }
+          : undefined,
       }
 
       // Validate response using Zod schema
@@ -151,9 +153,10 @@ export class CityApiService {
     }
 
     const searchTerm = query.toLowerCase().trim()
-    return cities.filter(city =>
-      city.city.toLowerCase().includes(searchTerm) ||
-      city.citySlug.toLowerCase().includes(searchTerm)
+    return cities.filter(
+      city =>
+        city.city.toLowerCase().includes(searchTerm) ||
+        city.citySlug.toLowerCase().includes(searchTerm)
     )
   }
 
@@ -167,7 +170,7 @@ export class CityApiService {
       if (error.name === 'ZodError') {
         return new Error(`Data validation failed: ${error.message}`)
       }
-      
+
       // Check if it's an HTTP error with status
       if ('status' in error) {
         const status = (error as { status: number }).status

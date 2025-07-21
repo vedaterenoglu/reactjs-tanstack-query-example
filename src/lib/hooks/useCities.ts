@@ -23,7 +23,6 @@ import {
   selectFilteredCitiesCount,
 } from '@/store/slices/cities'
 
-
 /**
  * Custom hook for city state management
  * Follows React 19 Custom Hook Pattern and Facade Pattern
@@ -191,17 +190,11 @@ export const useCityInitialization = () => {
   const isLoading = useSelector(selectIsLoading)
   const error = useSelector(selectError)
 
-  const initialize = useCallback(
-    () => {
-      dispatch(initializeCities())
-    },
-    [dispatch]
-  )
+  const initialize = useCallback(() => {
+    dispatch(initializeCities())
+  }, [dispatch])
 
-  const refresh = useCallback(
-    () => dispatch(refreshCities()),
-    [dispatch]
-  )
+  const refresh = useCallback(() => dispatch(refreshCities()), [dispatch])
 
   const retry = useCallback(
     () => dispatch(retryCityOperation('fetch')),
@@ -235,12 +228,12 @@ export const useCitiesWithInit = () => {
   const cityData = useCities()
   const { initialize, hasData, shouldRefresh } = useCityInitialization()
 
-  console.warn('[useCitiesWithInit] City data state:', { 
+  console.warn('[useCitiesWithInit] City data state:', {
     filteredCitiesCount: cityData.filteredCities.length,
-    isLoading: cityData.isLoading, 
+    isLoading: cityData.isLoading,
     error: cityData.error,
     hasData,
-    shouldRefresh 
+    shouldRefresh,
   })
 
   // Auto-refresh stale data

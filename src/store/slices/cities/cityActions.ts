@@ -86,7 +86,7 @@ interface SetLastFetchedAction {
 }
 
 // Union type for all city actions
-export type CityAction = 
+export type CityAction =
   | FetchCitiesRequestAction
   | FetchCitiesSuccessAction
   | FetchCitiesFailureAction
@@ -111,7 +111,10 @@ export const cityActionCreators = {
     return action
   },
 
-  fetchCitiesSuccess: (cities: City[], total?: number): FetchCitiesSuccessAction => ({
+  fetchCitiesSuccess: (
+    cities: City[],
+    total?: number
+  ): FetchCitiesSuccessAction => ({
     type: CITY_ACTIONS.FETCH_CITIES_SUCCESS,
     payload: { cities, total },
   }),

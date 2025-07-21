@@ -7,7 +7,7 @@ import { useCitySearch } from '@/lib/hooks'
 
 /**
  * SearchBox Component - Advanced search input with debouncing, state sync, and accessibility
- * 
+ *
  * Current Features:
  * - Controlled input with local state for immediate UI response
  * - Debounced search implementation (configurable debounceMs, default 300ms)
@@ -20,7 +20,7 @@ import { useCitySearch } from '@/lib/hooks'
  * - Keyboard support (Escape key clears search)
  * - Full accessibility: ARIA labels, searchbox role, screen reader support
  * - Mobile-optimized with proper input modes and focus handling
- * 
+ *
  * Design Patterns Applied:
  * - Controlled Component Pattern: Local inputValue state synced with Redux searchQuery
  * - Custom Hook Integration: useCitySearch provides search, clear, retry functionality
@@ -28,21 +28,21 @@ import { useCitySearch } from '@/lib/hooks'
  * - Composition Pattern: Composes Input, Button, Search/X/RefreshCw icons
  * - State Synchronization Pattern: useEffect manages local ↔ Redux state sync
  * - Event Handler Pattern: Memoized handlers for input, clear, refresh, keyboard events
- * 
+ *
  * SOLID Principles:
  * - SRP: Handles search input UI, debouncing, state sync, and user interactions only
  * - OCP: Extensible via comprehensive props (placeholder, debounceMs, onRefresh, etc.)
  * - LSP: Can substitute other search input implementations with same interface
  * - ISP: Focused SearchBoxProps interface with optional configuration
  * - DIP: Depends on useCitySearch hook and Input/Button component abstractions
- * 
+ *
  * React 19 Patterns:
  * - State Management: Local state + Redux sync with proper dependency arrays
  * - Performance Pattern: useCallback for handlers, careful useEffect dependencies
  * - Controlled Component: inputValue state with onChange sync to Redux
  * - Accessibility Pattern: Comprehensive ARIA attributes and semantic HTML
  * - Mobile Optimization: inputMode="search", iOS-specific classes
- * 
+ *
  * State Synchronization Logic:
  * - inputValue: immediate local state for UI responsiveness
  * - searchQuery: debounced Redux state for actual filtering
@@ -70,14 +70,14 @@ export const SearchBox = ({
   showRefreshButton = true,
 }: SearchBoxProps) => {
   // Custom hook integration following DIP
-  const { 
-    searchQuery, 
-    search, 
-    clearSearch, 
-    isLoading, 
+  const {
+    searchQuery,
+    search,
+    clearSearch,
+    isLoading,
     error,
     filteredCount,
-    retrySearch
+    retrySearch,
   } = useCitySearch()
 
   // Local state for input value (enables debouncing)
@@ -108,9 +108,12 @@ export const SearchBox = ({
   }, [inputValue, searchQuery, search, clearSearch, debounceMs])
 
   // Memoized event handlers following Performance Pattern
-  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value)
-  }, [])
+  const handleInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInputValue(event.target.value)
+    },
+    []
+  )
 
   const handleClearClick = useCallback(() => {
     setInputValue('')
@@ -123,11 +126,14 @@ export const SearchBox = ({
     }
   }, [onRefresh])
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      handleClearClick()
-    }
-  }, [handleClearClick])
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Escape') {
+        handleClearClick()
+      }
+    },
+    [handleClearClick]
+  )
 
   const handleRetryClick = useCallback(() => {
     retrySearch()
@@ -144,7 +150,7 @@ export const SearchBox = ({
       <div className="relative flex items-center gap-2">
         {/* Search Input with Icon */}
         <div className="relative flex-1">
-          <Search 
+          <Search
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none"
             aria-hidden="true"
           />
@@ -199,7 +205,9 @@ export const SearchBox = ({
             aria-label="Refresh cities data"
             title="Refresh cities data"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+            />
           </Button>
         )}
       </div>
@@ -208,7 +216,10 @@ export const SearchBox = ({
       <div className="min-h-5 flex items-center justify-between text-sm">
         {/* Error State */}
         {hasError && (
-          <div id="search-error" className="flex items-center gap-2 text-destructive">
+          <div
+            id="search-error"
+            className="flex items-center gap-2 text-destructive"
+          >
             <span>{error}</span>
             <Button
               type="button"
@@ -225,18 +236,15 @@ export const SearchBox = ({
         {/* Success State with Results Count */}
         {!hasError && hasValue && !isLoading && (
           <span className="text-muted-foreground">
-            {filteredCount === 1 
-              ? `1 city found` 
-              : `${filteredCount} cities found`
-            }
+            {filteredCount === 1
+              ? `1 city found`
+              : `${filteredCount} cities found`}
           </span>
         )}
 
         {/* Loading State */}
         {isLoading && (
-          <span className="text-muted-foreground">
-            Searching...
-          </span>
+          <span className="text-muted-foreground">Searching...</span>
         )}
       </div>
     </div>

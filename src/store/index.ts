@@ -15,7 +15,6 @@ import type { Action } from 'redux'
 import type { PersistConfig } from 'redux-persist'
 import type { ThunkDispatch, ThunkAction } from 'redux-thunk'
 
-
 // Create root reducer with city slice
 const rootReducer = combineReducers({
   cities: cityReducer,
