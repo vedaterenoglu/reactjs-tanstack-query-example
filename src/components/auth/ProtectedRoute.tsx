@@ -7,7 +7,10 @@ interface ProtectedRouteProps {
   redirectTo?: string
 }
 
-export function ProtectedRoute({ children, redirectTo = '/' }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  redirectTo = '/',
+}: ProtectedRouteProps) {
   const { isSignedIn, isLoaded } = useAuth()
 
   // Show loading state while authentication is being determined

@@ -13,7 +13,6 @@
 
 **A modern, production-ready React template with Clerk authentication, TypeScript, and beautiful UI components.**
 
-
 </div>
 
 ---
@@ -25,6 +24,7 @@
 <td width="50%">
 
 ### 🔐 **Authentication & Security**
+
 - ✅ **Clerk Authentication** - Complete auth solution
 - ✅ **Protected Routes** - Route guards with React Router v7
 - ✅ **User Management** - Profile, sessions, and more
@@ -34,6 +34,7 @@
 <td width="50%">
 
 ### ⚡ **Modern Tech Stack**
+
 - ✅ **React 19** - Latest React with concurrent features
 - ✅ **TypeScript** - Full type safety and IntelliSense
 - ✅ **Vite** - Lightning fast build tool
@@ -45,6 +46,7 @@
 <td width="50%">
 
 ### 🎨 **UI & Styling**
+
 - ✅ **Tailwind CSS 4** - Utility-first CSS framework
 - ✅ **shadcn/ui** - Beautiful, accessible components
 - ✅ **Dark/Light Mode** - Theme switching with persistence
@@ -54,6 +56,7 @@
 <td width="50%">
 
 ### 🛠️ **Developer Experience**
+
 - ✅ **React Hook Form** - Performant forms with validation
 - ✅ **ESLint + Prettier** - Code formatting and linting
 - ✅ **SOLID Principles** - Clean architecture patterns
@@ -127,10 +130,10 @@ src/
 
 ## 🎯 Available Routes
 
-| Route | Access | Description |
-|-------|--------|-------------|
-| `/` | 🌐 Public | Home page with authentication status |
-| `/authenticated` | 🔒 Protected | User dashboard (requires login) |
+| Route            | Access       | Description                          |
+| ---------------- | ------------ | ------------------------------------ |
+| `/`              | 🌐 Public    | Home page with authentication status |
+| `/authenticated` | 🔒 Protected | User dashboard (requires login)      |
 
 ---
 
@@ -156,6 +159,7 @@ npm run format:check # Check code formatting
 ## 🎨 Customization
 
 ### Theme Configuration
+
 The project uses a sophisticated theming system with CSS variables and Tailwind CSS:
 
 - **Colors**: Defined in `src/styles/globals.css`
@@ -163,12 +167,15 @@ The project uses a sophisticated theming system with CSS variables and Tailwind 
 - **Mode Toggle**: Users can switch between light, dark, and system themes
 
 ### Adding New Routes
+
 1. Create your page component in `src/routes/`
 2. Add the route to `src/router.tsx`
 3. Use `<ProtectedRoute>` wrapper for authenticated routes
 
 ### Form Handling
+
 Built-in form management with React Hook Form:
+
 ```tsx
 import { useForm } from 'react-hook-form'
 // Your form logic here
@@ -208,6 +215,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Vedat Erenoglu**
+
 - Website: [vedaterenoglu.com](https://vedaterenoglu.com)
 - LinkedIn: [@vedaterenoglu](https://www.linkedin.com/in/vedaterenoglu/)
 - Email: info@vedaterenoglu.com

@@ -23,7 +23,7 @@ export function Navbar({ title }: NavbarProps) {
               <UserButton
                 appearance={{
                   elements: {
-                    avatarBox: "h-8 w-8",
+                    avatarBox: 'h-8 w-8',
                   },
                 }}
               />

@@ -2,7 +2,13 @@ import { SignOutButton, useUser } from '@clerk/clerk-react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 export function Authenticated() {
   const { user } = useUser()
@@ -31,7 +37,8 @@ export function Authenticated() {
               <span className="font-medium">Name:</span> {user?.fullName}
             </p>
             <p className="text-sm">
-              <span className="font-medium">Email:</span> {user?.primaryEmailAddress?.emailAddress}
+              <span className="font-medium">Email:</span>{' '}
+              {user?.primaryEmailAddress?.emailAddress}
             </p>
           </CardContent>
         </Card>
