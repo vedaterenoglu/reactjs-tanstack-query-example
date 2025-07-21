@@ -1,0 +1,127 @@
+/* Scroll Animation Base Styles */
+.scroll-animate {
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--animation-duration, 600ms);
+  transition-delay: var(--animation-delay, 0ms);
+}
+
+/* Hidden state - initial state before animation */
+.scroll-animate-hidden {
+  opacity: 0;
+}
+
+/* Visible state - final animated state */
+.scroll-animate-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Animation Types */
+
+/* Fade Up - slides up while fading in */
+.scroll-animate-fadeUp.scroll-animate-hidden {
+  transform: translateY(20px);
+}
+
+/* Fade Down - slides down while fading in */
+.scroll-animate-fadeDown.scroll-animate-hidden {
+  transform: translateY(-20px);
+}
+
+/* Fade Left - slides from left while fading in */
+.scroll-animate-fadeLeft.scroll-animate-hidden {
+  transform: translateX(-20px);
+}
+
+/* Fade Right - slides from right while fading in */
+.scroll-animate-fadeRight.scroll-animate-hidden {
+  transform: translateX(20px);
+}
+
+/* Scale - scales up while fading in */
+.scroll-animate-scale.scroll-animate-hidden {
+  transform: scale(0.8);
+}
+
+/* Bounce - bounces in with elastic effect */
+.scroll-animate-bounce.scroll-animate-hidden {
+  transform: scale(0.3);
+}
+
+.scroll-animate-bounce.scroll-animate-visible {
+  transition-timing-function: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Slide Up - slides up from below */
+.scroll-animate-slideUp.scroll-animate-hidden {
+  transform: translateY(40px);
+}
+
+/* Slide Down - slides down from above */
+.scroll-animate-slideDown.scroll-animate-hidden {
+  transform: translateY(-40px);
+}
+
+/* Slide Left - slides in from left */
+.scroll-animate-slideLeft.scroll-animate-hidden {
+  transform: translateX(-40px);
+}
+
+/* Slide Right - slides in from right */
+.scroll-animate-slideRight.scroll-animate-hidden {
+  transform: translateX(40px);
+}
+
+/* Performance optimizations */
+.scroll-animate {
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  will-change: opacity, transform;
+  /* Improve text rendering during animation */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove will-change after animation completes for better performance */
+.scroll-animate-visible {
+  will-change: auto;
+}
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-animate {
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+  }
+  
+  .scroll-animate-hidden {
+    transform: none !important;
+  }
+}
+
+/* Custom animation duration classes */
+.scroll-animate-fast {
+  --animation-duration: 300ms;
+}
+
+.scroll-animate-slow {
+  --animation-duration: 1000ms;
+}
+
+/* Custom delay classes for manual control */
+.scroll-animate-delay-100 {
+  --animation-delay: 100ms;
+}
+
+.scroll-animate-delay-200 {
+  --animation-delay: 200ms;
+}
+
+.scroll-animate-delay-300 {
+  --animation-delay: 300ms;
+}
+
+.scroll-animate-delay-500 {
+  --animation-delay: 500ms;
+}

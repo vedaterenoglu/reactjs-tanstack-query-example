@@ -17,3 +17,9 @@ export {
   useCitiesWithInit,
   useCity,
 } from './useCities'
+
+// Animation hooks
+export {
+  useScrollAnimation,
+  useStaggeredScrollAnimation
+} from './useScrollAnimation'

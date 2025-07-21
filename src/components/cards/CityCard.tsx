@@ -6,22 +6,45 @@ import { useCitySelection } from '@/lib/hooks'
 import type { City } from '@/lib/types/city.types'
 
 /**
- * CityCard Component - Clean implementation with text overlay on image
+ * CityCard Component - Interactive city destination card with image overlay and selection
+ * 
+ * Current Features:
+ * - Semantic <article> element for proper content structure
+ * - City image with lazy loading and error fallback (MapPin icon)
+ * - Text overlay with transparent black background for city name
+ * - Hover animations (scale, overlay effects) with disabled state support
+ * - Selection state management via useCitySelection hook
+ * - Interactive select button with hover effects (green text on hover)
+ * - Loading state display with spinner and "Updating..." message
+ * - Selection indicator with checkmark when city is selected
+ * - Compact/default variants for different layout needs
+ * - Full accessibility support with ARIA labels and proper semantics
  * 
  * Design Patterns Applied:
- * - Composition Pattern: Built from Button, Image, and Icon components
- * - Observer Pattern: Uses useCitySelection to observe selection state
- * - Strategy Pattern: Different behaviors based on hover and selection states
+ * - Composition Pattern: Composes article, img, Button, icons within card layout
+ * - Observer Pattern: Observes selection state via useCitySelection hook
+ * - Strategy Pattern: Different rendering based on hover, selection, loading, error states
+ * - Event Handler Pattern: Handles mouse events, image loading, selection clicks
+ * - Error Boundary Ready: Graceful image error handling with fallback display
  * 
  * SOLID Principles:
- * - SRP: Only handles city card display and selection interactions
- * - OCP: Extensible through props for different card styles and behaviors
- * - DIP: Depends on useCitySelection hook abstraction
+ * - SRP: Handles city card display, selection interactions, and visual state management
+ * - OCP: Extensible via props (variant, showSelectButton, disabled, className, onSelect)
+ * - LSP: Can substitute other card implementations with same interface
+ * - ISP: Focused CityCardProps interface for city display and selection
+ * - DIP: Depends on useCitySelection hook and Button/Icon component abstractions
+ * 
+ * Semantic HTML Structure:
+ * - Uses semantic <article> element instead of div
+ * - Proper <img> with alt text and lazy loading
+ * - Button elements for interactive actions
+ * - <h3> for city name with proper text shadow for readability
+ * - ARIA labels for screen reader accessibility
  */
 
 interface CityCardProps {
   city: City
-  onSelect?: (city: City) => void
+  onSelect?: ((city: City) => void) | undefined
   className?: string
   showSelectButton?: boolean
   disabled?: boolean
@@ -82,7 +105,7 @@ export const CityCard = ({
   const cardHeight = variant === 'compact' ? 'h-48' : 'h-64'
 
   return (
-    <div
+    <article
       className={`
         group relative overflow-hidden rounded-lg shadow-sm transition-all duration-300
         hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]
@@ -93,8 +116,7 @@ export const CityCard = ({
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      role="article"
-      aria-label={`City card for ${city.city}`}
+      aria-label={`City destination: ${city.city}`}
     >
       {/* Background Image */}
       {!imageError ? (
@@ -199,6 +221,6 @@ export const CityCard = ({
           </Button>
         </div>
       )}
-    </div>
+    </article>
   )
 }

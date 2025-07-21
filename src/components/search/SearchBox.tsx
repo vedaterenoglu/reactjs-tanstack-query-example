@@ -6,25 +6,54 @@ import { Input } from '@/components/ui/input'
 import { useCitySearch } from '@/lib/hooks'
 
 /**
- * SearchBox Component - City search with real-time filtering
+ * SearchBox Component - Advanced search input with debouncing, state sync, and accessibility
+ * 
+ * Current Features:
+ * - Controlled input with local state for immediate UI response
+ * - Debounced search implementation (configurable debounceMs, default 300ms)
+ * - Bidirectional state synchronization with Redux (via useCitySearch hook)
+ * - Real-time search results count display
+ * - Clear button (X icon) when input has value and not loading
+ * - Refresh button with configurable visibility (showRefreshButton prop)
+ * - Loading state with spinner animation during search operations
+ * - Error state display with retry functionality
+ * - Keyboard support (Escape key clears search)
+ * - Full accessibility: ARIA labels, searchbox role, screen reader support
+ * - Mobile-optimized with proper input modes and focus handling
  * 
  * Design Patterns Applied:
- * - Controlled Component Pattern: Input state managed by React
- * - Custom Hook Integration: Uses useCitySearch for state management
- * - Debouncing Pattern: Prevents excessive searches during typing
- * - Composition Pattern: Composed from Input, Button, and Icon components
+ * - Controlled Component Pattern: Local inputValue state synced with Redux searchQuery
+ * - Custom Hook Integration: useCitySearch provides search, clear, retry functionality
+ * - Debouncing Pattern: setTimeout-based debouncing prevents excessive API calls
+ * - Composition Pattern: Composes Input, Button, Search/X/RefreshCw icons
+ * - State Synchronization Pattern: useEffect manages local ↔ Redux state sync
+ * - Event Handler Pattern: Memoized handlers for input, clear, refresh, keyboard events
  * 
  * SOLID Principles:
- * - SRP: Only handles search UI and user interactions
- * - OCP: Extensible through props for different search behaviors
- * - ISP: Focused interface accepting only necessary props
- * - DIP: Depends on useCitySearch hook abstraction
+ * - SRP: Handles search input UI, debouncing, state sync, and user interactions only
+ * - OCP: Extensible via comprehensive props (placeholder, debounceMs, onRefresh, etc.)
+ * - LSP: Can substitute other search input implementations with same interface
+ * - ISP: Focused SearchBoxProps interface with optional configuration
+ * - DIP: Depends on useCitySearch hook and Input/Button component abstractions
+ * 
+ * React 19 Patterns:
+ * - State Management: Local state + Redux sync with proper dependency arrays
+ * - Performance Pattern: useCallback for handlers, careful useEffect dependencies
+ * - Controlled Component: inputValue state with onChange sync to Redux
+ * - Accessibility Pattern: Comprehensive ARIA attributes and semantic HTML
+ * - Mobile Optimization: inputMode="search", iOS-specific classes
+ * 
+ * State Synchronization Logic:
+ * - inputValue: immediate local state for UI responsiveness
+ * - searchQuery: debounced Redux state for actual filtering
+ * - Sync inputValue ← searchQuery when external changes occur (avoiding infinite loops)
+ * - Debounced sync inputValue → searchQuery when user types
  */
 
 interface SearchBoxProps {
   placeholder?: string
   debounceMs?: number
-  onRefresh?: () => void
+  onRefresh?: (() => void) | undefined
   autoFocus?: boolean
   disabled?: boolean
   className?: string
