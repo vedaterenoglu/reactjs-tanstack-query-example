@@ -192,7 +192,9 @@ export const useCityInitialization = () => {
   const error = useSelector(selectError)
 
   const initialize = useCallback(
-    () => dispatch(initializeCities()),
+    () => {
+      dispatch(initializeCities())
+    },
     [dispatch]
   )
 
@@ -232,6 +234,14 @@ export const useCityInitialization = () => {
 export const useCitiesWithInit = () => {
   const cityData = useCities()
   const { initialize, hasData, shouldRefresh } = useCityInitialization()
+
+  console.warn('[useCitiesWithInit] City data state:', { 
+    filteredCitiesCount: cityData.filteredCities.length,
+    isLoading: cityData.isLoading, 
+    error: cityData.error,
+    hasData,
+    shouldRefresh 
+  })
 
   // Auto-refresh stale data
   useEffect(() => {

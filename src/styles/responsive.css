@@ -1,0 +1,282 @@
+/**
+ * Mobile-First Responsive Styles
+ * 
+ * Design Patterns Applied:
+ * - Mobile-First Pattern: Base styles for mobile, enhanced for larger screens
+ * - Progressive Enhancement: Features added as screen size increases
+ * - Utility Extension Pattern: Extends Tailwind with custom responsive utilities
+ * 
+ * SOLID Principles:
+ * - SRP: Each utility class has single responsibility
+ * - OCP: Extensible through CSS custom properties
+ * - DIP: Components depend on utility classes, not specific implementations
+ */
+
+@layer base {
+  /* Mobile-First Base Styles (min-width: 380px) */
+  :root {
+    --container-padding: 1rem;
+    --min-touch-target: 44px; /* WCAG 2.1 AA standard */
+    --safe-area-inset: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Ensure minimum width constraint */
+  html {
+    min-width: 380px;
+  }
+
+  /* Smooth scrolling for mobile */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Improved touch interactions */
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Ensure minimum touch target sizes */
+  button,
+  [role="button"] {
+    min-height: var(--min-touch-target);
+    min-width: var(--min-touch-target);
+  }
+}
+
+@layer components {
+  /* Responsive Container with Mobile-First Constraints */
+  .container-responsive {
+    @apply container mx-auto px-4;
+    min-width: 380px;
+    max-width: 1200px;
+  }
+
+  /* Mobile-First Grid System */
+  .grid-responsive {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  /* Card Grid - Mobile First */
+  .card-grid-mobile {
+    @apply grid gap-4 grid-cols-1;
+  }
+
+  @media (min-width: 640px) {
+    .card-grid-mobile {
+      @apply grid-cols-2 gap-6;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .card-grid-mobile {
+      @apply grid-cols-3;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .card-grid-mobile {
+      @apply grid-cols-4;
+    }
+  }
+
+  /* Touch-Optimized Cards */
+  .card-touch {
+    @apply relative overflow-hidden transition-all duration-200;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Mobile-Optimized Search */
+  .search-mobile {
+    @apply w-full;
+  }
+
+  .search-mobile input {
+    @apply text-base; /* Prevents zoom on iOS */
+    font-size: 16px; /* Explicit 16px to prevent zoom */
+  }
+
+  /* Responsive Typography */
+  .heading-responsive {
+    @apply text-2xl font-bold;
+  }
+
+  @media (min-width: 768px) {
+    .heading-responsive {
+      @apply text-3xl;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .heading-responsive {
+      @apply text-4xl;
+    }
+  }
+
+  /* Mobile-First Spacing */
+  .section-spacing {
+    @apply py-6;
+  }
+
+  @media (min-width: 768px) {
+    .section-spacing {
+      @apply py-8;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-spacing {
+      @apply py-12;
+    }
+  }
+
+  /* Touch-Friendly Buttons */
+  .btn-touch {
+    @apply px-6 py-3 min-h-[44px] active:scale-95 transition-transform;
+  }
+
+  /* Mobile Modal/Dialog Optimization */
+  .modal-mobile {
+    @apply fixed inset-x-4 top-auto bottom-4 max-w-[calc(100vw-2rem)] mx-auto;
+  }
+
+  @media (min-width: 640px) {
+    .modal-mobile {
+      @apply inset-x-auto inset-y-auto top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-lg;
+    }
+  }
+
+  /* Safe Area Support for Modern Devices */
+  .safe-area-bottom {
+    padding-bottom: calc(1rem + var(--safe-area-inset));
+  }
+
+  /* Responsive Image Container */
+  .image-responsive {
+    @apply relative w-full overflow-hidden bg-muted;
+    aspect-ratio: 16 / 9;
+  }
+
+  .image-responsive img {
+    @apply absolute inset-0 w-full h-full object-cover;
+  }
+
+  /* Mobile-Optimized Loading States */
+  .skeleton-mobile {
+    @apply animate-pulse bg-muted rounded;
+    min-height: var(--min-touch-target);
+  }
+
+  /* Responsive Navigation */
+  .nav-mobile {
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t z-50;
+    padding-bottom: calc(1rem + var(--safe-area-inset));
+  }
+
+  @media (min-width: 768px) {
+    .nav-mobile {
+      @apply static border-t-0 border-b;
+    }
+  }
+
+  /* Touch Gesture Hints */
+  .swipe-hint {
+    @apply relative overflow-x-auto snap-x snap-mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .swipe-hint::-webkit-scrollbar {
+    display: none;
+  }
+
+  .swipe-hint > * {
+    @apply snap-start;
+  }
+
+  /* Responsive Utility Classes */
+  .hide-mobile {
+    @apply hidden sm:block;
+  }
+
+  .show-mobile {
+    @apply block sm:hidden;
+  }
+
+  /* Performance Optimizations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Responsive Focus States */
+  .focus-visible-mobile {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  /* Landscape Mode Adjustments */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .landscape-compact {
+      @apply py-2;
+    }
+
+    .heading-responsive {
+      @apply text-xl;
+    }
+  }
+}
+
+@layer utilities {
+  /* Custom Responsive Breakpoints */
+  @media (min-width: 380px) {
+    .xs\:block {
+      display: block;
+    }
+  }
+
+  /* Touch Interaction Utilities */
+  .touch-none {
+    touch-action: none;
+  }
+
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+
+  /* Prevent Text Selection on Touch */
+  .select-none-touch {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* iOS Specific Fixes */
+  @supports (-webkit-touch-callout: none) {
+    .ios-fix {
+      -webkit-appearance: none;
+      -webkit-text-size-adjust: 100%;
+    }
+  }
+
+  /* Android Specific Optimizations */
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .android-optimize {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+  }
+}

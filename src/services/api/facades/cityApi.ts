@@ -46,13 +46,23 @@ export class CityApiService {
         params['offset'] = options.offset
       }
 
-      const response = await this.httpClient.get<CitiesApiResponse>(
+      const response = await this.httpClient.get<{ count: number; cities: City[] }>(
         `${this.apiBasePath}/cities`,
         { params }
       )
 
+      // Transform backend response to match our schema
+      const transformedResponse: CitiesApiResponse = {
+        data: response.data.cities || [],
+        pagination: response.data.count ? {
+          total: response.data.count,
+          limit: options?.limit || 50,
+          offset: options?.offset || 0
+        } : undefined
+      }
+
       // Validate response using Zod schema
-      return validateCityResponse(response.data)
+      return validateCityResponse(transformedResponse)
     } catch (error) {
       throw this.handleApiError(error, 'Failed to fetch cities')
     }

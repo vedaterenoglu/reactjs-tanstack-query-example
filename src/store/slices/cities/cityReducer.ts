@@ -1,3 +1,5 @@
+import { REHYDRATE } from 'redux-persist'
+
 import type { CitiesState } from '@/lib/types/city.types'
 
 import { CITY_ACTIONS, type CityAction } from './cityActions'
@@ -26,6 +28,24 @@ export function cityReducer(
   action: Action
 ): CitiesState {
   switch (action.type) {
+    // Redux Persist rehydration
+    case REHYDRATE: {
+      const rehydrateAction = action as Action & { payload?: { cities?: CitiesState } }
+      const persistedCityState = rehydrateAction.payload?.cities
+      
+      if (persistedCityState) {
+        return {
+          ...persistedCityState,
+          isLoading: false, // Reset loading state after rehydration
+          error: null,
+        }
+      }
+      return {
+        ...state,
+        isLoading: false, // Always reset loading after rehydration
+        error: null,
+      }
+    }
     // Async loading states
     case CITY_ACTIONS.FETCH_CITIES_REQUEST:
       return {

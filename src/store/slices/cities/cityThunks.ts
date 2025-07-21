@@ -54,6 +54,8 @@ export const fetchCities = (options?: CitySearchOptions): AppThunk => {
       }
 
     } catch (error) {
+      console.error('[fetchCities] API call failed:', error)
+      
       // Transform error to user-friendly message
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -175,11 +177,17 @@ export const initializeCities = (): AppThunk => {
       const cacheAge = selectCacheAge(state)
       const currentCities = selectCities(state)
 
+      console.warn('[initializeCities] State check:', { 
+        cacheAge, 
+        currentCitiesLength: currentCities.length 
+      })
+
       // Load fresh data if no cache or cache is very old (> 1 hour)
       const INITIALIZATION_CACHE_LIMIT = 60 * 60 * 1000 // 1 hour
       const shouldInitialize = !cacheAge || 
                                cacheAge > INITIALIZATION_CACHE_LIMIT || 
                                currentCities.length === 0
+
 
       if (shouldInitialize) {
         dispatch(fetchCities())
@@ -187,7 +195,7 @@ export const initializeCities = (): AppThunk => {
 
     } catch (error) {
       // Don't throw on initialization - app should still work
-      console.error('Failed to initialize cities:', error)
+      console.error('[initializeCities] Failed to initialize cities:', error)
     }
   }
 }

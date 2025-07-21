@@ -1,2 +1,2 @@
 export { Authenticated } from './Authenticated'
-export { Home } from './Home'
+export { HomePage } from './HomePage'
