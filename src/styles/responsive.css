@@ -38,14 +38,14 @@
   input,
   select,
   textarea,
-  [role="button"] {
+  [role='button'] {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
 
   /* Ensure minimum touch target sizes */
   button,
-  [role="button"] {
+  [role='button'] {
     min-height: var(--min-touch-target);
     min-width: var(--min-touch-target);
   }

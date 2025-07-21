@@ -27,7 +27,9 @@ interface ScrollAnimationReturn<T extends HTMLElement> {
   hasTriggered: boolean
 }
 
-export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(options: ScrollAnimationOptions = {}): ScrollAnimationReturn<T> {
+export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
+  options: ScrollAnimationOptions = {}
+): ScrollAnimationReturn<T> {
   const {
     threshold = 0.1,
     delay = 0,
@@ -102,7 +104,12 @@ interface StaggeredAnimationOptions extends ScrollAnimationOptions {
   totalElements?: number // Total number of elements for calculation
 }
 
-export function useStaggeredScrollAnimation<T extends HTMLElement = HTMLDivElement>(index: number, options: StaggeredAnimationOptions = {}): ScrollAnimationReturn<T> {
+export function useStaggeredScrollAnimation<
+  T extends HTMLElement = HTMLDivElement,
+>(
+  index: number,
+  options: StaggeredAnimationOptions = {}
+): ScrollAnimationReturn<T> {
   const { staggerDelay = 100, ...restOptions } = options
 
   const calculatedDelay = (restOptions.delay || 0) + index * staggerDelay

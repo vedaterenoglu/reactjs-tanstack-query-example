@@ -2,7 +2,10 @@ import { z } from 'zod'
 
 // Base validation utilities (from backend sanitization patterns)
 const validateSlug = (val: string, maxLength: number): string => {
-  return val.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, maxLength)
+  return val
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .slice(0, maxLength)
 }
 
 const sanitizePlainText = (val: string, maxLength: number): string => {
@@ -66,11 +69,13 @@ export type UpdateCity = z.infer<typeof UpdateCitySchema>
 // API Response schemas
 export const CitiesApiResponseSchema = z.object({
   data: z.array(CitySchema),
-  pagination: z.object({
-    total: z.number(),
-    limit: z.number(),
-    offset: z.number(),
-  }).optional(),
+  pagination: z
+    .object({
+      total: z.number(),
+      limit: z.number(),
+      offset: z.number(),
+    })
+    .optional(),
 })
 
 export type CitiesApiResponse = z.infer<typeof CitiesApiResponseSchema>
@@ -113,10 +118,14 @@ export const ApiErrorSchema = z.object({
   message: z.string(),
   statusCode: z.number(),
   error: z.string(),
-  details: z.array(z.object({
-    field: z.string(),
-    message: z.string(),
-  })).optional(),
+  details: z
+    .array(
+      z.object({
+        field: z.string(),
+        message: z.string(),
+      })
+    )
+    .optional(),
 })
 
 export type ApiError = z.infer<typeof ApiErrorSchema>

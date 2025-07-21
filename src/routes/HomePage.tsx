@@ -1,15 +1,18 @@
+import { Calendar } from 'lucide-react'
 import { useCallback, useMemo, useEffect } from 'react'
 
 import { StateFrame } from '@/components/frames'
 import { CitiesGrid } from '@/components/grids'
 import { SearchSection } from '@/components/sections'
+import { Button } from '@/components/ui/button'
 import { useCitiesWithInit, useCitySearch } from '@/lib/hooks'
 
 /**
  * HomePage Container Component - Semantic homepage with local events discovery functionality
  *
  * Current Features:
- * - Page header with title and description for local events discovery
+ * - Page header with title, description, and "View All Events" CTA button
+ * - Professional "View All Events" button with Calendar icon and hover animations
  * - Integrated city search functionality with real-time filtering and refresh
  * - Unified state management (loading, error, empty states) via StateFrame
  * - Responsive cities grid with scroll animations and selection
@@ -56,7 +59,6 @@ export const HomePage = ({
   gridColumns = 'auto',
   className = '',
 }: HomePageProps) => {
-
   // Custom hook integration following DIP and Facade patterns
   const {
     filteredCities,
@@ -103,6 +105,10 @@ export const HomePage = ({
     []
   )
 
+  const handleGetAllEvents = useCallback(() => {
+    // TODO: Navigate to all events page or implement all events functionality
+    // This will be implemented when the all events route is created
+  }, [])
 
   // Dynamic grid classes based on gridColumns prop
   const gridClasses = useMemo(() => {
@@ -131,15 +137,30 @@ export const HomePage = ({
     <div className={`min-h-screen bg-background ${className}`}>
       {/* Main Container with Mobile-First Constraints */}
       <div className="container-responsive section-spacing">
-
         {/* Page Header */}
         <header className="mb-6">
-          <h1 className="text-3xl font-bold text-center mb-2">
-            Find Local Events
-          </h1>
-          <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-            Select your city and discover exciting events happening near you
-          </p>
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl font-bold mb-2">Find Local Events</h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Select your city and discover exciting events happening near you
+            </p>
+
+            {/* Get All Events CTA */}
+            <div className="flex justify-center pt-2">
+              <Button
+                onClick={handleGetAllEvents}
+                variant="outline"
+                size="lg"
+                className="group transition-all duration-200 hover:scale-105 hover:shadow-md"
+              >
+                <Calendar className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-200" />
+                View All Events
+                <span className="ml-2 text-xs opacity-70 group-hover:opacity-100 transition-opacity">
+                  →
+                </span>
+              </Button>
+            </div>
+          </div>
         </header>
 
         {/* Search Section */}
@@ -186,7 +207,6 @@ export const HomePage = ({
             </StateFrame>
           </section>
         </main>
-
       </div>
     </div>
   )

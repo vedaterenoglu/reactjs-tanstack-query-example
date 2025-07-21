@@ -1,6 +1,6 @@
 /**
  * States Barrel Export
- * 
+ *
  * Centralized export for state components following React 19 patterns
  * Enables clean imports and better organization
  */

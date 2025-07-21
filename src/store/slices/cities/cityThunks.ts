@@ -3,9 +3,11 @@ import { cityApiService } from '@/services/api/facades/cityApi'
 import type { AppThunk } from '@/store'
 
 import { cityActionCreators } from './cityActions'
-import { selectCacheAge, selectIsCacheStale, selectCities } from './citySelectors'
-
-
+import {
+  selectCacheAge,
+  selectIsCacheStale,
+  selectCities,
+} from './citySelectors'
 
 /**
  * City Thunks - Async action creators using Redux Thunk
@@ -25,7 +27,7 @@ export const fetchCities = (options?: CitySearchOptions): AppThunk => {
       const state = getState()
       const isCacheStale = selectIsCacheStale(state)
       const currentCities = selectCities(state)
-      
+
       // Skip fetch if cache is fresh and no search query
       if (!isCacheStale && currentCities.length > 0 && !options?.query) {
         return
@@ -38,10 +40,12 @@ export const fetchCities = (options?: CitySearchOptions): AppThunk => {
       const response = await cityApiService.getCities(options)
 
       // Dispatch success action with fetched data
-      dispatch(cityActionCreators.fetchCitiesSuccess(
-        response.data,
-        response.pagination?.total
-      ))
+      dispatch(
+        cityActionCreators.fetchCitiesSuccess(
+          response.data,
+          response.pagination?.total
+        )
+      )
 
       // Auto-filter if search query provided
       if (options?.query) {
@@ -52,14 +56,14 @@ export const fetchCities = (options?: CitySearchOptions): AppThunk => {
         dispatch(cityActionCreators.filterCities(filteredCities))
         dispatch(cityActionCreators.setSearchQuery(options.query))
       }
-
     } catch (error) {
       console.error('[fetchCities] API call failed:', error)
-      
+
       // Transform error to user-friendly message
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Failed to fetch cities. Please try again.'
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch cities. Please try again.'
 
       dispatch(cityActionCreators.fetchCitiesFailure(errorMessage))
 
@@ -74,10 +78,10 @@ export const fetchCities = (options?: CitySearchOptions): AppThunk => {
  * Used when user explicitly requests fresh data
  */
 export const refreshCities = (): AppThunk => {
-  return async (dispatch) => {
+  return async dispatch => {
     // Invalidate cache first
     dispatch(cityActionCreators.invalidateCache())
-    
+
     // Fetch fresh data
     return dispatch(fetchCities())
   }
@@ -102,13 +106,16 @@ export const searchCities = (query: string): AppThunk => {
       }
 
       // Local search on existing data
-      const filteredCities = cityApiService.searchCitiesLocally(allCities, query)
+      const filteredCities = cityApiService.searchCitiesLocally(
+        allCities,
+        query
+      )
       dispatch(cityActionCreators.filterCities(filteredCities))
-
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : 'Search failed. Please try again.'
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Search failed. Please try again.'
 
       dispatch(cityActionCreators.fetchCitiesFailure(errorMessage))
       throw error
@@ -123,10 +130,10 @@ export const searchCities = (query: string): AppThunk => {
 export const clearSearch = (): AppThunk => {
   return async (dispatch, getState) => {
     dispatch(cityActionCreators.clearSearch())
-    
+
     const state = getState()
     const allCities = selectCities(state)
-    
+
     // Restore full list as filtered list
     dispatch(cityActionCreators.filterCities(allCities))
   }
@@ -141,10 +148,10 @@ export const selectCity = (citySlug: string): AppThunk => {
     try {
       const state = getState()
       const cities = selectCities(state)
-      
+
       // Find city in local state first
       const city = cities.find(c => c.citySlug === citySlug)
-      
+
       if (city) {
         dispatch(cityActionCreators.selectCity(city))
         return city
@@ -154,11 +161,9 @@ export const selectCity = (citySlug: string): AppThunk => {
       // For now, clear selection if city not found
       dispatch(cityActionCreators.clearSelection())
       throw new Error(`City with slug "${citySlug}" not found`)
-
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : 'Failed to select city'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to select city'
 
       dispatch(cityActionCreators.fetchCitiesFailure(errorMessage))
       throw error
@@ -177,22 +182,21 @@ export const initializeCities = (): AppThunk => {
       const cacheAge = selectCacheAge(state)
       const currentCities = selectCities(state)
 
-      console.warn('[initializeCities] State check:', { 
-        cacheAge, 
-        currentCitiesLength: currentCities.length 
+      console.warn('[initializeCities] State check:', {
+        cacheAge,
+        currentCitiesLength: currentCities.length,
       })
 
       // Load fresh data if no cache or cache is very old (> 1 hour)
       const INITIALIZATION_CACHE_LIMIT = 60 * 60 * 1000 // 1 hour
-      const shouldInitialize = !cacheAge || 
-                               cacheAge > INITIALIZATION_CACHE_LIMIT || 
-                               currentCities.length === 0
-
+      const shouldInitialize =
+        !cacheAge ||
+        cacheAge > INITIALIZATION_CACHE_LIMIT ||
+        currentCities.length === 0
 
       if (shouldInitialize) {
         dispatch(fetchCities())
       }
-
     } catch (error) {
       // Don't throw on initialization - app should still work
       console.error('[initializeCities] Failed to initialize cities:', error)
@@ -204,8 +208,11 @@ export const initializeCities = (): AppThunk => {
  * Retry failed operations
  * Provides user recovery mechanism for network issues
  */
-export const retryCityOperation = (lastOperation?: 'fetch' | 'search', query?: string): AppThunk => {
-  return async (dispatch) => {
+export const retryCityOperation = (
+  lastOperation?: 'fetch' | 'search',
+  query?: string
+): AppThunk => {
+  return async dispatch => {
     switch (lastOperation) {
       case 'search':
         if (query) {

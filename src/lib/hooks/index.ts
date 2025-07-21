@@ -1,6 +1,6 @@
 /**
  * Custom Hooks Barrel Export
- * 
+ *
  * Centralized export for all custom hooks following React 19 patterns
  * Enables clean imports and better organization
  */
@@ -21,5 +21,5 @@ export {
 // Animation hooks
 export {
   useScrollAnimation,
-  useStaggeredScrollAnimation
+  useStaggeredScrollAnimation,
 } from './useScrollAnimation'

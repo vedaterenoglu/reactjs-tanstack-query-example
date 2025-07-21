@@ -1,4 +1,9 @@
-import type { HttpClient, HttpRequestConfig, HttpResponse, HttpError } from '../interfaces/httpClient.interface'
+import type {
+  HttpClient,
+  HttpRequestConfig,
+  HttpResponse,
+  HttpError,
+} from '../interfaces/httpClient.interface'
 
 /**
  * Fetch API adapter implementation of HttpClient interface
@@ -15,9 +20,12 @@ export class FetchAdapter implements HttpClient {
   /**
    * Build full URL with query parameters
    */
-  private buildUrl(url: string, params?: Record<string, string | number | boolean>): string {
+  private buildUrl(
+    url: string,
+    params?: Record<string, string | number | boolean>
+  ): string {
     const fullUrl = this.baseUrl + url
-    
+
     if (!params || Object.keys(params).length === 0) {
       return fullUrl
     }
@@ -33,8 +41,10 @@ export class FetchAdapter implements HttpClient {
   /**
    * Transform fetch response to HttpResponse format
    */
-  private async transformResponse<T>(response: Response): Promise<HttpResponse<T>> {
-    const data = await response.json() as T
+  private async transformResponse<T>(
+    response: Response
+  ): Promise<HttpResponse<T>> {
+    const data = (await response.json()) as T
 
     return {
       data,
@@ -80,7 +90,7 @@ export class FetchAdapter implements HttpClient {
   ): Promise<HttpResponse<T>> {
     try {
       const fullUrl = this.buildUrl(url, config.params)
-      
+
       const requestInit: RequestInit = {
         method: config.method || 'GET',
         headers: {
@@ -97,7 +107,9 @@ export class FetchAdapter implements HttpClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+        throw new Error(
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`
+        )
       }
 
       return await this.transformResponse<T>(response)
@@ -106,7 +118,10 @@ export class FetchAdapter implements HttpClient {
     }
   }
 
-  async get<T>(url: string, config?: Omit<HttpRequestConfig, 'method'>): Promise<HttpResponse<T>> {
+  async get<T>(
+    url: string,
+    config?: Omit<HttpRequestConfig, 'method'>
+  ): Promise<HttpResponse<T>> {
     return this.makeRequest<T>(url, { ...config, method: 'GET' })
   }
 
@@ -126,7 +141,10 @@ export class FetchAdapter implements HttpClient {
     return this.makeRequest<T>(url, { ...config, method: 'PUT', body: data })
   }
 
-  async delete<T>(url: string, config?: Omit<HttpRequestConfig, 'method'>): Promise<HttpResponse<T>> {
+  async delete<T>(
+    url: string,
+    config?: Omit<HttpRequestConfig, 'method'>
+  ): Promise<HttpResponse<T>> {
     return this.makeRequest<T>(url, { ...config, method: 'DELETE' })
   }
 }
