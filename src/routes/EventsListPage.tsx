@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import { EventsStateFrame } from '@/components/frames'
-import { EventGrid } from '@/components/grids/EventGrid'
+import { AutoResizeEventGrid } from '@/components/grids'
 import { useEventsWithInit } from '@/lib/hooks/useEvents'
 import type { Event } from '@/lib/types/event.types'
 
@@ -12,7 +12,7 @@ import type { Event } from '@/lib/types/event.types'
  * 1. **Container/Presentational Pattern**: This is a container component that:
  *    - Handles data fetching through useEvents hook
  *    - Manages loading, error, and data states
- *    - Delegates presentation to EventGrid component
+ *    - Delegates presentation to AutoResizeEventGrid component
  *
  * 2. **Custom Hook Pattern**: Uses useEvents for data fetching abstraction
  *
@@ -70,12 +70,11 @@ export const EventsListPage = () => {
           isEmpty={isEmpty}
           onRefresh={handleRetry}
         >
-          <EventGrid
+          <AutoResizeEventGrid
             events={events || []}
             hasResults={events ? events.length > 0 : false}
             isLoading={isLoading && hasData}
             onEventSelect={handleEventClick}
-            gridClasses="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             filteredCount={events ? events.length : 0}
           />
         </EventsStateFrame>

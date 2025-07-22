@@ -37,7 +37,7 @@ export const EventSchema = z.object({
   imageUrl: z.string().url().max(500),
   alt: z.string().min(1).max(200),
   description: z.string().min(1).max(2000),
-  price: z.number().int().min(0), // Price in cents
+  price: z.number().int().min(0), // Price in dollars (e.g., 70 = $70.00)
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 })

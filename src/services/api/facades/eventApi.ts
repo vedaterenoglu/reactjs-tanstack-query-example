@@ -76,19 +76,31 @@ export class EventApiService {
         queryParams['order'] = params.order
       }
 
-      const response = await this.httpClient.get<unknown>(
-        `${this.apiBasePath}/events`,
-        { params: queryParams }
-      )
+      const response = await this.httpClient.get<{
+        count: number
+        events: unknown[]
+        pagination?: {
+          limit: number
+          offset: number
+          hasMore: boolean
+        }
+      }>(`${this.apiBasePath}/events`, { params: queryParams })
 
-      // Debug: Log actual backend response structure to understand what we receive
-      console.warn('[EventApiService] Raw backend response:', JSON.stringify(response.data, null, 2))
-      console.warn('[EventApiService] Response keys:', Object.keys(response.data || {}))
-      console.warn('[EventApiService] Response type:', typeof response.data)
+      // Transform backend response to match EventsApiResponse schema (same pattern as Cities API)
+      const transformedResponse: EventsApiResponse = {
+        success: true,
+        data: response.data.events as Event[],
+        pagination: response.data.count ? {
+          total: response.data.count,
+          limit: params?.limit || 12,
+          offset: params?.offset || 0,
+          hasMore: response.data.pagination?.hasMore,
+        } : undefined,
+        timestamp: new Date().toISOString(),
+      }
 
-      // The backend returns the structure directly matching our schema
-      // Validate response using Zod validation function
-      return validateEventsResponse(response.data)
+      // Validate transformed response using Zod validation function
+      return validateEventsResponse(transformedResponse)
     } catch (error) {
       throw this.handleApiError(error, 'Failed to fetch events')
     }

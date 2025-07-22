@@ -62,7 +62,7 @@ export const EventCard = ({
 
   // Memoized formatting operations for performance
   const formattedPrice = useMemo(() => {
-    return event.price === 0 ? 'Free' : `$${(event.price / 100).toFixed(2)}`
+    return event.price === 0 ? 'Free' : `$${event.price.toFixed(2)}`
   }, [event.price])
 
   const formattedDate = useMemo(() => {
@@ -70,6 +70,7 @@ export const EventCard = ({
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
     })
   }, [event.date])
 
@@ -110,8 +111,11 @@ export const EventCard = ({
     setImageError(false)
   }, [])
 
-  // Responsive dimensions - rectangular format for events
-  const cardHeight = variant === 'compact' ? 'h-64' : 'h-80'
+  // Responsive dimensions - 3:2 aspect ratio maintaining original image proportions
+  // Grid-friendly: width controlled by parent grid, height maintains 3:2 aspect ratio
+  const cardDimensions = variant === 'compact' 
+    ? 'w-full aspect-[3/2] min-h-[200px]'
+    : 'w-full aspect-[3/2] min-h-[266px]'
 
   return (
     <article
@@ -119,7 +123,7 @@ export const EventCard = ({
         group relative overflow-hidden rounded-lg shadow-sm transition-all duration-300
         hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        ${cardHeight}
+        ${cardDimensions}
         ${className}
       `}
       onMouseEnter={handleMouseEnter}
