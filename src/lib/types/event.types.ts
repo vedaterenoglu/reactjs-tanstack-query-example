@@ -118,7 +118,13 @@ export const validateEvent = (data: unknown): Event => {
   return EventSchema.parse(data)
 }
 
-// Redux state schema for events
+// Page cache schema for storing fetched pages
+export const PageCacheSchema = z.object({
+  events: z.array(EventSchema),
+  timestamp: z.number(), // Unix timestamp for cache invalidation
+})
+
+// Redux state schema for events with enhanced pagination
 export const EventsStateSchema = z.object({
   events: z.array(EventSchema),
   filteredEvents: z.array(EventSchema),
@@ -134,6 +140,22 @@ export const EventsStateSchema = z.object({
     total: z.number().optional(),
     hasMore: z.boolean().optional(),
   }).nullable(),
+  
+  // Enhanced pagination state
+  currentPage: z.number().int().positive().default(1),
+  itemsPerPage: z.number().int().positive().default(12),
+  totalPages: z.number().int().min(0).default(0),
+  
+  // Page caching system
+  cachedPages: z.record(z.string(), PageCacheSchema).default({}),
+  
+  // Prefetch state
+  prefetchingPage: z.number().int().positive().nullable().default(null),
+  prefetchedPages: z.array(z.number()).default([]),
+  
+  // UI state
+  isChangingPage: z.boolean().default(false),
 })
 
 export type EventsState = z.infer<typeof EventsStateSchema>
+export type PageCache = z.infer<typeof PageCacheSchema>

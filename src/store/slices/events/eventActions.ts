@@ -1,4 +1,4 @@
-import type { Event } from '@/lib/types/event.types'
+import type { Event, PageCache } from '@/lib/types/event.types'
 
 /**
  * Event Actions - Traditional Redux Action Definitions
@@ -48,6 +48,16 @@ export const EVENT_ACTIONS = {
 
   // Pagination
   SET_PAGINATION: 'events/SET_PAGINATION',
+  
+  // Enhanced pagination actions
+  SET_CURRENT_PAGE: 'events/SET_CURRENT_PAGE',
+  SET_TOTAL_PAGES: 'events/SET_TOTAL_PAGES',
+  CACHE_PAGE_RESULTS: 'events/CACHE_PAGE_RESULTS',
+  INVALIDATE_PAGE_CACHE: 'events/INVALIDATE_PAGE_CACHE',
+  SET_PREFETCHING_PAGE: 'events/SET_PREFETCHING_PAGE',
+  MARK_PAGE_PREFETCHED: 'events/MARK_PAGE_PREFETCHED',
+  SET_PAGE_CHANGING: 'events/SET_PAGE_CHANGING',
+  CLEAR_PREFETCH_STATE: 'events/CLEAR_PREFETCH_STATE',
 } as const
 
 // Action Interfaces following FSA (Flux Standard Action) pattern
@@ -161,6 +171,61 @@ interface SetPaginationAction {
   }
 }
 
+// Enhanced pagination action interfaces
+interface SetCurrentPageAction {
+  type: typeof EVENT_ACTIONS.SET_CURRENT_PAGE
+  payload: {
+    page: number
+  }
+}
+
+interface SetTotalPagesAction {
+  type: typeof EVENT_ACTIONS.SET_TOTAL_PAGES
+  payload: {
+    totalPages: number
+  }
+}
+
+interface CachePageResultsAction {
+  type: typeof EVENT_ACTIONS.CACHE_PAGE_RESULTS
+  payload: {
+    page: number
+    cache: PageCache
+  }
+}
+
+interface InvalidatePageCacheAction {
+  type: typeof EVENT_ACTIONS.INVALIDATE_PAGE_CACHE
+  payload: {
+    page?: number // Optional: specific page, or all if undefined
+  }
+}
+
+interface SetPrefetchingPageAction {
+  type: typeof EVENT_ACTIONS.SET_PREFETCHING_PAGE
+  payload: {
+    page: number | null
+  }
+}
+
+interface MarkPagePrefetchedAction {
+  type: typeof EVENT_ACTIONS.MARK_PAGE_PREFETCHED
+  payload: {
+    page: number
+  }
+}
+
+interface SetPageChangingAction {
+  type: typeof EVENT_ACTIONS.SET_PAGE_CHANGING
+  payload: {
+    isChanging: boolean
+  }
+}
+
+interface ClearPrefetchStateAction {
+  type: typeof EVENT_ACTIONS.CLEAR_PREFETCH_STATE
+}
+
 // Union type for all event actions
 export type EventAction =
   | FetchEventsRequestAction
@@ -179,6 +244,14 @@ export type EventAction =
   | InvalidateCacheAction
   | SetLastFetchedAction
   | SetPaginationAction
+  | SetCurrentPageAction
+  | SetTotalPagesAction
+  | CachePageResultsAction
+  | InvalidatePageCacheAction
+  | SetPrefetchingPageAction
+  | MarkPagePrefetchedAction
+  | SetPageChangingAction
+  | ClearPrefetchStateAction
 
 // Action Creators - Pure functions that return actions
 export const eventActionCreators = {
@@ -293,5 +366,45 @@ export const eventActionCreators = {
       offset, 
       ...(total !== undefined && { total }),
     },
+  }),
+  
+  // Enhanced pagination action creators
+  setCurrentPage: (page: number): SetCurrentPageAction => ({
+    type: EVENT_ACTIONS.SET_CURRENT_PAGE,
+    payload: { page },
+  }),
+  
+  setTotalPages: (totalPages: number): SetTotalPagesAction => ({
+    type: EVENT_ACTIONS.SET_TOTAL_PAGES,
+    payload: { totalPages },
+  }),
+  
+  cachePageResults: (page: number, cache: PageCache): CachePageResultsAction => ({
+    type: EVENT_ACTIONS.CACHE_PAGE_RESULTS,
+    payload: { page, cache },
+  }),
+  
+  invalidatePageCache: (page?: number): InvalidatePageCacheAction => ({
+    type: EVENT_ACTIONS.INVALIDATE_PAGE_CACHE,
+    payload: page !== undefined ? { page } : {},
+  }),
+  
+  setPrefetchingPage: (page: number | null): SetPrefetchingPageAction => ({
+    type: EVENT_ACTIONS.SET_PREFETCHING_PAGE,
+    payload: { page },
+  }),
+  
+  markPagePrefetched: (page: number): MarkPagePrefetchedAction => ({
+    type: EVENT_ACTIONS.MARK_PAGE_PREFETCHED,
+    payload: { page },
+  }),
+  
+  setPageChanging: (isChanging: boolean): SetPageChangingAction => ({
+    type: EVENT_ACTIONS.SET_PAGE_CHANGING,
+    payload: { isChanging },
+  }),
+  
+  clearPrefetchState: (): ClearPrefetchStateAction => ({
+    type: EVENT_ACTIONS.CLEAR_PREFETCH_STATE,
   }),
 }

@@ -315,7 +315,6 @@ export const useEventInitialization = () => {
   const error = useSelector(selectError)
 
   const initialize = useCallback(() => {
-    console.warn('[useEventInitialization] initialize() called, dispatching initializeEvents')
     dispatch(initializeEvents())
   }, [dispatch])
 
@@ -328,15 +327,7 @@ export const useEventInitialization = () => {
 
   // Auto-initialize on mount if needed
   useEffect(() => {
-    console.warn('[useEventInitialization] useEffect triggered:', {
-      hasData,
-      isLoading,
-      error,
-      condition: !hasData && !isLoading && !error,
-      timestamp: Date.now()
-    })
     if (!hasData && !isLoading && !error) {
-      console.warn('[useEventInitialization] Calling initialize()')
       initialize()
     }
   }, [hasData, isLoading, error, initialize])
@@ -359,15 +350,8 @@ export const useEventInitialization = () => {
  */
 export const useEventsWithInit = () => {
   const eventData = useEvents()
-  const { hasData, shouldRefresh } = useEventInitialization()
+  const { shouldRefresh } = useEventInitialization()
 
-  console.warn('[useEventsWithInit] Event data state:', {
-    filteredEventsCount: eventData.filteredEvents.length,
-    isLoading: eventData.isLoading,
-    error: eventData.error,
-    hasData,
-    shouldRefresh,
-  })
 
   // Auto-refresh stale data
   useEffect(() => {

@@ -9,8 +9,16 @@ import {
   selectEvents,
   selectCityFilter,
   selectSearchQuery,
-  selectIsLoading,
-  selectError,
+  // Enhanced pagination selectors
+  selectCurrentPage,
+  selectItemsPerPage,
+  selectTotalPages,
+  selectIsPageCached,
+  selectCachedPageData,
+  selectNextPageNumber,
+  selectPreviousPageNumber,
+  selectIsChangingPage,
+  selectPrefetchingPage,
 } from './eventSelectors'
 
 /**
@@ -44,7 +52,6 @@ import {
 export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
   return async (dispatch, getState) => {
     try {
-      console.warn('[fetchEvents] Thunk called with params:', params, 'at', Date.now())
       // Check cache validity - avoid redundant API calls
       const state = getState()
       const isCacheStale = selectIsCacheStale(state)
@@ -70,6 +77,7 @@ export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
 
       // Call API facade - abstracts HTTP implementation details
       const response = await eventApiService.getEvents(params)
+      
 
       // Dispatch success action with fetched data
       dispatch(
@@ -343,20 +351,9 @@ export const selectEvent = (eventSlug: string): AppThunk => {
 export const initializeEvents = (): AppThunk => {
   return async (dispatch, getState) => {
     try {
-      console.warn('[initializeEvents] Thunk called at', Date.now())
       const state = getState()
       const cacheAge = selectCacheAge(state)
       const currentEvents = selectEvents(state)
-      const isLoading = selectIsLoading(state)
-      const error = selectError(state)
-
-      console.warn('[initializeEvents] State check:', {
-        cacheAge,
-        currentEventsLength: currentEvents.length,
-        isLoading,
-        error,
-        timestamp: Date.now()
-      })
 
       // Load fresh data if no cache or cache is very old (> 1 hour)
       const INITIALIZATION_CACHE_LIMIT = 60 * 60 * 1000 // 1 hour
@@ -423,6 +420,260 @@ export const loadMoreEvents = (): AppThunk => {
 
       dispatch(eventActionCreators.fetchEventsFailure(errorMessage))
       throw error
+    }
+  }
+}
+
+// Debounce timers for pagination operations
+let pageChangeDebounceTimer: NodeJS.Timeout | null = null
+let prefetchDebounceTimer: NodeJS.Timeout | null = null
+
+/**
+ * Enhanced pagination thunks with caching and prefetching
+ */
+
+/**
+ * Fetch specific page with caching support
+ * Core pagination function that handles API calls and caching
+ */
+export const fetchEventsPage = (
+  page: number,
+  options: {
+    useCache?: boolean
+    isPrefetch?: boolean
+  } = {}
+): AppThunk => {
+  return async (dispatch, getState) => {
+    try {
+      const { useCache = true, isPrefetch = false } = options
+      const state = getState()
+      
+      // Check if page is already cached and cache is valid
+      if (useCache && selectIsPageCached(state, page)) {
+        const cachedData = selectCachedPageData(state, page)
+        if (cachedData) {
+          // Use cached data
+          dispatch(eventActionCreators.fetchEventsSuccess(cachedData.events))
+          return cachedData.events
+        }
+      }
+      
+      const itemsPerPage = selectItemsPerPage(state)
+      const offset = (page - 1) * itemsPerPage
+      
+      // Mark as prefetching if background operation
+      if (isPrefetch) {
+        dispatch(eventActionCreators.setPrefetchingPage(page))
+      }
+      
+      const params: EventsQueryParams = {
+        limit: itemsPerPage,
+        offset,
+        sortBy: 'date',
+        order: 'asc',
+      }
+      
+      const response = await eventApiService.getEvents(params)
+      
+      // Cache the results
+      dispatch(eventActionCreators.cachePageResults(page, {
+        events: response.data,
+        timestamp: Date.now()
+      }))
+      
+      // Mark as prefetched if background operation
+      if (isPrefetch) {
+        dispatch(eventActionCreators.markPagePrefetched(page))
+      } else {
+        // Update main events list for current page
+        dispatch(eventActionCreators.fetchEventsSuccess(
+          response.data, 
+          response.pagination?.total
+        ))
+      }
+      
+      return response.data
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch events page'
+      
+      // Only dispatch failure for non-prefetch operations
+      if (!options.isPrefetch) {
+        dispatch(eventActionCreators.fetchEventsFailure(errorMessage))
+      }
+      
+      // Reset prefetching state on error
+      dispatch(eventActionCreators.setPrefetchingPage(null))
+      throw error
+    }
+  }
+}
+
+/**
+ * Change to specific page with loading states and prefetching
+ * Main navigation function with debouncing and cache management
+ */
+export const changePage = (targetPage: number): AppThunk => {
+  return async (dispatch, getState) => {
+    try {
+      // Debounce rapid page changes
+      if (pageChangeDebounceTimer) {
+        clearTimeout(pageChangeDebounceTimer)
+      }
+      
+      return new Promise<void>((resolve, reject) => {
+        pageChangeDebounceTimer = setTimeout(async () => {
+          try {
+            const state = getState()
+            const currentPage = selectCurrentPage(state)
+            const totalPages = selectTotalPages(state)
+            const isChanging = selectIsChangingPage(state)
+            
+            // Validate page number
+            if (targetPage < 1 || targetPage > totalPages || targetPage === currentPage || isChanging) {
+              resolve()
+              return
+            }
+            
+            // Set changing state
+            dispatch(eventActionCreators.setPageChanging(true))
+            dispatch(eventActionCreators.setCurrentPage(targetPage))
+            
+            // Fetch page data
+            await dispatch(fetchEventsPage(targetPage, { useCache: true }))
+            
+            // Prefetch adjacent pages in background
+            dispatch(prefetchAdjacentPages(targetPage))
+            
+            // Reset changing state
+            dispatch(eventActionCreators.setPageChanging(false))
+            
+            resolve()
+          } catch (error) {
+            dispatch(eventActionCreators.setPageChanging(false))
+            reject(error)
+          }
+        }, 300) // 300ms debounce
+      })
+    } catch (error) {
+      dispatch(eventActionCreators.setPageChanging(false))
+      throw error
+    }
+  }
+}
+
+/**
+ * Navigate to next page
+ */
+export const goToNextPage = (): AppThunk => {
+  return async (dispatch, getState) => {
+    const state = getState()
+    const nextPage = selectNextPageNumber(state)
+    
+    if (nextPage) {
+      return dispatch(changePage(nextPage))
+    }
+  }
+}
+
+/**
+ * Navigate to previous page
+ */
+export const goToPreviousPage = (): AppThunk => {
+  return async (dispatch, getState) => {
+    const state = getState()
+    const prevPage = selectPreviousPageNumber(state)
+    
+    if (prevPage) {
+      return dispatch(changePage(prevPage))
+    }
+  }
+}
+
+/**
+ * Prefetch adjacent pages in background
+ * Smart prefetching strategy for better UX
+ */
+export const prefetchAdjacentPages = (currentPage: number): AppThunk => {
+  return async (dispatch, getState) => {
+    // Debounce prefetch operations
+    if (prefetchDebounceTimer) {
+      clearTimeout(prefetchDebounceTimer)
+    }
+    
+    prefetchDebounceTimer = setTimeout(async () => {
+      try {
+        const state = getState()
+        const totalPages = selectTotalPages(state)
+        const prefetchingPage = selectPrefetchingPage(state)
+        
+        // Don't prefetch if already prefetching
+        if (prefetchingPage) return
+        
+        const pagesToPrefetch: number[] = []
+        
+        // Prefetch next page
+        if (currentPage < totalPages) {
+          pagesToPrefetch.push(currentPage + 1)
+        }
+        
+        // Prefetch previous page
+        if (currentPage > 1) {
+          pagesToPrefetch.push(currentPage - 1)
+        }
+        
+        // Prefetch pages that aren't cached
+        for (const page of pagesToPrefetch) {
+          const stateForPage = getState() // Fresh state for each check
+          if (!selectIsPageCached(stateForPage, page)) {
+            try {
+              await dispatch(fetchEventsPage(page, { isPrefetch: true }))
+              // Small delay between prefetches to avoid overwhelming the server
+              await new Promise(resolve => setTimeout(resolve, 100))
+            } catch {
+              // Silently fail prefetch operations
+            }
+          }
+        }
+      } catch {
+        // Background prefetch failed silently
+      }
+    }, 500) // 500ms delay for prefetching
+  }
+}
+
+/**
+ * Invalidate page cache
+ * Clear cached pages when data becomes stale
+ */
+export const invalidatePageCache = (page?: number): AppThunk => {
+  return async dispatch => {
+    dispatch(eventActionCreators.invalidatePageCache(page))
+    
+    // Clear prefetch state if invalidating all pages
+    if (page === undefined) {
+      dispatch(eventActionCreators.clearPrefetchState())
+    }
+  }
+}
+
+/**
+ * Initialize pagination system
+ * Set up initial page state and prefetch first pages
+ */
+export const initializePagination = (): AppThunk => {
+  return async dispatch => {
+    try {
+      // Start with page 1
+      dispatch(eventActionCreators.setCurrentPage(1))
+      
+      // Fetch first page
+      await dispatch(fetchEventsPage(1, { useCache: false }))
+      
+      // Prefetch page 2 in background
+      dispatch(prefetchAdjacentPages(1))
+    } catch (error) {
+      console.error('[initializePagination] Failed to initialize pagination:', error)
+      // Don't throw - let the app continue with basic functionality
     }
   }
 }

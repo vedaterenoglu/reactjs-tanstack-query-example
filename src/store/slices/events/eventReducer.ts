@@ -29,8 +29,9 @@ import type { Action } from 'redux'
  * - Proper Redux Persist integration
  */
 
-// Initial state following EventsState interface
+// Initial state following EventsState interface with enhanced pagination
 const initialState: EventsState = {
+  // Existing state
   events: [],
   filteredEvents: [],
   selectedEvent: null,
@@ -40,6 +41,21 @@ const initialState: EventsState = {
   error: null,
   lastFetched: null,
   pagination: null,
+  
+  // Enhanced pagination state
+  currentPage: 1,
+  itemsPerPage: 12, // Fixed at 12 events per page
+  totalPages: 0,
+  
+  // Page caching system
+  cachedPages: {},
+  
+  // Prefetch state
+  prefetchingPage: null,
+  prefetchedPages: [],
+  
+  // UI state
+  isChangingPage: false,
 }
 
 /**
@@ -61,7 +77,8 @@ export function eventReducer(
 
       if (persistedEventState) {
         return {
-          ...persistedEventState,
+          ...initialState, // Start with complete initial state
+          ...persistedEventState, // Override with persisted values
           isLoading: false, // Reset loading state after rehydration
           error: null,
         }
@@ -75,7 +92,6 @@ export function eventReducer(
 
     // Events list async operations
     case EVENT_ACTIONS.FETCH_EVENTS_REQUEST:
-      console.warn('[eventReducer] FETCH_EVENTS_REQUEST - clearing error, setting loading=true')
       return {
         ...state,
         isLoading: true,
@@ -86,6 +102,12 @@ export function eventReducer(
       const successAction = action as EventAction & {
         type: typeof EVENT_ACTIONS.FETCH_EVENTS_SUCCESS
       }
+      
+      // Calculate total pages when we have total count
+      const totalPages = successAction.payload.total !== undefined
+        ? Math.ceil(successAction.payload.total / state.itemsPerPage)
+        : state.totalPages
+      
       return {
         ...state,
         events: successAction.payload.events,
@@ -93,8 +115,9 @@ export function eventReducer(
         isLoading: false,
         error: null,
         lastFetched: Date.now(),
+        totalPages,
         pagination: successAction.payload.total !== undefined ? {
-          limit: state.pagination?.limit || 12,
+          limit: state.pagination?.limit || state.itemsPerPage,
           offset: state.pagination?.offset || 0,
           total: successAction.payload.total,
           hasMore: successAction.payload.hasMore,
@@ -106,7 +129,6 @@ export function eventReducer(
       const failureAction = action as EventAction & {
         type: typeof EVENT_ACTIONS.FETCH_EVENTS_FAILURE
       }
-      console.warn('[eventReducer] FETCH_EVENTS_FAILURE - setting error:', failureAction.payload.error)
       return {
         ...state,
         isLoading: false,
@@ -261,6 +283,102 @@ export function eventReducer(
         },
       }
     }
+
+    // Enhanced pagination cases
+    case EVENT_ACTIONS.SET_CURRENT_PAGE: {
+      const pageAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.SET_CURRENT_PAGE
+      }
+      return {
+        ...state,
+        currentPage: pageAction.payload.page,
+      }
+    }
+
+    case EVENT_ACTIONS.SET_TOTAL_PAGES: {
+      const totalPagesAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.SET_TOTAL_PAGES
+      }
+      return {
+        ...state,
+        totalPages: totalPagesAction.payload.totalPages,
+      }
+    }
+
+    case EVENT_ACTIONS.CACHE_PAGE_RESULTS: {
+      const cacheAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.CACHE_PAGE_RESULTS
+      }
+      return {
+        ...state,
+        cachedPages: {
+          ...state.cachedPages,
+          [cacheAction.payload.page.toString()]: cacheAction.payload.cache,
+        },
+      }
+    }
+
+    case EVENT_ACTIONS.INVALIDATE_PAGE_CACHE: {
+      const invalidateAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.INVALIDATE_PAGE_CACHE
+      }
+      
+      // If specific page provided, remove only that page
+      if (invalidateAction.payload.page !== undefined) {
+        const newCachedPages = { ...state.cachedPages }
+        delete newCachedPages[invalidateAction.payload.page.toString()]
+        return {
+          ...state,
+          cachedPages: newCachedPages,
+        }
+      }
+      
+      // Otherwise, clear all cached pages
+      return {
+        ...state,
+        cachedPages: {},
+      }
+    }
+
+    case EVENT_ACTIONS.SET_PREFETCHING_PAGE: {
+      const prefetchingAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.SET_PREFETCHING_PAGE
+      }
+      return {
+        ...state,
+        prefetchingPage: prefetchingAction.payload.page,
+      }
+    }
+
+    case EVENT_ACTIONS.MARK_PAGE_PREFETCHED: {
+      const prefetchedAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.MARK_PAGE_PREFETCHED
+      }
+      return {
+        ...state,
+        prefetchedPages: [...state.prefetchedPages, prefetchedAction.payload.page],
+        prefetchingPage: state.prefetchingPage === prefetchedAction.payload.page 
+          ? null 
+          : state.prefetchingPage,
+      }
+    }
+
+    case EVENT_ACTIONS.SET_PAGE_CHANGING: {
+      const changingAction = action as EventAction & {
+        type: typeof EVENT_ACTIONS.SET_PAGE_CHANGING
+      }
+      return {
+        ...state,
+        isChangingPage: changingAction.payload.isChanging,
+      }
+    }
+
+    case EVENT_ACTIONS.CLEAR_PREFETCH_STATE:
+      return {
+        ...state,
+        prefetchingPage: null,
+        prefetchedPages: [],
+      }
 
     default:
       return state

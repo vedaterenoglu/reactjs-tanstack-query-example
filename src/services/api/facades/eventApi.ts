@@ -90,7 +90,7 @@ export class EventApiService {
       const transformedResponse: EventsApiResponse = {
         success: true,
         data: response.data.events as Event[],
-        pagination: response.data.count ? {
+        pagination: response.data.count !== undefined ? {
           total: response.data.count,
           limit: params?.limit || 12,
           offset: params?.offset || 0,

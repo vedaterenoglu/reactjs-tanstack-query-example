@@ -38,6 +38,14 @@ const defaultEventsState: EventsState = {
   error: null,
   lastFetched: null,
   pagination: null,
+  // Enhanced pagination defaults
+  currentPage: 1,
+  itemsPerPage: 12,
+  totalPages: 0,
+  cachedPages: {},
+  prefetchingPage: null,
+  prefetchedPages: [],
+  isChangingPage: false,
 }
 
 export const selectEventsState = (state: RootState): EventsState =>
@@ -145,23 +153,181 @@ export const selectIsCacheStale = createSelector([selectCacheAge], cacheAge => {
   return cacheAge > CACHE_EXPIRY
 })
 
-// Pagination selectors
+// Enhanced pagination selectors
 export const selectCurrentPage = createSelector(
-  [selectPagination],
-  pagination => {
-    if (!pagination) return 1
-    return Math.floor(pagination.offset / pagination.limit) + 1
-  }
+  [selectEventsState],
+  eventsState => eventsState.currentPage
+)
+
+export const selectItemsPerPage = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.itemsPerPage
 )
 
 export const selectTotalPages = createSelector(
-  [selectPagination],
-  pagination => {
-    if (!pagination?.total) return 1
-    return Math.ceil(pagination.total / pagination.limit)
+  [selectEventsState],
+  eventsState => eventsState.totalPages
+)
+
+export const selectCachedPages = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.cachedPages
+)
+
+export const selectPrefetchingPage = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.prefetchingPage
+)
+
+export const selectPrefetchedPages = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.prefetchedPages
+)
+
+export const selectIsChangingPage = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.isChangingPage
+)
+
+// Derived pagination selectors
+export const selectCanGoPrevious = createSelector(
+  [selectCurrentPage],
+  currentPage => currentPage > 1
+)
+
+export const selectCanGoNext = createSelector(
+  [selectCurrentPage, selectTotalPages],
+  (currentPage, totalPages) => currentPage < totalPages
+)
+
+export const selectPageOffset = createSelector(
+  [selectCurrentPage, selectItemsPerPage],
+  (currentPage, itemsPerPage) => (currentPage - 1) * itemsPerPage
+)
+
+// State-based selector - uses currentPage from Redux state
+export const selectIsCurrentPageCached = createSelector(
+  [selectCachedPages, selectCurrentPage],
+  (cachedPages, currentPage) => {
+    if (!currentPage) return false
+    return currentPage.toString() in cachedPages
   }
 )
 
+// Parameter-based selector - for thunk usage with explicit page
+export const selectIsPageCached = createSelector(
+  [selectCachedPages, (_state: RootState, page: number) => page],
+  (cachedPages, page) => {
+    if (page === undefined || page === null) return false
+    return page.toString() in cachedPages
+  }
+)
+
+// State-based selector - uses currentPage from Redux state
+export const selectCurrentCachedPageData = createSelector(
+  [selectCachedPages, selectCurrentPage],
+  (cachedPages, currentPage) => {
+    if (!currentPage) return undefined
+    return cachedPages[currentPage.toString()]
+  }
+)
+
+// Parameter-based selector - for thunk usage with explicit page
+export const selectCachedPageData = createSelector(
+  [selectCachedPages, (_state: RootState, page: number) => page],
+  (cachedPages, page) => {
+    if (page === undefined || page === null) return undefined
+    return cachedPages[page.toString()]
+  }
+)
+
+export const selectIsPagePrefetched = createSelector(
+  [selectPrefetchedPages, (_state: RootState, page: number) => page],
+  (prefetchedPages, page) => prefetchedPages.includes(page)
+)
+
+export const selectCurrentPageEvents = createSelector(
+  [selectEvents, selectCurrentPage, selectItemsPerPage, selectCachedPages],
+  (events, currentPage, itemsPerPage, cachedPages) => {
+    // Safety checks
+    if (!currentPage || currentPage < 1 || !itemsPerPage) {
+      return events.slice(0, itemsPerPage || 12) // Return first page as fallback
+    }
+    
+    // Check if current page is cached
+    const cachedPage = cachedPages[currentPage.toString()]
+    if (cachedPage && cachedPage.events) {
+      return cachedPage.events
+    }
+    
+    // Otherwise, slice from current events (fallback)
+    const start = (currentPage - 1) * itemsPerPage
+    const end = start + itemsPerPage
+    return events.slice(start, end)
+  }
+)
+
+// State-based selector - uses currentPage from Redux state  
+export const selectCurrentPageCacheAge = createSelector(
+  [selectCachedPages, selectCurrentPage],
+  (cachedPages, currentPage) => {
+    if (!currentPage) return null
+    const cached = cachedPages[currentPage.toString()]
+    if (!cached) return null
+    return Date.now() - cached.timestamp
+  }
+)
+
+// Parameter-based selector - for thunk usage with explicit page
+export const selectPageCacheAge = createSelector(
+  [selectCachedPages, (_state: RootState, page: number) => page],
+  (cachedPages, page) => {
+    if (page === undefined || page === null) return null
+    const cached = cachedPages[page.toString()]
+    if (!cached) return null
+    return Date.now() - cached.timestamp
+  }
+)
+
+export const selectIsPageCacheStale = createSelector(
+  [selectPageCacheAge],
+  cacheAge => {
+    if (cacheAge === null) return true
+    // Consider page cache stale after 5 minutes
+    const CACHE_EXPIRY = 5 * 60 * 1000
+    return cacheAge > CACHE_EXPIRY
+  }
+)
+
+export const selectNextPageNumber = createSelector(
+  [selectCurrentPage, selectTotalPages],
+  (currentPage, totalPages) => {
+    const next = currentPage + 1
+    return next <= totalPages ? next : null
+  }
+)
+
+export const selectPreviousPageNumber = createSelector(
+  [selectCurrentPage],
+  currentPage => {
+    const prev = currentPage - 1
+    return prev >= 1 ? prev : null
+  }
+)
+
+export const selectPaginationInfo = createSelector(
+  [selectCurrentPage, selectTotalPages, selectItemsPerPage, selectPageOffset],
+  (currentPage, totalPages, itemsPerPage, offset) => ({
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    offset,
+    startItem: offset + 1,
+    endItem: Math.min(offset + itemsPerPage, totalPages * itemsPerPage),
+  })
+)
+
+// Legacy pagination selectors (for backward compatibility)
 export const selectHasMore = createSelector(
   [selectPagination],
   pagination => pagination?.hasMore || false
