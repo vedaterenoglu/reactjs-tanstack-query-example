@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Clock, DollarSign } from 'lucide-react'
+import { Calendar, MapPin, Clock } from 'lucide-react'
 import { useCallback, useState, useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -161,13 +161,13 @@ export const EventCard = ({
         {formattedPrice}
       </div>
 
-      {/* Event Details Overlay - bottom section like CityCard */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/70 p-4">
+      {/* Event Details Overlay - bottom section matching CityCard design */}
+      <div className="absolute bottom-2 left-4 right-4 z-10 bg-black/60 rounded px-2 py-1">
         {/* Event Name - main title */}
         <h3
           className={`
-            font-bold text-white mb-2 line-clamp-2
-            ${variant === 'compact' ? 'text-lg' : 'text-xl'}
+            font-semibold text-white truncate
+            ${variant === 'compact' ? 'text-sm' : 'text-base'}
           `}
           style={{
             textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
@@ -177,20 +177,20 @@ export const EventCard = ({
         </h3>
 
         {/* Date and Time Row */}
-        <div className="flex items-center gap-4 text-white/90 text-sm mb-2">
+        <div className="flex items-center gap-3 text-white/90 text-xs mt-1">
           <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-3 w-3" />
             <time dateTime={event.date}>{formattedDate}</time>
           </div>
           <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
+            <Clock className="h-3 w-3" />
             <span>{formattedTime}</span>
           </div>
         </div>
 
         {/* Location */}
-        <div className="flex items-center gap-2 text-white/80 text-sm mb-3">
-          <MapPin className="h-4 w-4" />
+        <div className="flex items-center gap-1 text-white/80 text-xs mt-1">
+          <MapPin className="h-3 w-3" />
           <span
             className="line-clamp-1"
             style={{
@@ -200,34 +200,34 @@ export const EventCard = ({
             {event.location}
           </span>
         </div>
-
-        {/* Action Button - centered like CityCard select button */}
-        {showActionButton && (
-          <div
-            className={`
-              flex justify-center transition-all duration-300 ease-out
-              ${isHovered ? 'opacity-100 scale-100' : 'opacity-80 scale-95'}
-            `}
-          >
-            <Button
-              onClick={handleCardClick}
-              disabled={disabled}
-              variant="secondary"
-              size="sm"
-              className={`
-                shadow-lg backdrop-blur-sm min-h-[40px] min-w-[120px]
-                bg-white/90 text-gray-900 hover:bg-white hover:text-primary
-                transform transition-all duration-200
-                ${isHovered ? 'hover:scale-105' : ''}
-              `}
-              aria-label={`View details for ${event.name}`}
-            >
-              <DollarSign className="mr-2 h-4 w-4" />
-              View Details
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Action Button - Centered on hover like CityCard */}
+      {showActionButton && (
+        <div
+          className={`
+            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20
+            transition-all duration-300 ease-out
+            ${isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}
+          `}
+        >
+          <Button
+            onClick={handleCardClick}
+            disabled={disabled}
+            variant="ghost"
+            size="sm"
+            className={`
+              shadow-lg backdrop-blur-sm min-h-[44px] min-w-[88px]
+              bg-black/60 text-white hover:bg-black/70 hover:text-green-500
+              transform transition-all duration-200
+              ${isHovered ? 'hover:scale-110' : ''}
+            `}
+            aria-label={`View details for ${event.name}`}
+          >
+            View Details
+          </Button>
+        </div>
+      )}
     </article>
   )
 }

@@ -104,3 +104,36 @@ export const UpdateEventSchema = CreateEventSchema.partial()
 
 export type CreateEventDto = z.infer<typeof CreateEventSchema>
 export type UpdateEventDto = z.infer<typeof UpdateEventSchema>
+
+// Validation utilities for runtime checking
+export const validateEventsResponse = (data: unknown): EventsApiResponse => {
+  return EventsApiResponseSchema.parse(data)
+}
+
+export const validateSingleEventResponse = (data: unknown): SingleEventApiResponse => {
+  return SingleEventApiResponseSchema.parse(data)
+}
+
+export const validateEvent = (data: unknown): Event => {
+  return EventSchema.parse(data)
+}
+
+// Redux state schema for events
+export const EventsStateSchema = z.object({
+  events: z.array(EventSchema),
+  filteredEvents: z.array(EventSchema),
+  selectedEvent: EventSchema.nullable(),
+  searchQuery: z.string(),
+  cityFilter: z.string().optional(),
+  isLoading: z.boolean(),
+  error: z.string().nullable(),
+  lastFetched: z.number().nullable(),
+  pagination: z.object({
+    limit: z.number(),
+    offset: z.number(),
+    total: z.number().optional(),
+    hasMore: z.boolean().optional(),
+  }).nullable(),
+})
+
+export type EventsState = z.infer<typeof EventsStateSchema>

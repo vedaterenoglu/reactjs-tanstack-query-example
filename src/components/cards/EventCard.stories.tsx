@@ -60,6 +60,22 @@ export const Disabled: Story = {
   },
 }
 
+export const HoverState: Story = {
+  args: {
+    event: mockEvent,
+  },
+  parameters: {
+    pseudo: { hover: true },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = canvasElement as HTMLElement
+    const card = canvas.querySelector('article')
+    if (card) {
+      card.dispatchEvent(new MouseEvent('mouseenter'))
+    }
+  },
+}
+
 export const HarmonyFestival: Story = {
   args: {
     event: events[1]!, // Harmony Festival

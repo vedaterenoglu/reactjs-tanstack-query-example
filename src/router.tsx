@@ -12,6 +12,9 @@ const HomePage = lazy(() =>
 const Authenticated = lazy(() =>
   import('@/routes').then(module => ({ default: module.Authenticated }))
 )
+const EventsListPage = lazy(() =>
+  import('@/routes').then(module => ({ default: module.EventsListPage }))
+)
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +48,20 @@ export const router = createBrowserRouter([
             <ProtectedRoute>
               <Authenticated />
             </ProtectedRoute>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'events',
+        element: (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            }
+          >
+            <EventsListPage />
           </Suspense>
         ),
       },

@@ -10,14 +10,16 @@ import storage from 'redux-persist/lib/storage'
 import { thunk } from 'redux-thunk'
 
 import { cityReducer } from './slices/cities'
+import { eventReducer } from './slices/events'
 
 import type { Action } from 'redux'
 import type { PersistConfig } from 'redux-persist'
 import type { ThunkDispatch, ThunkAction } from 'redux-thunk'
 
-// Create root reducer with city slice
+// Create root reducer with city and event slices
 const rootReducer = combineReducers({
   cities: cityReducer,
+  events: eventReducer,
 })
 
 // Infer RootState type from the reducer
@@ -26,7 +28,7 @@ export type RootState = ReturnType<typeof rootReducer>
 const persistConfig: PersistConfig<RootState> = {
   key: 'root',
   storage,
-  whitelist: ['cities'],
+  whitelist: ['cities', 'events'],
   stateReconciler: autoMergeLevel2,
 }
 

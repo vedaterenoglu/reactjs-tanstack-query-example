@@ -18,6 +18,18 @@ export {
   useCity,
 } from './useCities'
 
+// Event management hooks (new)
+export {
+  useEvents,
+  useEventSearch,
+  useEventSelection,
+  useEventFilters,
+  useEventInitialization,
+  useEventsWithInit,
+  useEvent,
+  useEventPagination,
+} from './useEvents'
+
 // Animation hooks
 export {
   useScrollAnimation,
