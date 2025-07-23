@@ -1,11 +1,11 @@
 {
-  "name": "reactjs-redux-toolkit-example",
+  "name": "reactjs-tanstack-query-example",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vedaterenoglu/reactjs-redux-toolkit-example.git"
+    "url": "https://github.com/vedaterenoglu/reactjs-tanstack-query-example.git"
   },
   "keywords": [
     "Node.js",
@@ -23,7 +23,7 @@
     "linkedin": "https://www.linkedin.com/in/vedaterenoglu/"
   },
   "license": "MIT",
-  "homepage": "https://reactjs-redux-toolkit-example.demo.vedaterenoglu.com",
+  "homepage": "https://reactjs-tanstack-query-example.demo.vedaterenoglu.com",
   "scripts": {
     "dev": "vite --port 3061 --host",
     "build": "rm -rf dist && tsc -b && vite build",
