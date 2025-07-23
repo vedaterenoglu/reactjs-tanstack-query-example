@@ -1,13 +1,24 @@
 /**
  * Events slice using Redux Toolkit
  * Manages event data, search, selection, pagination, and caching with RTK patterns
- * Part 1: Basic structure with synchronous actions only
+ * Complete implementation with async thunks
  */
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import { REHYDRATE } from 'redux-persist'
 
-import type { Event, EventsState, PaginationConfig, PageCache, PrefetchQueueItem, ActivePrefetch, FailedPrefetch } from '@/lib/types/event.types'
+import type { Event, EventsState, PageCache, EventsQueryParams } from '@/lib/types/event.types'
+
+import { showErrorNotification } from '@/lib/utils/notifications'
+import { eventApiService } from '@/services/eventApiService'
+
+import type { RootState } from '@/store'
+
+// Extract types from EventsState for better type safety
+type PrefetchQueueItem = EventsState['prefetchQueue'][number]
+type ActivePrefetch = EventsState['activePrefetches'][string]
+type FailedPrefetch = EventsState['failedPrefetches'][string]
+type PaginationConfig = NonNullable<EventsState['pagination']>
 
 // Initial state with comprehensive structure
 const initialState: EventsState = {
@@ -65,7 +76,118 @@ const initialState: EventsState = {
   isChangingPage: false,
 }
 
-// Events slice with synchronous actions only
+// Cache configuration
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
+// Async thunks
+export const fetchEvents = createAsyncThunk<
+  { events: Event[]; total?: number },
+  Partial<EventsQueryParams> | undefined,
+  { state: RootState }
+>('events/fetchEvents', async (params = {}, { getState, dispatch }) => {
+  const state = getState()
+  const lastFetched = state.events.lastFetched
+  const currentTime = Date.now()
+
+  // Check cache validity
+  const isCacheStale = !lastFetched || currentTime - lastFetched > CACHE_DURATION
+  if (!isCacheStale && state.events.events.length > 0 && !params.search && !params.city) {
+    return { events: state.events.events }
+  }
+
+  // Fetch from API
+  const response = await eventApiService.getEvents(params)
+
+  // Update search/filter state if params provided
+  if (params.search) {
+    dispatch(eventSlice.actions.setSearchQuery(params.search))
+  }
+  if (params.city) {
+    dispatch(eventSlice.actions.setCityFilter(params.city))
+  }
+
+  return {
+    events: response.data,
+    total: response.pagination?.total,
+  }
+})
+
+export const fetchEventBySlug = createAsyncThunk<Event, string, { state: RootState }>(
+  'events/fetchEventBySlug',
+  async (slug, { getState }) => {
+    const state = getState()
+    
+    // Check if event exists in local cache first
+    const cachedEvent = state.events.events.find(event => event.slug === slug)
+    if (cachedEvent) {
+      return cachedEvent
+    }
+
+    const response = await eventApiService.getEventBySlug(slug)
+    return response.data
+  }
+)
+
+export const fetchEventsPage = createAsyncThunk<
+  { events: Event[]; page: number; total?: number },
+  { page: number; useCache?: boolean; isPrefetch?: boolean },
+  { state: RootState }
+>('events/fetchEventsPage', async ({ page, useCache = true, isPrefetch = false }, { getState, dispatch }) => {
+  const state = getState()
+  const pageKey = `page-${page}`
+
+  // Check page cache
+  if (useCache && state.events.cachedPages[pageKey]) {
+    const cached = state.events.cachedPages[pageKey]
+    const isStale = Date.now() - cached.timestamp > CACHE_DURATION
+    if (!isStale) {
+      return { events: cached.events, page, total: state.events.totalPages * state.events.itemsPerPage }
+    }
+  }
+
+  // Mark as prefetching if it's a prefetch operation
+  if (isPrefetch) {
+    dispatch(eventSlice.actions.setPrefetchingPage(page))
+  }
+
+  const offset = (page - 1) * state.events.itemsPerPage
+  const response = await eventApiService.getEvents({
+    limit: state.events.itemsPerPage,
+    offset,
+  })
+
+  // Cache the results
+  dispatch(eventSlice.actions.cachePageResults({
+    pageKey,
+    pageData: {
+      events: response.data,
+      timestamp: Date.now(),
+    },
+  }))
+
+  // Mark as prefetched
+  if (isPrefetch) {
+    dispatch(eventSlice.actions.markPagePrefetched(page))
+  }
+
+  return {
+    events: response.data,
+    page,
+    total: response.pagination?.total,
+  }
+})
+
+export const refreshEvents = createAsyncThunk<
+  { events: Event[]; total?: number },
+  void,
+  { state: RootState }
+>('events/refreshEvents', async (_, { dispatch }) => {
+  dispatch(eventSlice.actions.invalidateCache())
+  const response = await dispatch(fetchEvents())
+  return response.payload as { events: Event[]; total?: number }
+})
+
+// Events slice with synchronous and asynchronous actions
 const eventSlice = createSlice({
   name: 'events',
   initialState,
@@ -80,10 +202,9 @@ const eventSlice = createSlice({
         const query = action.payload.toLowerCase()
         state.filteredEvents = state.events.filter(
           (event: Event) =>
-            event.title.toLowerCase().includes(query) ||
+            event.name.toLowerCase().includes(query) ||
             event.description.toLowerCase().includes(query) ||
-            event.category.toLowerCase().includes(query) ||
-            event.cityName.toLowerCase().includes(query)
+            event.city.toLowerCase().includes(query)
         )
       }
     },
@@ -275,6 +396,112 @@ const eventSlice = createSlice({
   },
   extraReducers: builder => {
     builder
+      // Fetch events
+      .addCase(fetchEvents.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(fetchEvents.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.events = action.payload.events
+        state.filteredEvents = state.searchQuery
+          ? action.payload.events.filter(
+              (event: Event) =>
+                event.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+                event.description.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+                event.city.toLowerCase().includes(state.searchQuery.toLowerCase())
+            )
+          : action.payload.events
+        
+        if (action.payload.total) {
+          state.totalPages = Math.ceil(action.payload.total / state.itemsPerPage)
+        }
+        
+        state.lastFetched = Date.now()
+        state.error = null
+      })
+      .addCase(fetchEvents.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.error.message || 'Failed to fetch events'
+        showErrorNotification(state.error)
+      })
+
+      // Fetch single event
+      .addCase(fetchEventBySlug.fulfilled, (state, action) => {
+        // Update or add the event to the events array
+        const existingIndex = state.events.findIndex(e => e.slug === action.payload.slug)
+        if (existingIndex >= 0) {
+          state.events[existingIndex] = action.payload
+        } else {
+          state.events.push(action.payload)
+        }
+        
+        // Update filtered events if filters are active
+        if (state.searchQuery || state.cityFilter) {
+          const matchesSearch = !state.searchQuery || 
+            action.payload.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+            action.payload.description.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+            action.payload.city.toLowerCase().includes(state.searchQuery.toLowerCase())
+          
+          const matchesCity = !state.cityFilter || action.payload.citySlug === state.cityFilter
+          
+          if (matchesSearch && matchesCity) {
+            const filteredIndex = state.filteredEvents.findIndex(e => e.slug === action.payload.slug)
+            if (filteredIndex >= 0) {
+              state.filteredEvents[filteredIndex] = action.payload
+            } else {
+              state.filteredEvents.push(action.payload)
+            }
+          }
+        } else {
+          // No filters, add to filtered events too
+          const filteredIndex = state.filteredEvents.findIndex(e => e.slug === action.payload.slug)
+          if (filteredIndex >= 0) {
+            state.filteredEvents[filteredIndex] = action.payload
+          } else {
+            state.filteredEvents.push(action.payload)
+          }
+        }
+      })
+      .addCase(fetchEventBySlug.rejected, (state, action) => {
+        state.error = action.error.message || 'Failed to fetch event'
+        showErrorNotification(state.error)
+      })
+
+      // Fetch events page
+      .addCase(fetchEventsPage.pending, state => {
+        state.isChangingPage = true
+        state.error = null
+      })
+      .addCase(fetchEventsPage.fulfilled, (state, action) => {
+        state.isChangingPage = false
+        state.events = action.payload.events
+        state.filteredEvents = action.payload.events
+        state.currentPage = action.payload.page
+        
+        if (action.payload.total) {
+          state.totalPages = Math.ceil(action.payload.total / state.itemsPerPage)
+        }
+        
+        state.lastFetched = Date.now()
+        state.error = null
+      })
+      .addCase(fetchEventsPage.rejected, (state, action) => {
+        state.isChangingPage = false
+        state.error = action.error.message || 'Failed to fetch events page'
+        showErrorNotification(state.error)
+      })
+
+      // Refresh events
+      .addCase(refreshEvents.fulfilled, (state, action) => {
+        state.events = action.payload.events
+        state.filteredEvents = action.payload.events
+        if (action.payload.total) {
+          state.totalPages = Math.ceil(action.payload.total / state.itemsPerPage)
+        }
+        state.lastFetched = Date.now()
+      })
+
       // Handle redux-persist rehydrate
       .addMatcher(
         action => action.type === REHYDRATE,
