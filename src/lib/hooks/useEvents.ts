@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from 'react'
 
 import type { EventsQueryParams } from '@/lib/types/event.types'
-
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
   fetchEvents,

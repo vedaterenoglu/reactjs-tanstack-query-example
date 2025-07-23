@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
-import type { Event } from '@/lib/types/event.types'
 
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
 import { useEventsWithInit } from '@/lib/hooks/useEvents'
+import type { Event } from '@/lib/types/event.types'
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
   fetchEventsPage,

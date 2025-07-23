@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react'
+
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
   fetchEventBySlug,

@@ -8,7 +8,6 @@ import { REHYDRATE } from 'redux-persist'
 
 import { showErrorNotification } from '@/lib/utils/notifications'
 import { cityService } from '@/services/cityService'
-
 import type { RootState, AppDispatch } from '@/store'
 
 import type { City, CitiesState } from './city.types'

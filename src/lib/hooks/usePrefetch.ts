@@ -22,7 +22,7 @@
  */
 
 import { useCallback, useEffect, useRef, useMemo } from 'react'
-import { useAppSelector } from '@/store'
+
 
 import { AbortControllerUtils } from '@/lib/utils/prefetch/abortControllerFactory'
 import {
@@ -33,6 +33,7 @@ import type {
   PrefetchStrategy,
   PrefetchPriority,
 } from '@/lib/utils/prefetch/prefetchQueue'
+import { useAppSelector } from '@/store'
 import {
   selectCurrentPage,
   selectNextPageNumber,

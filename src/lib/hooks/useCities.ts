@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from 'react'
 
 import type { CitySearchOptions } from '@/lib/types/city.types'
-
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
   fetchCities,

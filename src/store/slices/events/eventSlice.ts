@@ -8,10 +8,8 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import { REHYDRATE } from 'redux-persist'
 
 import type { Event, EventsState, PageCache, EventsQueryParams } from '@/lib/types/event.types'
-
 import { showErrorNotification } from '@/lib/utils/notifications'
 import { eventApiService } from '@/services/eventApiService'
-
 import type { RootState } from '@/store'
 
 // Extract types from EventsState for better type safety

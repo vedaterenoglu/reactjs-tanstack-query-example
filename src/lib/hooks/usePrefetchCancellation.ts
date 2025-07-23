@@ -22,11 +22,12 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react'
-import { useAppSelector } from '@/store'
+
 
 import { AbortControllerUtils } from '@/lib/utils/prefetch/abortControllerFactory'
 import type { AbortReason } from '@/lib/utils/prefetch/abortControllerFactory'
 import { prefetchQueueManager } from '@/lib/utils/prefetch/prefetchQueue'
+import { useAppSelector } from '@/store'
 import {
   selectCurrentPage,
   selectIsChangingPage,
