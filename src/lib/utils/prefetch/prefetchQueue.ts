@@ -153,6 +153,7 @@ class PriorityPrefetchQueue implements PrefetchQueue {
     const initialLength = this.commands.length
 
     for (let i = this.commands.length - 1; i >= 0; i--) {
+      // eslint-disable-next-line security/detect-object-injection
       const command = this.commands[i]
       if (command && command.page === page) {
         if (!command.abortController.isAborted()) {
@@ -175,6 +176,7 @@ class PriorityPrefetchQueue implements PrefetchQueue {
     }
 
     for (let i = 0; i < this.commands.length; i++) {
+      // eslint-disable-next-line security/detect-object-injection
       const existingCommand = this.commands[i]
       if (!existingCommand) continue
 

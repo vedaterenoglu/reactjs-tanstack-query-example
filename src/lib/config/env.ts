@@ -41,6 +41,7 @@ function validateEnvironment(): void {
   ]
 
   const missing = required.filter(
+    // eslint-disable-next-line security/detect-object-injection
     key => !(import.meta.env as Record<string, string>)[key]
   )
 

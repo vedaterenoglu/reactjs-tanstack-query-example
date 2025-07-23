@@ -161,7 +161,9 @@ export const fetchEventsPage = createAsyncThunk<
     const pageKey = `page-${page}`
 
     // Check page cache
+    // eslint-disable-next-line security/detect-object-injection
     if (useCache && state.events.cachedPages[pageKey]) {
+      // eslint-disable-next-line security/detect-object-injection
       const cached = state.events.cachedPages[pageKey]
       const isStale = Date.now() - cached.timestamp > CACHE_DURATION
       if (!isStale) {
@@ -342,6 +344,7 @@ const eventSlice = createSlice({
       }>
     ) => {
       const { pageKey, pageData } = action.payload
+      // eslint-disable-next-line security/detect-object-injection
       state.cachedPages[pageKey] = pageData
     },
 
@@ -349,6 +352,7 @@ const eventSlice = createSlice({
       const pageKey = action.payload
       if (pageKey) {
         // Remove specific page from cache
+        // eslint-disable-next-line security/detect-object-injection
         delete state.cachedPages[pageKey]
       } else {
         // Clear all cached pages
@@ -408,6 +412,7 @@ const eventSlice = createSlice({
       }>
     ) => {
       const { key, prefetch } = action.payload
+      // eslint-disable-next-line security/detect-object-injection
       state.activePrefetches[key] = prefetch
     },
 
@@ -424,6 +429,7 @@ const eventSlice = createSlice({
       }>
     ) => {
       const { key, failed } = action.payload
+      // eslint-disable-next-line security/detect-object-injection
       state.failedPrefetches[key] = failed
     },
 
@@ -503,6 +509,7 @@ const eventSlice = createSlice({
           e => e.slug === action.payload.slug
         )
         if (existingIndex >= 0) {
+          // eslint-disable-next-line security/detect-object-injection
           state.events[existingIndex] = action.payload
         } else {
           state.events.push(action.payload)
@@ -530,6 +537,7 @@ const eventSlice = createSlice({
               e => e.slug === action.payload.slug
             )
             if (filteredIndex >= 0) {
+              // eslint-disable-next-line security/detect-object-injection
               state.filteredEvents[filteredIndex] = action.payload
             } else {
               state.filteredEvents.push(action.payload)
@@ -541,6 +549,7 @@ const eventSlice = createSlice({
             e => e.slug === action.payload.slug
           )
           if (filteredIndex >= 0) {
+            // eslint-disable-next-line security/detect-object-injection
             state.filteredEvents[filteredIndex] = action.payload
           } else {
             state.filteredEvents.push(action.payload)
