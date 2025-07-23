@@ -48,7 +48,7 @@ export const EVENT_ACTIONS = {
 
   // Pagination
   SET_PAGINATION: 'events/SET_PAGINATION',
-  
+
   // Enhanced pagination actions
   SET_CURRENT_PAGE: 'events/SET_CURRENT_PAGE',
   SET_TOTAL_PAGES: 'events/SET_TOTAL_PAGES',
@@ -266,7 +266,9 @@ export const eventActionCreators = {
     }
     if (options) {
       action.meta = {
-        ...(options.searchQuery !== undefined && { searchQuery: options.searchQuery }),
+        ...(options.searchQuery !== undefined && {
+          searchQuery: options.searchQuery,
+        }),
         ...(options.citySlug !== undefined && { citySlug: options.citySlug }),
         ...(options.refresh !== undefined && { refresh: options.refresh }),
       }
@@ -280,8 +282,8 @@ export const eventActionCreators = {
     hasMore?: boolean
   ): FetchEventsSuccessAction => ({
     type: EVENT_ACTIONS.FETCH_EVENTS_SUCCESS,
-    payload: { 
-      events, 
+    payload: {
+      events,
       ...(total !== undefined && { total }),
       ...(hasMore !== undefined && { hasMore }),
     },
@@ -304,7 +306,10 @@ export const eventActionCreators = {
     payload: { event },
   }),
 
-  fetchEventFailure: (error: string, eventSlug: string): FetchEventFailureAction => ({
+  fetchEventFailure: (
+    error: string,
+    eventSlug: string
+  ): FetchEventFailureAction => ({
     type: EVENT_ACTIONS.FETCH_EVENT_FAILURE,
     payload: { error, eventSlug },
     error: true,
@@ -361,49 +366,52 @@ export const eventActionCreators = {
     total?: number
   ): SetPaginationAction => ({
     type: EVENT_ACTIONS.SET_PAGINATION,
-    payload: { 
-      limit, 
-      offset, 
+    payload: {
+      limit,
+      offset,
       ...(total !== undefined && { total }),
     },
   }),
-  
+
   // Enhanced pagination action creators
   setCurrentPage: (page: number): SetCurrentPageAction => ({
     type: EVENT_ACTIONS.SET_CURRENT_PAGE,
     payload: { page },
   }),
-  
+
   setTotalPages: (totalPages: number): SetTotalPagesAction => ({
     type: EVENT_ACTIONS.SET_TOTAL_PAGES,
     payload: { totalPages },
   }),
-  
-  cachePageResults: (page: number, cache: PageCache): CachePageResultsAction => ({
+
+  cachePageResults: (
+    page: number,
+    cache: PageCache
+  ): CachePageResultsAction => ({
     type: EVENT_ACTIONS.CACHE_PAGE_RESULTS,
     payload: { page, cache },
   }),
-  
+
   invalidatePageCache: (page?: number): InvalidatePageCacheAction => ({
     type: EVENT_ACTIONS.INVALIDATE_PAGE_CACHE,
     payload: page !== undefined ? { page } : {},
   }),
-  
+
   setPrefetchingPage: (page: number | null): SetPrefetchingPageAction => ({
     type: EVENT_ACTIONS.SET_PREFETCHING_PAGE,
     payload: { page },
   }),
-  
+
   markPagePrefetched: (page: number): MarkPagePrefetchedAction => ({
     type: EVENT_ACTIONS.MARK_PAGE_PREFETCHED,
     payload: { page },
   }),
-  
+
   setPageChanging: (isChanging: boolean): SetPageChangingAction => ({
     type: EVENT_ACTIONS.SET_PAGE_CHANGING,
     payload: { isChanging },
   }),
-  
+
   clearPrefetchState: (): ClearPrefetchStateAction => ({
     type: EVENT_ACTIONS.CLEAR_PREFETCH_STATE,
   }),

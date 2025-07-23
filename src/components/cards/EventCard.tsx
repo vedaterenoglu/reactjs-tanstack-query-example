@@ -113,9 +113,10 @@ export const EventCard = ({
 
   // Responsive dimensions - 3:2 aspect ratio maintaining original image proportions
   // Grid-friendly: width controlled by parent grid, height maintains 3:2 aspect ratio
-  const cardDimensions = variant === 'compact' 
-    ? 'w-full aspect-[3/2] min-h-[200px]'
-    : 'w-full aspect-[3/2] min-h-[266px]'
+  const cardDimensions =
+    variant === 'compact'
+      ? 'w-full aspect-[3/2] min-h-[200px]'
+      : 'w-full aspect-[3/2] min-h-[266px]'
 
   return (
     <article

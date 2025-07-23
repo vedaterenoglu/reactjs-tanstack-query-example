@@ -24,13 +24,11 @@ import { abortControllerRegistry } from './abortControllerFactory'
 import { NetworkUtils } from './networkObserver'
 import { prefetchQueueManager } from './prefetchQueue'
 
-import type { 
-  NetworkStatus 
-} from './networkObserver'
-import type { 
-  PrefetchCommand, 
-  PrefetchPriority, 
-  PrefetchStrategy 
+import type { NetworkStatus } from './networkObserver'
+import type {
+  PrefetchCommand,
+  PrefetchPriority,
+  PrefetchStrategy,
 } from './prefetchQueue'
 
 /**
@@ -189,7 +187,7 @@ export class NetworkConditionFactory {
  */
 export class MockApiResponseFactory {
   static createSuccessResponse(delay = 100): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(resolve, delay)
     })
   }
@@ -203,13 +201,13 @@ export class MockApiResponseFactory {
   }
 
   static createTimeoutResponse(delay = 5000): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(resolve, delay)
     })
   }
 
   static createConditionalResponse(
-    errorRate: number, 
+    errorRate: number,
     errorMessage: string,
     delay = 100
   ): Promise<void> {
@@ -264,23 +262,23 @@ export class PrefetchValidationUtils {
       strategy,
       createdAt: Date.now(),
       abortController,
-      
+
       async execute(): Promise<void> {
         if (this.abortController.isAborted()) {
           throw new Error('Command was aborted before execution')
         }
-        
+
         if (executor) {
           await executor()
         } else {
           await MockApiResponseFactory.createSuccessResponse(100)
         }
       },
-      
+
       canExecute(): boolean {
         return !this.abortController.isAborted()
       },
-      
+
       getEstimatedDuration(): number {
         return strategy === 'delayed' ? 2000 : 1000
       },
@@ -290,13 +288,15 @@ export class PrefetchValidationUtils {
   /**
    * Wait for queue to process commands with timeout
    */
-  static async waitForQueueProcessing(timeoutMs = 5000): Promise<ValidationResult> {
-    return new Promise((resolve) => {
+  static async waitForQueueProcessing(
+    timeoutMs = 5000
+  ): Promise<ValidationResult> {
+    return new Promise(resolve => {
       const startTime = Date.now()
-      
+
       const checkQueue = () => {
         const stats = prefetchQueueManager.getStats()
-        
+
         if (stats.queueLength === 0 && stats.activeCommands === 0) {
           resolve({
             passed: true,
@@ -306,7 +306,7 @@ export class PrefetchValidationUtils {
           })
           return
         }
-        
+
         if (Date.now() - startTime > timeoutMs) {
           resolve({
             passed: false,
@@ -316,10 +316,10 @@ export class PrefetchValidationUtils {
           })
           return
         }
-        
+
         setTimeout(checkQueue, 50)
       }
-      
+
       checkQueue()
     })
   }
@@ -328,19 +328,19 @@ export class PrefetchValidationUtils {
    * Simulate rapid navigation sequence for validation
    */
   static async simulateRapidNavigation(
-    pages: number[], 
+    pages: number[],
     intervalMs: number
   ): Promise<ValidationResult> {
     try {
       for (const [index, page] of pages.entries()) {
         const command = this.createMockCommand(page)
         prefetchQueueManager.addPrefetchCommand(command)
-        
+
         if (index < pages.length - 1) {
           await new Promise(resolve => setTimeout(resolve, intervalMs))
         }
       }
-      
+
       return {
         passed: true,
         message: `Rapid navigation simulation completed for ${pages.length} pages`,
@@ -363,7 +363,7 @@ export class PrefetchValidationUtils {
   static getSystemSnapshot(): SystemSnapshot {
     const queueStats = prefetchQueueManager.getStats()
     const activeControllers = abortControllerRegistry.getActive()
-    
+
     return {
       queueLength: queueStats.queueLength,
       activeCommands: queueStats.activeCommands,
@@ -380,54 +380,60 @@ export class PrefetchValidationUtils {
    */
   static validateNetworkAwareness(): ValidationResult[] {
     const results: ValidationResult[] = []
-    
+
     // Test fast connection
     const fastNetwork = NetworkConditionFactory.createFastConnection()
     const shouldEnableFast = NetworkUtils.shouldEnablePrefetch(fastNetwork)
     const concurrencyFast = NetworkUtils.getRecommendedConcurrency(fastNetwork)
-    
+
     results.push({
       passed: shouldEnableFast && concurrencyFast === 3,
       message: 'Fast connection should enable prefetch with high concurrency',
       details: { shouldEnable: shouldEnableFast, concurrency: concurrencyFast },
       timestamp: Date.now(),
     })
-    
+
     // Test slow connection
     const slowNetwork = NetworkConditionFactory.createSlowConnection()
     const shouldEnableSlow = NetworkUtils.shouldEnablePrefetch(slowNetwork)
     const concurrencySlow = NetworkUtils.getRecommendedConcurrency(slowNetwork)
-    
+
     results.push({
       passed: shouldEnableSlow && concurrencySlow === 1,
       message: 'Slow connection should enable prefetch with low concurrency',
       details: { shouldEnable: shouldEnableSlow, concurrency: concurrencySlow },
       timestamp: Date.now(),
     })
-    
+
     // Test offline connection
     const offlineNetwork = NetworkConditionFactory.createOfflineConnection()
-    const shouldEnableOffline = NetworkUtils.shouldEnablePrefetch(offlineNetwork)
-    const concurrencyOffline = NetworkUtils.getRecommendedConcurrency(offlineNetwork)
-    
+    const shouldEnableOffline =
+      NetworkUtils.shouldEnablePrefetch(offlineNetwork)
+    const concurrencyOffline =
+      NetworkUtils.getRecommendedConcurrency(offlineNetwork)
+
     results.push({
       passed: !shouldEnableOffline && concurrencyOffline === 0,
       message: 'Offline connection should disable prefetch',
-      details: { shouldEnable: shouldEnableOffline, concurrency: concurrencyOffline },
+      details: {
+        shouldEnable: shouldEnableOffline,
+        concurrency: concurrencyOffline,
+      },
       timestamp: Date.now(),
     })
-    
+
     // Test data saver mode
     const dataSaverNetwork = NetworkConditionFactory.createDataSaverConnection()
-    const shouldEnableDataSaver = NetworkUtils.shouldEnablePrefetch(dataSaverNetwork)
-    
+    const shouldEnableDataSaver =
+      NetworkUtils.shouldEnablePrefetch(dataSaverNetwork)
+
     results.push({
       passed: !shouldEnableDataSaver,
       message: 'Data saver mode should disable prefetch',
       details: { shouldEnable: shouldEnableDataSaver },
       timestamp: Date.now(),
     })
-    
+
     return results
   }
 
@@ -436,38 +442,38 @@ export class PrefetchValidationUtils {
    */
   static async validateBasicOperations(): Promise<ValidationResult[]> {
     const results: ValidationResult[] = []
-    
+
     // Setup clean environment
     this.setup()
     prefetchQueueManager.start()
-    
+
     try {
       // Test single command execution
       const command = this.createMockCommand(1)
       const added = prefetchQueueManager.addPrefetchCommand(command)
-      
+
       results.push({
         passed: added,
         message: 'Single command should be added to queue successfully',
         details: { added },
         timestamp: Date.now(),
       })
-      
+
       // Wait for processing
       const processingResult = await this.waitForQueueProcessing(2000)
       results.push(processingResult)
-      
+
       // Test duplicate prevention
       const duplicateCommand = this.createMockCommand(1) // Same page
-      const duplicateAdded = prefetchQueueManager.addPrefetchCommand(duplicateCommand)
-      
+      const duplicateAdded =
+        prefetchQueueManager.addPrefetchCommand(duplicateCommand)
+
       results.push({
         passed: !duplicateAdded,
         message: 'Duplicate command for same page should be rejected',
         details: { duplicateAdded },
         timestamp: Date.now(),
       })
-      
     } catch (error) {
       results.push({
         passed: false,
@@ -478,7 +484,7 @@ export class PrefetchValidationUtils {
     } finally {
       this.cleanup()
     }
-    
+
     return results
   }
 
@@ -488,17 +494,17 @@ export class PrefetchValidationUtils {
   static async runValidationSuite(): Promise<ValidationSuiteResult> {
     const startTime = Date.now()
     const results: ValidationResult[] = []
-    
+
     try {
       // Network awareness validation
       results.push(...this.validateNetworkAwareness())
-      
+
       // Basic operations validation
-      results.push(...await this.validateBasicOperations())
-      
+      results.push(...(await this.validateBasicOperations()))
+
       const passedCount = results.filter(r => r.passed).length
       const totalCount = results.length
-      
+
       return {
         passed: passedCount === totalCount,
         totalTests: totalCount,

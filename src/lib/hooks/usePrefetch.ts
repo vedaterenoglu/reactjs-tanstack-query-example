@@ -25,8 +25,14 @@ import { useCallback, useEffect, useRef, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 
 import { AbortControllerUtils } from '@/lib/utils/prefetch/abortControllerFactory'
-import { prefetchQueueManager, createPrefetchCommand } from '@/lib/utils/prefetch/prefetchQueue'
-import type { PrefetchStrategy, PrefetchPriority } from '@/lib/utils/prefetch/prefetchQueue'
+import {
+  prefetchQueueManager,
+  createPrefetchCommand,
+} from '@/lib/utils/prefetch/prefetchQueue'
+import type {
+  PrefetchStrategy,
+  PrefetchPriority,
+} from '@/lib/utils/prefetch/prefetchQueue'
 import {
   selectCurrentPage,
   selectNextPageNumber,
@@ -84,7 +90,11 @@ interface UsePrefetchConfig {
 class PrefetchStrategyFactory {
   static createStrategy(
     networkStrategy: string,
-    networkStatus: { connectionSpeed: string; isOnline: boolean; dataSaver: boolean },
+    networkStatus: {
+      connectionSpeed: string
+      isOnline: boolean
+      dataSaver: boolean
+    },
     delayMs: number
   ): PrefetchStrategyConfig {
     switch (networkStrategy) {
@@ -96,7 +106,7 @@ class PrefetchStrategyFactory {
           shouldPrefetchNext: true,
           shouldPrefetchPrevious: true,
         }
-      
+
       case 'conservative':
         return {
           strategy: 'delayed',
@@ -105,7 +115,7 @@ class PrefetchStrategyFactory {
           shouldPrefetchNext: true,
           shouldPrefetchPrevious: false, // Don't prefetch previous on conservative
         }
-      
+
       case 'disabled':
         return {
           strategy: 'immediate',
@@ -114,7 +124,7 @@ class PrefetchStrategyFactory {
           shouldPrefetchNext: false,
           shouldPrefetchPrevious: false,
         }
-      
+
       case 'normal':
       default:
         return {
@@ -133,30 +143,35 @@ class PrefetchStrategyFactory {
  * Manages intelligent prefetching based on user navigation patterns
  */
 export function usePrefetch(config: UsePrefetchConfig = {}) {
-  
   // Redux state selectors
   const currentPage = useSelector(selectCurrentPage)
   const nextPage = useSelector(selectNextPageNumber)
   const previousPage = useSelector(selectPreviousPageNumber)
   // Memoized recommendations to prevent useCallback dependency changes
-  const nextRecommendation = useMemo(() => ({ 
-    shouldPrefetch: !!nextPage, 
-    priority: 'normal' as const 
-  }), [nextPage])
-  
-  const previousRecommendation = useMemo(() => ({ 
-    shouldPrefetch: !!previousPage, 
-    priority: 'low' as const 
-  }), [previousPage])
+  const nextRecommendation = useMemo(
+    () => ({
+      shouldPrefetch: !!nextPage,
+      priority: 'normal' as const,
+    }),
+    [nextPage]
+  )
+
+  const previousRecommendation = useMemo(
+    () => ({
+      shouldPrefetch: !!previousPage,
+      priority: 'low' as const,
+    }),
+    [previousPage]
+  )
   const isPrefetchEnabled = useSelector(selectIsPrefetchEnabled)
   const currentStrategy = useSelector(selectCurrentPrefetchStrategy)
   const prefetchDelay = useSelector(selectPrefetchDelay)
   const networkStatus = useSelector(selectNetworkStatus)
-  
+
   // Refs for cleanup and preventing stale closures
   const timeoutRefs = useRef<Map<number, NodeJS.Timeout>>(new Map())
   const prefetchedPagesRef = useRef<Set<number>>(new Set())
-  
+
   const {
     enableOnPageLoad = true,
     enableOnPageChange = true,
@@ -170,76 +185,87 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
    * Execute prefetch command with error handling
    * Follows Command Pattern with undo capability
    */
-  const executePrefetch = useCallback(async (
-    page: number,
-    strategy: PrefetchStrategy,
-    priority: PrefetchPriority
-  ) => {
-    if (!isPrefetchEnabled || prefetchedPagesRef.current.has(page)) {
-      return
-    }
-
-    try {
-      onPrefetchStart?.(page)
-      
-      // Create prefetch command with actual API call
-      const command = createPrefetchCommand(
-        page,
-        priority,
-        strategy,
-        async () => {
-          // TODO: This would be replaced with actual API call in integration
-          // For now, simulate the prefetch operation
-          await new Promise(resolve => setTimeout(resolve, 500))
-          prefetchedPagesRef.current.add(page)
-        }
-      )
-
-      // Add to queue manager
-      const added = prefetchQueueManager.addPrefetchCommand(command)
-      
-      if (added) {
-        // Start queue processor if not running
-        if (!prefetchQueueManager.getStats().isRunning) {
-          prefetchQueueManager.start()
-        }
-        
-        onPrefetchComplete?.(page, true)
+  const executePrefetch = useCallback(
+    async (
+      page: number,
+      strategy: PrefetchStrategy,
+      priority: PrefetchPriority
+    ) => {
+      if (!isPrefetchEnabled || prefetchedPagesRef.current.has(page)) {
+        return
       }
-    } catch (error) {
-      const prefetchError = error instanceof Error ? error : new Error(String(error))
-      onPrefetchError?.(page, prefetchError)
-      onPrefetchComplete?.(page, false)
-    }
-  }, [isPrefetchEnabled, onPrefetchStart, onPrefetchComplete, onPrefetchError])
+
+      try {
+        onPrefetchStart?.(page)
+
+        // Create prefetch command with actual API call
+        const command = createPrefetchCommand(
+          page,
+          priority,
+          strategy,
+          async () => {
+            // TODO: This would be replaced with actual API call in integration
+            // For now, simulate the prefetch operation
+            await new Promise(resolve => setTimeout(resolve, 500))
+            prefetchedPagesRef.current.add(page)
+          }
+        )
+
+        // Add to queue manager
+        const added = prefetchQueueManager.addPrefetchCommand(command)
+
+        if (added) {
+          // Start queue processor if not running
+          if (!prefetchQueueManager.getStats().isRunning) {
+            prefetchQueueManager.start()
+          }
+
+          onPrefetchComplete?.(page, true)
+        }
+      } catch (error) {
+        const prefetchError =
+          error instanceof Error ? error : new Error(String(error))
+        onPrefetchError?.(page, prefetchError)
+        onPrefetchComplete?.(page, false)
+      }
+    },
+    [isPrefetchEnabled, onPrefetchStart, onPrefetchComplete, onPrefetchError]
+  )
 
   /**
    * Schedule prefetch with strategy-based delay
    * Implements Strategy Pattern for different timing approaches
    */
-  const schedulePrefetch = useCallback((
-    page: number,
-    strategyConfig: PrefetchStrategyConfig
-  ) => {
-    if (!strategyConfig.shouldPrefetchNext && !strategyConfig.shouldPrefetchPrevious) {
-      return
-    }
+  const schedulePrefetch = useCallback(
+    (page: number, strategyConfig: PrefetchStrategyConfig) => {
+      if (
+        !strategyConfig.shouldPrefetchNext &&
+        !strategyConfig.shouldPrefetchPrevious
+      ) {
+        return
+      }
 
-    // Clear existing timeout for this page
-    const existingTimeout = timeoutRefs.current.get(page)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
+      // Clear existing timeout for this page
+      const existingTimeout = timeoutRefs.current.get(page)
+      if (existingTimeout) {
+        clearTimeout(existingTimeout)
+      }
 
-    const effectiveDelay = delayOverride ?? strategyConfig.delayMs
-    
-    const timeoutId = setTimeout(() => {
-      void executePrefetch(page, strategyConfig.strategy, strategyConfig.priority)
-      timeoutRefs.current.delete(page)
-    }, effectiveDelay)
+      const effectiveDelay = delayOverride ?? strategyConfig.delayMs
 
-    timeoutRefs.current.set(page, timeoutId)
-  }, [executePrefetch, delayOverride])
+      const timeoutId = setTimeout(() => {
+        void executePrefetch(
+          page,
+          strategyConfig.strategy,
+          strategyConfig.priority
+        )
+        timeoutRefs.current.delete(page)
+      }, effectiveDelay)
+
+      timeoutRefs.current.set(page, timeoutId)
+    },
+    [executePrefetch, delayOverride]
+  )
 
   /**
    * Auto-prefetch trigger based on current page and recommendations
@@ -257,7 +283,11 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
     )
 
     // Prefetch next page if recommended
-    if (nextPage && nextRecommendation.shouldPrefetch && strategyConfig.shouldPrefetchNext) {
+    if (
+      nextPage &&
+      nextRecommendation.shouldPrefetch &&
+      strategyConfig.shouldPrefetchNext
+    ) {
       schedulePrefetch(nextPage, {
         ...strategyConfig,
         priority: nextRecommendation.priority || strategyConfig.priority,
@@ -265,7 +295,11 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
     }
 
     // Prefetch previous page if recommended
-    if (previousPage && previousRecommendation.shouldPrefetch && strategyConfig.shouldPrefetchPrevious) {
+    if (
+      previousPage &&
+      previousRecommendation.shouldPrefetch &&
+      strategyConfig.shouldPrefetchPrevious
+    ) {
       schedulePrefetch(previousPage, {
         ...strategyConfig,
         priority: previousRecommendation.priority || strategyConfig.priority,
@@ -302,40 +336,49 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
    * Manual prefetch trigger - Open/Closed Principle
    * Can be extended with additional prefetch types
    */
-  const prefetchPage = useCallback((
-    page: number,
-    options: {
-      priority?: PrefetchPriority
-      strategy?: PrefetchStrategy
-      immediate?: boolean
-    } = {}
-  ) => {
-    const {
-      priority = 'normal',
-      strategy = 'immediate',
-      immediate = false,
-    } = options
+  const prefetchPage = useCallback(
+    (
+      page: number,
+      options: {
+        priority?: PrefetchPriority
+        strategy?: PrefetchStrategy
+        immediate?: boolean
+      } = {}
+    ) => {
+      const {
+        priority = 'normal',
+        strategy = 'immediate',
+        immediate = false,
+      } = options
 
-    if (immediate) {
-      void executePrefetch(page, strategy, priority)
-    } else {
-      const strategyConfig = PrefetchStrategyFactory.createStrategy(
-        currentStrategy,
-        networkStatus,
-        prefetchDelay
-      )
-      
-      schedulePrefetch(page, {
-        ...strategyConfig,
-        strategy,
-        priority,
-        shouldPrefetchNext: true,
-        shouldPrefetchPrevious: true,
-      })
-    }
-    
-    return Promise.resolve()
-  }, [executePrefetch, schedulePrefetch, currentStrategy, networkStatus, prefetchDelay])
+      if (immediate) {
+        void executePrefetch(page, strategy, priority)
+      } else {
+        const strategyConfig = PrefetchStrategyFactory.createStrategy(
+          currentStrategy,
+          networkStatus,
+          prefetchDelay
+        )
+
+        schedulePrefetch(page, {
+          ...strategyConfig,
+          strategy,
+          priority,
+          shouldPrefetchNext: true,
+          shouldPrefetchPrevious: true,
+        })
+      }
+
+      return Promise.resolve()
+    },
+    [
+      executePrefetch,
+      schedulePrefetch,
+      currentStrategy,
+      networkStatus,
+      prefetchDelay,
+    ]
+  )
 
   // Auto-prefetch on page load
   useEffect(() => {
@@ -349,7 +392,7 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
     if (enableOnPageChange && currentPage) {
       // Cancel previous prefetches on page change
       cancelPendingPrefetches()
-      
+
       // Trigger new prefetches with slight delay to avoid rapid navigation issues
       const changeTimeout = setTimeout(() => {
         triggerAutoPrefetch()
@@ -359,9 +402,14 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
         clearTimeout(changeTimeout)
       }
     }
-    
+
     return undefined
-  }, [enableOnPageChange, currentPage, cancelPendingPrefetches, triggerAutoPrefetch])
+  }, [
+    enableOnPageChange,
+    currentPage,
+    cancelPendingPrefetches,
+    triggerAutoPrefetch,
+  ])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -381,23 +429,28 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
       // Re-trigger prefetch when network becomes available
       triggerAutoPrefetch()
     }
-  }, [networkStatus.isOnline, networkStatus.dataSaver, cancelPendingPrefetches, triggerAutoPrefetch])
+  }, [
+    networkStatus.isOnline,
+    networkStatus.dataSaver,
+    cancelPendingPrefetches,
+    triggerAutoPrefetch,
+  ])
 
   return {
     // State
     isPrefetchEnabled,
     currentStrategy,
     networkStatus,
-    
+
     // Actions
     prefetchPage,
     triggerAutoPrefetch,
     cancelPendingPrefetches,
-    
+
     // Recommendations (for debugging/monitoring)
     nextRecommendation,
     previousRecommendation,
-    
+
     // Utilities
     isPageScheduled: (page: number) => timeoutRefs.current.has(page),
     getPendingPrefetches: () => Array.from(timeoutRefs.current.keys()),

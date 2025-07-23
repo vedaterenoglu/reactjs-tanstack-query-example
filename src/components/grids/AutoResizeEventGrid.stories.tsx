@@ -124,10 +124,13 @@ export const Loading: Story = {
 // Search results state
 export const SearchResults: Story = {
   args: {
-    events: events.filter(event => 
-      event.name.toLowerCase().includes('tech') || 
-      event.description.toLowerCase().includes('tech')
-    ).slice(0, 8),
+    events: events
+      .filter(
+        event =>
+          event.name.toLowerCase().includes('tech') ||
+          event.description.toLowerCase().includes('tech')
+      )
+      .slice(0, 8),
     isSearchActive: true,
     searchQuery: 'tech',
     filteredCount: 15, // Simulated total results
@@ -166,7 +169,7 @@ export const NarrowContainer: Story = {
     events: mockEvents.slice(0, 6),
   },
   decorators: [
-    (Story) => (
+    Story => (
       <div className="max-w-md mx-auto border-2 border-dashed border-gray-300 p-4">
         <p className="text-sm text-gray-500 mb-4">Container width: ~400px</p>
         <Story />
@@ -180,7 +183,7 @@ export const WideContainer: Story = {
     events: mockEvents,
   },
   decorators: [
-    (Story) => (
+    Story => (
       <div className="max-w-7xl mx-auto border-2 border-dashed border-gray-300 p-4">
         <p className="text-sm text-gray-500 mb-4">Container width: ~1280px</p>
         <Story />
@@ -201,7 +204,8 @@ export const Playground: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Interactive playground to test different AutoResizeEventGrid configurations. Adjust the controls to see how the grid adapts.',
+        story:
+          'Interactive playground to test different AutoResizeEventGrid configurations. Adjust the controls to see how the grid adapts.',
       },
     },
   },

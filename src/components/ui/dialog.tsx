@@ -1,3 +1,8 @@
+/**
+ * Dialog UI components - Modal dialog components built on Radix UI
+ * Includes Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose
+ */
+
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 import * as React from 'react'

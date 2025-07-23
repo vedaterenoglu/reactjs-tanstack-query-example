@@ -269,13 +269,13 @@ export const selectCurrentPageEvents = createSelector(
     if (!currentPage || currentPage < 1 || !itemsPerPage) {
       return events.slice(0, itemsPerPage || 12) // Return first page as fallback
     }
-    
+
     // Check if current page is cached
     const cachedPage = cachedPages[currentPage.toString()]
     if (cachedPage && cachedPage.events) {
       return cachedPage.events
     }
-    
+
     // Otherwise, slice from current events (fallback)
     const start = (currentPage - 1) * itemsPerPage
     const end = start + itemsPerPage
@@ -283,7 +283,7 @@ export const selectCurrentPageEvents = createSelector(
   }
 )
 
-// State-based selector - uses currentPage from Redux state  
+// State-based selector - uses currentPage from Redux state
 export const selectCurrentPageCacheAge = createSelector(
   [selectCachedPages, selectCurrentPage],
   (cachedPages, currentPage) => {
@@ -377,18 +377,21 @@ export const selectEventsBySearchTerm = createSelector(
   }
 )
 
-export const selectUpcomingEvents = createSelector(
-  [selectEvents],
-  events => {
-    const now = new Date()
-    return events
-      .filter(event => new Date(event.date) > now)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }
-)
+export const selectUpcomingEvents = createSelector([selectEvents], events => {
+  const now = new Date()
+  return events
+    .filter(event => new Date(event.date) > now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+})
 
 export const selectEventsByDateRange = createSelector(
-  [selectEvents, (_state: RootState, startDate: Date, endDate: Date) => ({ startDate, endDate })],
+  [
+    selectEvents,
+    (_state: RootState, startDate: Date, endDate: Date) => ({
+      startDate,
+      endDate,
+    }),
+  ],
   (events, { startDate, endDate }) => {
     return events.filter(event => {
       const eventDate = new Date(event.date)
@@ -422,7 +425,12 @@ export const selectShouldRefresh = createSelector(
 
 // Search context selectors
 export const selectSearchContext = createSelector(
-  [selectSearchQuery, selectCityFilter, selectFilteredEventsCount, selectEventsCount],
+  [
+    selectSearchQuery,
+    selectCityFilter,
+    selectFilteredEventsCount,
+    selectEventsCount,
+  ],
   (searchQuery, cityFilter, filteredCount, totalCount) => ({
     searchQuery,
     cityFilter,
@@ -454,22 +462,24 @@ export const selectActivePrefetches = createSelector(
 
 export const selectNetworkStatus = createSelector(
   [selectEventsState],
-  eventsState => eventsState.networkStatus || {
-    isOnline: true,
-    connectionSpeed: 'unknown' as const,
-    dataSaver: false,
-  }
+  eventsState =>
+    eventsState.networkStatus || {
+      isOnline: true,
+      connectionSpeed: 'unknown' as const,
+      dataSaver: false,
+    }
 )
 
 export const selectPrefetchConfig = createSelector(
   [selectEventsState],
-  eventsState => eventsState.prefetchConfig || {
-    maxConcurrentRequests: 2,
-    networkAwareThreshold: 1000,
-    delayMs: 500,
-    enabledStrategies: ['immediate', 'delayed'],
-    prefetchEnabled: true,
-  }
+  eventsState =>
+    eventsState.prefetchConfig || {
+      maxConcurrentRequests: 2,
+      networkAwareThreshold: 1000,
+      delayMs: 500,
+      enabledStrategies: ['immediate', 'delayed'],
+      prefetchEnabled: true,
+    }
 )
 
 export const selectFailedPrefetches = createSelector(
@@ -495,10 +505,8 @@ export const selectFailedPrefetchCount = createSelector(
 
 export const selectIsPrefetchEnabled = createSelector(
   [selectPrefetchConfig, selectNetworkStatus],
-  (config, networkStatus) => 
-    config.prefetchEnabled && 
-    networkStatus.isOnline && 
-    !networkStatus.dataSaver
+  (config, networkStatus) =>
+    config.prefetchEnabled && networkStatus.isOnline && !networkStatus.dataSaver
 )
 
 export const selectCanPrefetchMore = createSelector(
@@ -556,25 +564,29 @@ export const selectIsPageInQueue = createSelector(
 
 export const selectIsPagePrefetching = createSelector(
   [selectActivePrefetches, (_state: RootState, page: number) => page],
-  (activePrefetches, page) => 
+  (activePrefetches, page) =>
     Object.values(activePrefetches).some(prefetch => prefetch.page === page)
 )
 
 export const selectPagePrefetchStatus = createSelector(
   [
-    selectIsPagePrefetched, 
-    selectIsPageInQueue, 
+    selectIsPagePrefetched,
+    selectIsPageInQueue,
     selectIsPagePrefetching,
-    (_state: RootState, page: number) => page
+    (_state: RootState, page: number) => page,
   ],
   (isPrefetched, isQueued, isPrefetching, page) => ({
     page,
     isPrefetched,
     isQueued,
     isPrefetching,
-    status: isPrefetching ? 'prefetching' : 
-            isQueued ? 'queued' : 
-            isPrefetched ? 'prefetched' : 'none'
+    status: isPrefetching
+      ? 'prefetching'
+      : isQueued
+        ? 'queued'
+        : isPrefetched
+          ? 'prefetched'
+          : 'none',
   })
 )
 
@@ -601,19 +613,19 @@ export const selectPagePrefetchRetryCount = createSelector(
 // Strategy-based selectors - Strategy Pattern for prefetch behavior
 export const selectCurrentPrefetchStrategy = createSelector(
   [selectNetworkStatus],
-  (networkStatus) => {
+  networkStatus => {
     if (!networkStatus.isOnline || networkStatus.dataSaver) {
       return 'disabled'
     }
-    
+
     if (networkStatus.connectionSpeed === 'fast') {
       return 'aggressive'
     }
-    
+
     if (networkStatus.connectionSpeed === 'slow') {
       return 'conservative'
     }
-    
+
     return 'normal'
   }
 )
@@ -653,34 +665,40 @@ export const selectMaxConcurrentPrefetches = createSelector(
 // Next/Previous page prefetch recommendations - Strategy Pattern
 export const selectNextPagePrefetchRecommendation = createSelector(
   [
-    selectNextPageNumber, 
-    selectIsPagePrefetched, 
+    selectNextPageNumber,
+    selectIsPagePrefetched,
     selectIsPageInQueue,
     selectIsPrefetchEnabled,
-    selectCanPrefetchMore
+    selectCanPrefetchMore,
   ],
-  (nextPage, isPagePrefetched, isPageInQueue, prefetchEnabled, canPrefetchMore) => {
+  (
+    nextPage,
+    isPagePrefetched,
+    isPageInQueue,
+    prefetchEnabled,
+    canPrefetchMore
+  ) => {
     if (!nextPage || !prefetchEnabled || !canPrefetchMore) {
       return { shouldPrefetch: false, reason: 'conditions-not-met' }
     }
-    
+
     // Use state for parameter-based selector
     const isPrefetched = isPagePrefetched
     const isQueued = isPageInQueue
-    
+
     if (isPrefetched) {
       return { shouldPrefetch: false, reason: 'already-prefetched' }
     }
-    
+
     if (isQueued) {
       return { shouldPrefetch: false, reason: 'already-queued' }
     }
-    
-    return { 
-      shouldPrefetch: true, 
+
+    return {
+      shouldPrefetch: true,
       page: nextPage,
       priority: 'normal' as const,
-      strategy: 'immediate' as const
+      strategy: 'immediate' as const,
     }
   }
 )
@@ -689,31 +707,37 @@ export const selectPreviousPagePrefetchRecommendation = createSelector(
   [
     selectPreviousPageNumber,
     selectIsPagePrefetched,
-    selectIsPageInQueue, 
+    selectIsPageInQueue,
     selectIsPrefetchEnabled,
-    selectCanPrefetchMore
+    selectCanPrefetchMore,
   ],
-  (prevPage, isPagePrefetched, isPageInQueue, prefetchEnabled, canPrefetchMore) => {
+  (
+    prevPage,
+    isPagePrefetched,
+    isPageInQueue,
+    prefetchEnabled,
+    canPrefetchMore
+  ) => {
     if (!prevPage || !prefetchEnabled || !canPrefetchMore) {
       return { shouldPrefetch: false, reason: 'conditions-not-met' }
     }
-    
+
     const isPrefetched = isPagePrefetched
     const isQueued = isPageInQueue
-    
+
     if (isPrefetched) {
       return { shouldPrefetch: false, reason: 'already-prefetched' }
     }
-    
+
     if (isQueued) {
       return { shouldPrefetch: false, reason: 'already-queued' }
     }
-    
-    return { 
-      shouldPrefetch: true, 
+
+    return {
+      shouldPrefetch: true,
       page: prevPage,
       priority: 'low' as const,
-      strategy: 'delayed' as const
+      strategy: 'delayed' as const,
     }
   }
 )
@@ -725,7 +749,7 @@ export const selectPrefetchPerformanceMetrics = createSelector(
     selectActivePrefetchCount,
     selectFailedPrefetchCount,
     selectPrefetchedPages,
-    selectCurrentPrefetchStrategy
+    selectCurrentPrefetchStrategy,
   ],
   (queueLength, activeCount, failedCount, prefetchedPages, strategy) => ({
     queueLength,
@@ -733,10 +757,12 @@ export const selectPrefetchPerformanceMetrics = createSelector(
     failedCount,
     prefetchedCount: prefetchedPages.length,
     strategy,
-    efficiency: prefetchedPages.length > 0 
-      ? (prefetchedPages.length / (prefetchedPages.length + failedCount)) * 100 
-      : 0,
-    timestamp: Date.now()
+    efficiency:
+      prefetchedPages.length > 0
+        ? (prefetchedPages.length / (prefetchedPages.length + failedCount)) *
+          100
+        : 0,
+    timestamp: Date.now(),
   })
 )
 
@@ -745,7 +771,7 @@ export const selectPrefetchDebugInfo = createSelector(
   [
     selectEventsState,
     selectPrefetchPerformanceMetrics,
-    selectCurrentPrefetchStrategy
+    selectCurrentPrefetchStrategy,
   ],
   (eventsState, metrics, strategy) => ({
     state: {
@@ -759,8 +785,9 @@ export const selectPrefetchDebugInfo = createSelector(
     recommendations: {
       shouldOptimize: metrics.efficiency < 80,
       shouldReduceConcurrency: metrics.failedCount > 3,
-      shouldIncreaseConcurrency: metrics.efficiency > 95 && metrics.activeCount < 2,
-    }
+      shouldIncreaseConcurrency:
+        metrics.efficiency > 95 && metrics.activeCount < 2,
+    },
   })
 )
 

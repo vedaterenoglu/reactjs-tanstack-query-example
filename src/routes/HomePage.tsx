@@ -62,7 +62,7 @@ export const HomePage = ({
   className = '',
 }: HomePageProps) => {
   const navigate = useNavigate()
-  
+
   // Custom hook integration following DIP and Facade patterns
   const {
     filteredCities,

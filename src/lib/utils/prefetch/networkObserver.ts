@@ -42,7 +42,10 @@ export interface NetworkStatus {
  */
 export interface NetworkObserver {
   onNetworkChange(status: NetworkStatus, previousStatus: NetworkStatus): void
-  onConnectionSpeedChange(speed: ConnectionSpeed, previousSpeed: ConnectionSpeed): void
+  onConnectionSpeedChange(
+    speed: ConnectionSpeed,
+    previousSpeed: ConnectionSpeed
+  ): void
   onOnlineStatusChange(isOnline: boolean): void
 }
 
@@ -97,7 +100,8 @@ class NavigatorConnectionAdapter implements NetworkStatusProvider {
   constructor() {
     // Check for various connection API implementations
     const nav = navigator as ExtendedNavigator
-    this.connection = nav.connection || nav.mozConnection || nav.webkitConnection || null
+    this.connection =
+      nav.connection || nav.mozConnection || nav.webkitConnection || null
   }
 
   getCurrentStatus(): NetworkStatus {
@@ -110,18 +114,19 @@ class NavigatorConnectionAdapter implements NetworkStatusProvider {
 
     // Add connection-specific details if available
     if (this.connection) {
-      const connectionDetails: any = {}
-      
-      if (this.connection.effectiveType !== undefined) {
-        connectionDetails.effectiveType = this.connection.effectiveType
+      const connectionDetails: Record<string, unknown> = {}
+
+      const connection = this.connection as Record<string, unknown>
+      if (connection['effectiveType'] !== undefined) {
+        connectionDetails['effectiveType'] = connection['effectiveType']
       }
-      if (this.connection.downlink !== undefined) {
-        connectionDetails.downlink = this.connection.downlink
+      if (connection['downlink'] !== undefined) {
+        connectionDetails['downlink'] = connection['downlink']
       }
-      if (this.connection.rtt !== undefined) {
-        connectionDetails.rtt = this.connection.rtt
+      if (connection['rtt'] !== undefined) {
+        connectionDetails['rtt'] = connection['rtt']
       }
-      
+
       return {
         ...baseStatus,
         ...connectionDetails,
@@ -139,30 +144,30 @@ class NavigatorConnectionAdapter implements NetworkStatusProvider {
     // Monitor online/offline status
     const onlineHandler = () => this.handleStatusChange()
     const offlineHandler = () => this.handleStatusChange()
-    
+
     window.addEventListener('online', onlineHandler)
     window.addEventListener('offline', offlineHandler)
-    
+
     this.listeners.push(
       () => window.removeEventListener('online', onlineHandler),
       () => window.removeEventListener('offline', offlineHandler)
     )
 
     // Monitor connection changes if supported
-    if (this.connection && 
-        typeof this.connection.addEventListener === 'function' &&
-        typeof this.connection.removeEventListener === 'function') {
+    if (
+      this.connection &&
+      typeof this.connection.addEventListener === 'function' &&
+      typeof this.connection.removeEventListener === 'function'
+    ) {
       const connectionHandler = () => this.handleStatusChange()
       const connection = this.connection // Capture connection reference
       connection.addEventListener!('change', connectionHandler)
-      
-      this.listeners.push(
-        () => {
-          if (typeof connection.removeEventListener === 'function') {
-            connection.removeEventListener('change', connectionHandler)
-          }
+
+      this.listeners.push(() => {
+        if (typeof connection.removeEventListener === 'function') {
+          connection.removeEventListener('change', connectionHandler)
         }
-      )
+      })
     }
 
     // Initial status
@@ -211,14 +216,20 @@ class NavigatorConnectionAdapter implements NetworkStatusProvider {
 
   private handleStatusChange(): void {
     const currentStatus = this.getCurrentStatus()
-    
+
     // Only trigger if status actually changed
-    if (this.lastStatus && this.hasStatusChanged(this.lastStatus, currentStatus)) {
+    if (
+      this.lastStatus &&
+      this.hasStatusChanged(this.lastStatus, currentStatus)
+    ) {
       this.lastStatus = currentStatus
     }
   }
 
-  private hasStatusChanged(previous: NetworkStatus, current: NetworkStatus): boolean {
+  private hasStatusChanged(
+    previous: NetworkStatus,
+    current: NetworkStatus
+  ): boolean {
     return (
       previous.isOnline !== current.isOnline ||
       previous.connectionSpeed !== current.connectionSpeed ||
@@ -253,7 +264,7 @@ class NetworkObserverManager {
    */
   addObserver(observer: NetworkObserver): void {
     this.observers.add(observer)
-    
+
     // Start monitoring when first observer is added
     if (this.observers.size === 1 && !this.isMonitoring) {
       this.startMonitoring()
@@ -265,7 +276,7 @@ class NetworkObserverManager {
    */
   removeObserver(observer: NetworkObserver): void {
     this.observers.delete(observer)
-    
+
     // Stop monitoring when no observers remain
     if (this.observers.size === 0 && this.isMonitoring) {
       this.stopMonitoring()
@@ -284,11 +295,11 @@ class NetworkObserverManager {
    */
   checkStatus(): void {
     const newStatus = this.provider.getCurrentStatus()
-    
+
     if (this.currentStatus) {
       this.notifyObservers(newStatus, this.currentStatus)
     }
-    
+
     this.currentStatus = newStatus
   }
 
@@ -313,35 +324,44 @@ class NetworkObserverManager {
 
   private setupPolling(): void {
     const pollInterval = 5000 // 5 seconds
-    
+
     const poll = () => {
       if (!this.isMonitoring) {
         return
       }
-      
+
       const newStatus = this.provider.getCurrentStatus()
-      
-      if (this.currentStatus && this.hasStatusChanged(this.currentStatus, newStatus)) {
+
+      if (
+        this.currentStatus &&
+        this.hasStatusChanged(this.currentStatus, newStatus)
+      ) {
         this.notifyObservers(newStatus, this.currentStatus)
         this.currentStatus = newStatus
       }
-      
+
       setTimeout(poll, pollInterval)
     }
-    
+
     setTimeout(poll, pollInterval)
   }
 
-  private notifyObservers(newStatus: NetworkStatus, previousStatus: NetworkStatus): void {
+  private notifyObservers(
+    newStatus: NetworkStatus,
+    previousStatus: NetworkStatus
+  ): void {
     for (const observer of this.observers) {
       try {
         observer.onNetworkChange(newStatus, previousStatus)
-        
+
         // Specific notifications
         if (newStatus.connectionSpeed !== previousStatus.connectionSpeed) {
-          observer.onConnectionSpeedChange(newStatus.connectionSpeed, previousStatus.connectionSpeed)
+          observer.onConnectionSpeedChange(
+            newStatus.connectionSpeed,
+            previousStatus.connectionSpeed
+          )
         }
-        
+
         if (newStatus.isOnline !== previousStatus.isOnline) {
           observer.onOnlineStatusChange(newStatus.isOnline)
         }
@@ -351,7 +371,10 @@ class NetworkObserverManager {
     }
   }
 
-  private hasStatusChanged(previous: NetworkStatus, current: NetworkStatus): boolean {
+  private hasStatusChanged(
+    previous: NetworkStatus,
+    current: NetworkStatus
+  ): boolean {
     return (
       previous.isOnline !== current.isOnline ||
       previous.connectionSpeed !== current.connectionSpeed ||
@@ -366,7 +389,9 @@ class NetworkObserverManager {
  */
 export class NetworkPrefetchStrategyManager implements NetworkObserver {
   private currentConfig: NetworkPrefetchConfig
-  private readonly configChangeCallbacks = new Set<(config: NetworkPrefetchConfig) => void>()
+  private readonly configChangeCallbacks = new Set<
+    (config: NetworkPrefetchConfig) => void
+  >()
 
   constructor(initialConfig: NetworkPrefetchConfig) {
     this.currentConfig = initialConfig
@@ -378,14 +403,17 @@ export class NetworkPrefetchStrategyManager implements NetworkObserver {
   onNetworkChange(status: NetworkStatus, previousStatus: NetworkStatus): void {
     void previousStatus // Acknowledge parameter for interface compliance
     const newConfig = this.determineConfig(status)
-    
+
     if (this.hasConfigChanged(this.currentConfig, newConfig)) {
       this.currentConfig = newConfig
       this.notifyConfigChange()
     }
   }
 
-  onConnectionSpeedChange(speed: ConnectionSpeed, previousSpeed: ConnectionSpeed): void {
+  onConnectionSpeedChange(
+    speed: ConnectionSpeed,
+    previousSpeed: ConnectionSpeed
+  ): void {
     void speed // Acknowledge parameters for interface compliance
     void previousSpeed
     // Handled by onNetworkChange
@@ -419,7 +447,9 @@ export class NetworkPrefetchStrategyManager implements NetworkObserver {
   /**
    * Remove config change callback
    */
-  removeConfigChangeCallback(callback: (config: NetworkPrefetchConfig) => void): void {
+  removeConfigChangeCallback(
+    callback: (config: NetworkPrefetchConfig) => void
+  ): void {
     this.configChangeCallbacks.delete(callback)
   }
 
@@ -457,7 +487,10 @@ export class NetworkPrefetchStrategyManager implements NetworkObserver {
       return {
         ...this.currentConfig,
         strategy: 'aggressive',
-        maxConcurrentRequests: Math.min(this.currentConfig.maxConcurrentRequests, 3),
+        maxConcurrentRequests: Math.min(
+          this.currentConfig.maxConcurrentRequests,
+          3
+        ),
         delayMs: Math.min(this.currentConfig.delayMs, 200),
       }
     }
@@ -469,7 +502,10 @@ export class NetworkPrefetchStrategyManager implements NetworkObserver {
     }
   }
 
-  private hasConfigChanged(previous: NetworkPrefetchConfig, current: NetworkPrefetchConfig): boolean {
+  private hasConfigChanged(
+    previous: NetworkPrefetchConfig,
+    current: NetworkPrefetchConfig
+  ): boolean {
     return (
       previous.strategy !== current.strategy ||
       previous.maxConcurrentRequests !== current.maxConcurrentRequests ||
@@ -500,7 +536,9 @@ export const NetworkUtils = {
   /**
    * Create network-aware prefetch strategy manager
    */
-  createStrategyManager: (initialConfig: NetworkPrefetchConfig): NetworkPrefetchStrategyManager => {
+  createStrategyManager: (
+    initialConfig: NetworkPrefetchConfig
+  ): NetworkPrefetchStrategyManager => {
     const manager = new NetworkPrefetchStrategyManager(initialConfig)
     networkObserverManager.addObserver(manager)
     return manager
@@ -526,11 +564,11 @@ export const NetworkUtils = {
    */
   getRecommendedConcurrency: (status?: NetworkStatus): number => {
     const networkStatus = status || networkObserverManager.getCurrentStatus()
-    
+
     if (!networkStatus.isOnline || networkStatus.dataSaver) {
       return 0
     }
-    
+
     switch (networkStatus.connectionSpeed) {
       case 'fast':
         return 3

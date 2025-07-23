@@ -1,3 +1,8 @@
+/**
+ * Card UI components - Reusable card components with consistent styling
+ * Includes Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter
+ */
+
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'

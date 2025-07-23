@@ -1,3 +1,7 @@
+/**
+ * Input UI component - Styled input field with focus states and validation
+ */
+
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'

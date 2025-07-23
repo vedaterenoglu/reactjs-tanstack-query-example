@@ -14,24 +14,24 @@ import type { HttpClient } from '../interfaces/httpClient.interface'
 
 /**
  * Event API Facade - Provides simplified interface for event operations
- * 
+ *
  * Design Patterns Applied:
  * 1. **Facade Pattern**: Hides complexity of HTTP operations and validation
  *    - Provides clean, simple interface for event API operations
  *    - Encapsulates error handling and data transformation
- * 
+ *
  * 2. **Adapter Pattern**: Works with HttpClient interface
  *    - Allows different HTTP implementations (fetch, axios, etc)
- * 
+ *
  * 3. **Singleton Pattern**: Default instance exported for convenience
- * 
+ *
  * SOLID Principles:
  * - **SRP**: Only handles event-related API operations
  * - **OCP**: Extensible through HttpClient injection
  * - **LSP**: Can substitute any HttpClient implementation
  * - **ISP**: Focused interface for event operations only
  * - **DIP**: Depends on HttpClient abstraction, not concrete implementation
- * 
+ *
  * Backend API Alignment:
  * - Matches Portfolio Events REST API endpoints
  * - Handles both public (/api/events) and admin (/api/admin/events) routes
@@ -43,7 +43,8 @@ export class EventApiService {
 
   constructor(
     httpClient?: HttpClient,
-    baseUrl: string = import.meta.env['VITE_API_BASE_URL'] || 'http://localhost:3060'
+    baseUrl: string = import.meta.env['VITE_API_BASE_URL'] ||
+      'http://localhost:3060'
   ) {
     this.httpClient = httpClient || new FetchAdapter(baseUrl)
   }
@@ -90,12 +91,15 @@ export class EventApiService {
       const transformedResponse: EventsApiResponse = {
         success: true,
         data: response.data.events as Event[],
-        pagination: response.data.count !== undefined ? {
-          total: response.data.count,
-          limit: params?.limit || 12,
-          offset: params?.offset || 0,
-          hasMore: response.data.pagination?.hasMore,
-        } : undefined,
+        pagination:
+          response.data.count !== undefined
+            ? {
+                total: response.data.count,
+                limit: params?.limit || 12,
+                offset: params?.offset || 0,
+                hasMore: response.data.pagination?.hasMore,
+              }
+            : undefined,
         timestamp: new Date().toISOString(),
       }
 
@@ -220,8 +224,10 @@ export class EventApiService {
     console.warn('API FILTER DEBUG:', {
       targetCitySlug: citySlug,
       totalEvents: events.length,
-      sampleEventSlugs: events.slice(0, 3).map(e => ({ city: e.city, citySlug: e.citySlug })),
-      filterResult: events.filter(event => event.citySlug === citySlug).length
+      sampleEventSlugs: events
+        .slice(0, 3)
+        .map(e => ({ city: e.city, citySlug: e.citySlug })),
+      filterResult: events.filter(event => event.citySlug === citySlug).length,
     })
 
     return events.filter(event => event.citySlug === citySlug)

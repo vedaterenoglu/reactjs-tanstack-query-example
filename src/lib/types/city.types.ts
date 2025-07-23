@@ -1,3 +1,8 @@
+/**
+ * City types and schemas - Type definitions and validation for city data
+ * Includes Zod schemas, TypeScript types, API response types, and validation utilities
+ */
+
 import { z } from 'zod'
 
 // Base validation utilities (from backend sanitization patterns)

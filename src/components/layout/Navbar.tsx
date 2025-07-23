@@ -16,8 +16,8 @@ export function Navbar({ title }: NavbarProps) {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="group relative text-xl font-semibold text-foreground/90 hover:text-foreground transition-all duration-300 ease-out"
             >
               <span className="relative z-10">{title}</span>

@@ -1,3 +1,8 @@
+/**
+ * Redux store configuration - Main store setup with persistence and middleware
+ * Combines city and event reducers with Redux DevTools and persistence support
+ */
+
 import { composeWithDevTools } from '@redux-devtools/extension'
 import {
   legacy_createStore as createStore,

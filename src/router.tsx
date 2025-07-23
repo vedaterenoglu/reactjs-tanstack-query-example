@@ -18,6 +18,12 @@ const EventsListPage = lazy(() =>
 const SingleEventPage = lazy(() =>
   import('@/routes').then(module => ({ default: module.SingleEventPage }))
 )
+const PaymentSuccessPage = lazy(() =>
+  import('@/routes').then(module => ({ default: module.PaymentSuccessPage }))
+)
+const PaymentCancelPage = lazy(() =>
+  import('@/routes').then(module => ({ default: module.PaymentCancelPage }))
+)
 
 export const router = createBrowserRouter([
   {
@@ -79,6 +85,34 @@ export const router = createBrowserRouter([
             }
           >
             <SingleEventPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'events/:slug/payment-success',
+        element: (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            }
+          >
+            <PaymentSuccessPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'events/:slug/payment-cancel',
+        element: (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            }
+          >
+            <PaymentCancelPage />
           </Suspense>
         ),
       },

@@ -14,7 +14,7 @@
  *
  * Exports:
  * - Actions and action creators
- * - Reducer function  
+ * - Reducer function
  * - Memoized selectors
  * - Async thunk operations
  *

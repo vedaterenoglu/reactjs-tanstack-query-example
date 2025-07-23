@@ -1,3 +1,8 @@
+/**
+ * App - Root application component
+ * Sets up providers (Clerk, Redux, Theme) and router configuration
+ */
+
 import { RouterProvider } from 'react-router-dom'
 
 import { ClerkProvider, ReduxProvider } from '@/components/providers'

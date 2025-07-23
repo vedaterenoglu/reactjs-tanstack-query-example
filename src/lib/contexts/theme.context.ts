@@ -1,3 +1,8 @@
+/**
+ * Theme context - React context for theme management
+ * Defines Theme type, ThemeProviderState interface, and ThemeProviderContext
+ */
+
 import { createContext } from 'react'
 
 export type Theme = 'dark' | 'light' | 'system'

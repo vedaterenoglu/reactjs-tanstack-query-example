@@ -23,6 +23,7 @@
     "linkedin": "https://www.linkedin.com/in/vedaterenoglu/"
   },
   "license": "MIT",
+  "homepage": "https://reactjs-redux-thunk-example.demo.vedaterenoglu.com",
   "scripts": {
     "dev": "vite --port 3061 --host",
     "build": "rm -rf dist && tsc -b && vite build",

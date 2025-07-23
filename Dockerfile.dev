@@ -1,0 +1,22 @@
+# Development Dockerfile for hot reloading
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Expose development port
+EXPOSE 3061
+
+# Add labels for better container management
+LABEL maintainer="Vedat Erenoglu <info@vedaterenoglu.com>"
+LABEL description="Events Portfolio - React Redux TypeScript Application (Development)"
+LABEL version="1.0.1"
+
+# Start development server
+CMD ["npm", "run", "dev"]

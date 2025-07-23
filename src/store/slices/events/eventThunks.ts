@@ -52,14 +52,18 @@ import {
 export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
   return async (dispatch, getState) => {
     try {
-      
       // Check cache validity - avoid redundant API calls
       const state = getState()
       const isCacheStale = selectIsCacheStale(state)
       const currentEvents = selectEvents(state)
 
       // Skip fetch if cache is fresh and no specific parameters
-      if (!isCacheStale && currentEvents.length > 0 && !params?.search && !params?.city) {
+      if (
+        !isCacheStale &&
+        currentEvents.length > 0 &&
+        !params?.search &&
+        !params?.city
+      ) {
         return
       }
 
@@ -69,12 +73,16 @@ export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
         citySlug?: string
         refresh?: boolean
       } = {}
-      
+
       if (params?.search) requestMeta.searchQuery = params.search
       if (params?.city) requestMeta.citySlug = params.city
       if (params) requestMeta.refresh = true
-      
-      dispatch(eventActionCreators.fetchEventsRequest(Object.keys(requestMeta).length > 0 ? requestMeta : undefined))
+
+      dispatch(
+        eventActionCreators.fetchEventsRequest(
+          Object.keys(requestMeta).length > 0 ? requestMeta : undefined
+        )
+      )
 
       // Call API facade - abstracts HTTP implementation details
       const response = await eventApiService.getEvents(params)
@@ -188,20 +196,20 @@ export const refreshEvents = (): AppThunk => {
  * Always fetches from server to get accurate filtered results
  */
 export const searchEvents = (query: string): AppThunk => {
-  return async (dispatch) => {
+  return async dispatch => {
     try {
       // Update search query in state
       dispatch(eventActionCreators.setSearchQuery(query))
 
       // Always fetch from backend with search parameter for accurate results
-      const fetchParams = { 
+      const fetchParams = {
         search: query,
         limit: 50, // Get more results for search
         offset: 0,
         sortBy: 'date' as const,
-        order: 'asc' as const
+        order: 'asc' as const,
       }
-      
+
       return dispatch(fetchEvents(fetchParams))
     } catch (error) {
       const errorMessage =
@@ -231,21 +239,29 @@ export const filterEventsByCity = (citySlug: string): AppThunk => {
 
       // No events loaded yet - fetch with city filter
       if (allEvents.length === 0) {
-        return dispatch(fetchEvents({ 
-          city: citySlug,
-          limit: 12,
-          offset: 0,
-          sortBy: 'date',
-          order: 'asc'
-        }))
+        return dispatch(
+          fetchEvents({
+            city: citySlug,
+            limit: 12,
+            offset: 0,
+            sortBy: 'date',
+            order: 'asc',
+          })
+        )
       }
 
       // Start with city-filtered events
-      let filteredEvents = eventApiService.filterEventsByCity(allEvents, citySlug)
+      let filteredEvents = eventApiService.filterEventsByCity(
+        allEvents,
+        citySlug
+      )
 
       // Apply search filter if active
       if (searchQuery.trim()) {
-        filteredEvents = eventApiService.searchEventsLocally(filteredEvents, searchQuery)
+        filteredEvents = eventApiService.searchEventsLocally(
+          filteredEvents,
+          searchQuery
+        )
       }
 
       dispatch(eventActionCreators.filterEvents(filteredEvents))
@@ -290,7 +306,10 @@ export const clearSearch = (): AppThunk => {
 
     // Apply city filter if still active, otherwise show all
     if (cityFilter) {
-      const filteredEvents = eventApiService.filterEventsByCity(allEvents, cityFilter)
+      const filteredEvents = eventApiService.filterEventsByCity(
+        allEvents,
+        cityFilter
+      )
       dispatch(eventActionCreators.filterEvents(filteredEvents))
     } else {
       dispatch(eventActionCreators.filterEvents(allEvents))
@@ -393,7 +412,12 @@ export const loadMoreEvents = (): AppThunk => {
 
       // Append to existing events
       const allEvents = [...currentEvents, ...response.data]
-      dispatch(eventActionCreators.fetchEventsSuccess(allEvents, response.pagination?.total))
+      dispatch(
+        eventActionCreators.fetchEventsSuccess(
+          allEvents,
+          response.pagination?.total
+        )
+      )
 
       // Update pagination
       dispatch(
@@ -405,9 +429,7 @@ export const loadMoreEvents = (): AppThunk => {
       )
     } catch (error) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to load more events.'
+        error instanceof Error ? error.message : 'Failed to load more events.'
 
       dispatch(eventActionCreators.fetchEventsFailure(errorMessage))
       throw error
@@ -438,7 +460,7 @@ export const fetchEventsPage = (
     try {
       const { useCache = true, isPrefetch = false } = options
       const state = getState()
-      
+
       // Check if page is already cached and cache is valid
       if (useCache && selectIsPageCached(state, page)) {
         const cachedData = selectCachedPageData(state, page)
@@ -448,50 +470,55 @@ export const fetchEventsPage = (
           return cachedData.events
         }
       }
-      
+
       const itemsPerPage = selectItemsPerPage(state)
       const offset = (page - 1) * itemsPerPage
-      
+
       // Mark as prefetching if background operation
       if (isPrefetch) {
         dispatch(eventActionCreators.setPrefetchingPage(page))
       }
-      
+
       const params: EventsQueryParams = {
         limit: itemsPerPage,
         offset,
         sortBy: 'date',
         order: 'asc',
       }
-      
+
       const response = await eventApiService.getEvents(params)
-      
+
       // Cache the results
-      dispatch(eventActionCreators.cachePageResults(page, {
-        events: response.data,
-        timestamp: Date.now()
-      }))
-      
+      dispatch(
+        eventActionCreators.cachePageResults(page, {
+          events: response.data,
+          timestamp: Date.now(),
+        })
+      )
+
       // Mark as prefetched if background operation
       if (isPrefetch) {
         dispatch(eventActionCreators.markPagePrefetched(page))
       } else {
         // Update main events list for current page
-        dispatch(eventActionCreators.fetchEventsSuccess(
-          response.data, 
-          response.pagination?.total
-        ))
+        dispatch(
+          eventActionCreators.fetchEventsSuccess(
+            response.data,
+            response.pagination?.total
+          )
+        )
       }
-      
+
       return response.data
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch events page'
-      
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch events page'
+
       // Only dispatch failure for non-prefetch operations
       if (!options.isPrefetch) {
         dispatch(eventActionCreators.fetchEventsFailure(errorMessage))
       }
-      
+
       // Reset prefetching state on error
       dispatch(eventActionCreators.setPrefetchingPage(null))
       throw error
@@ -510,7 +537,7 @@ export const changePage = (targetPage: number): AppThunk => {
       if (pageChangeDebounceTimer) {
         clearTimeout(pageChangeDebounceTimer)
       }
-      
+
       return new Promise<void>((resolve, reject) => {
         pageChangeDebounceTimer = setTimeout(async () => {
           try {
@@ -518,26 +545,31 @@ export const changePage = (targetPage: number): AppThunk => {
             const currentPage = selectCurrentPage(state)
             const totalPages = selectTotalPages(state)
             const isChanging = selectIsChangingPage(state)
-            
+
             // Validate page number
-            if (targetPage < 1 || targetPage > totalPages || targetPage === currentPage || isChanging) {
+            if (
+              targetPage < 1 ||
+              targetPage > totalPages ||
+              targetPage === currentPage ||
+              isChanging
+            ) {
               resolve()
               return
             }
-            
+
             // Set changing state
             dispatch(eventActionCreators.setPageChanging(true))
             dispatch(eventActionCreators.setCurrentPage(targetPage))
-            
+
             // Fetch page data
             await dispatch(fetchEventsPage(targetPage, { useCache: true }))
-            
+
             // Prefetch adjacent pages in background
             dispatch(prefetchAdjacentPages(targetPage))
-            
+
             // Reset changing state
             dispatch(eventActionCreators.setPageChanging(false))
-            
+
             resolve()
           } catch (error) {
             dispatch(eventActionCreators.setPageChanging(false))
@@ -559,7 +591,7 @@ export const goToNextPage = (): AppThunk => {
   return async (dispatch, getState) => {
     const state = getState()
     const nextPage = selectNextPageNumber(state)
-    
+
     if (nextPage) {
       return dispatch(changePage(nextPage))
     }
@@ -573,7 +605,7 @@ export const goToPreviousPage = (): AppThunk => {
   return async (dispatch, getState) => {
     const state = getState()
     const prevPage = selectPreviousPageNumber(state)
-    
+
     if (prevPage) {
       return dispatch(changePage(prevPage))
     }
@@ -590,28 +622,28 @@ export const prefetchAdjacentPages = (currentPage: number): AppThunk => {
     if (prefetchDebounceTimer) {
       clearTimeout(prefetchDebounceTimer)
     }
-    
+
     prefetchDebounceTimer = setTimeout(async () => {
       try {
         const state = getState()
         const totalPages = selectTotalPages(state)
         const prefetchingPage = selectPrefetchingPage(state)
-        
+
         // Don't prefetch if already prefetching
         if (prefetchingPage) return
-        
+
         const pagesToPrefetch: number[] = []
-        
+
         // Prefetch next page
         if (currentPage < totalPages) {
           pagesToPrefetch.push(currentPage + 1)
         }
-        
+
         // Prefetch previous page
         if (currentPage > 1) {
           pagesToPrefetch.push(currentPage - 1)
         }
-        
+
         // Prefetch pages that aren't cached
         for (const page of pagesToPrefetch) {
           const stateForPage = getState() // Fresh state for each check
@@ -639,7 +671,7 @@ export const prefetchAdjacentPages = (currentPage: number): AppThunk => {
 export const invalidatePageCache = (page?: number): AppThunk => {
   return async dispatch => {
     dispatch(eventActionCreators.invalidatePageCache(page))
-    
+
     // Clear prefetch state if invalidating all pages
     if (page === undefined) {
       dispatch(eventActionCreators.clearPrefetchState())
@@ -656,14 +688,17 @@ export const initializePagination = (): AppThunk => {
     try {
       // Start with page 1
       dispatch(eventActionCreators.setCurrentPage(1))
-      
+
       // Fetch first page
       await dispatch(fetchEventsPage(1, { useCache: false }))
-      
+
       // Prefetch page 2 in background
       dispatch(prefetchAdjacentPages(1))
     } catch (error) {
-      console.error('[initializePagination] Failed to initialize pagination:', error)
+      console.error(
+        '[initializePagination] Failed to initialize pagination:',
+        error
+      )
       // Don't throw - let the app continue with basic functionality
     }
   }

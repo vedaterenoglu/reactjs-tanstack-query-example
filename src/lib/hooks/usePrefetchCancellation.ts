@@ -76,7 +76,7 @@ interface CancellationResult {
  * Cancellation Trigger Types - Open/Closed Principle
  * New triggers can be added without modifying existing handlers
  */
-type CancellationTrigger = 
+type CancellationTrigger =
   | 'rapid-navigation'
   | 'page-change'
   | 'network-offline'
@@ -132,7 +132,10 @@ class RapidNavigationHandler implements CancellationHandler {
     this.threshold = threshold
   }
 
-  canHandle(trigger: CancellationTrigger, context: CancellationContext): boolean {
+  canHandle(
+    trigger: CancellationTrigger,
+    context: CancellationContext
+  ): boolean {
     if (trigger !== 'rapid-navigation' && trigger !== 'page-change') {
       return false
     }
@@ -147,14 +150,18 @@ class RapidNavigationHandler implements CancellationHandler {
 
   async execute(_context: CancellationContext): Promise<CancellationResult> {
     const startTime = performance.now()
-    
+
     try {
       // Cancel all prefetches for rapid navigation
-      const cancelledCount = AbortControllerUtils.cancelRapidNavigation(_context.currentPage)
-      
+      const cancelledCount = AbortControllerUtils.cancelRapidNavigation(
+        _context.currentPage
+      )
+
       // Clear queue for current page
-      const queueCancelledCount = prefetchQueueManager.cancelPage(_context.currentPage)
-      
+      const queueCancelledCount = prefetchQueueManager.cancelPage(
+        _context.currentPage
+      )
+
       return {
         cancelled: true,
         affectedCount: cancelledCount + queueCancelledCount,
@@ -180,27 +187,32 @@ class NetworkCancellationHandler implements CancellationHandler {
   readonly type: CancellationTrigger = 'network-offline'
   readonly priority = 2 // Medium priority
 
-  canHandle(trigger: CancellationTrigger, context: CancellationContext): boolean {
+  canHandle(
+    trigger: CancellationTrigger,
+    context: CancellationContext
+  ): boolean {
     return (
       (trigger === 'network-offline' && !context.networkStatus.isOnline) ||
-      (trigger === 'network-slow' && context.networkStatus.connectionSpeed === 'slow')
+      (trigger === 'network-slow' &&
+        context.networkStatus.connectionSpeed === 'slow')
     )
   }
 
   async execute(_context: CancellationContext): Promise<CancellationResult> {
     const startTime = performance.now()
-    
+
     try {
-      const reason: AbortReason = _context.trigger === 'network-offline' 
-        ? 'network-change' 
-        : 'network-change'
-      
+      const reason: AbortReason =
+        _context.trigger === 'network-offline'
+          ? 'network-change'
+          : 'network-change'
+
       // Cancel all active prefetches
       const cancelledCount = AbortControllerUtils.cancelOnNetworkChange()
-      
+
       // Pause queue processing
       prefetchQueueManager.pause()
-      
+
       return {
         cancelled: true,
         affectedCount: cancelledCount,
@@ -233,17 +245,17 @@ class UnmountCancellationHandler implements CancellationHandler {
   async execute(_context: CancellationContext): Promise<CancellationResult> {
     void _context // Acknowledge parameter for interface compliance
     const startTime = performance.now()
-    
+
     try {
       // Cancel all active prefetches
       const cancelledCount = AbortControllerUtils.cancelOnUnmount()
-      
+
       // Stop queue processing
       prefetchQueueManager.stop()
-      
+
       // Clear entire queue
       prefetchQueueManager.clearQueue()
-      
+
       return {
         cancelled: true,
         affectedCount: cancelledCount,
@@ -276,35 +288,40 @@ class ErrorThresholdHandler implements CancellationHandler {
     this.maxErrors = maxErrors
   }
 
-  canHandle(trigger: CancellationTrigger, _context: CancellationContext): boolean {
+  canHandle(
+    trigger: CancellationTrigger,
+    _context: CancellationContext
+  ): boolean {
     void _context // Acknowledge parameter for interface compliance
     if (trigger === 'error-threshold') {
       this.errorCount++
       return this.errorCount >= this.maxErrors
     }
-    
+
     // Reset error count on successful operations
     if (trigger === 'page-change') {
       this.errorCount = 0
     }
-    
+
     return false
   }
 
   async execute(_context: CancellationContext): Promise<CancellationResult> {
     void _context // Acknowledge parameter for interface compliance
     const startTime = performance.now()
-    
+
     try {
       // Cancel all active prefetches due to too many errors
-      const cancelledCount = AbortControllerUtils.cancelRapidNavigation(_context.currentPage)
-      
+      const cancelledCount = AbortControllerUtils.cancelRapidNavigation(
+        _context.currentPage
+      )
+
       // Pause queue temporarily
       prefetchQueueManager.pause()
-      
+
       // Reset error count
       this.errorCount = 0
-      
+
       return {
         cancelled: true,
         affectedCount: cancelledCount,
@@ -338,20 +355,23 @@ class CancellationChain {
       new ErrorThresholdHandler(),
       ...customHandlers
     )
-    
+
     // Sort by priority (lower number = higher priority)
     this.handlers.sort((a, b) => a.priority - b.priority)
   }
 
-  async process(trigger: CancellationTrigger, context: CancellationContext): Promise<CancellationResult[]> {
+  async process(
+    trigger: CancellationTrigger,
+    context: CancellationContext
+  ): Promise<CancellationResult[]> {
     const results: CancellationResult[] = []
-    
+
     for (const handler of this.handlers) {
       try {
         if (handler.canHandle(trigger, context)) {
           const result = await handler.execute(context)
           results.push(result)
-          
+
           // Stop processing if a high-priority handler succeeded
           if (result.cancelled && handler.priority === 1) {
             break
@@ -367,7 +387,7 @@ class CancellationChain {
         })
       }
     }
-    
+
     return results
   }
 }
@@ -382,7 +402,7 @@ export function usePrefetchCancellation(config: CancellationConfig = {}) {
   const isChangingPage = useSelector(selectIsChangingPage)
   const networkStatus = useSelector(selectNetworkStatus)
   const activePrefetchCount = useSelector(selectActivePrefetchCount)
-  
+
   // Configuration with defaults
   const {
     enableRapidNavigation = true,
@@ -401,60 +421,68 @@ export function usePrefetchCancellation(config: CancellationConfig = {}) {
   // Initialize cancellation chain
   if (!cancellationChainRef.current) {
     const handlers = [...customHandlers]
-    
+
     if (enableRapidNavigation) {
       handlers.push(new RapidNavigationHandler(rapidNavigationThreshold))
     }
-    
+
     if (enableErrorThreshold) {
       handlers.push(new ErrorThresholdHandler(maxErrors))
     }
-    
+
     cancellationChainRef.current = new CancellationChain(handlers)
   }
 
   /**
    * Execute cancellation chain - Template Method Pattern
    */
-  const executeCancellation = useCallback(async (
-    trigger: CancellationTrigger,
-    metadata?: Record<string, unknown>
-  ): Promise<CancellationResult[]> => {
-    const context: CancellationContext = {
-      trigger,
-      currentPage: currentPage || 0,
-      previousPage: previousPageRef.current,
-      networkStatus: {
-        ...networkStatus,
-        lastChecked: networkStatus.lastChecked || Date.now(),
-      },
-      timestamp: Date.now(),
-      metadata: metadata || {},
-    }
+  const executeCancellation = useCallback(
+    async (
+      trigger: CancellationTrigger,
+      metadata?: Record<string, unknown>
+    ): Promise<CancellationResult[]> => {
+      const context: CancellationContext = {
+        trigger,
+        currentPage: currentPage || 0,
+        previousPage: previousPageRef.current,
+        networkStatus: {
+          ...networkStatus,
+          lastChecked: networkStatus.lastChecked || Date.now(),
+        },
+        timestamp: Date.now(),
+        metadata: metadata || {},
+      }
 
-    if (!cancellationChainRef.current) {
-      return []
-    }
+      if (!cancellationChainRef.current) {
+        return []
+      }
 
-    try {
-      const results = await cancellationChainRef.current.process(trigger, context)
-      
-      // Update references
-      previousPageRef.current = currentPage
-      navigationTimestampRef.current = context.timestamp
-      
-      return results
-    } catch (error) {
-      console.error('Cancellation chain execution failed:', error)
-      return [{
-        cancelled: false,
-        affectedCount: 0,
-        reason: 'manual-cancel',
-        duration: 0,
-        errors: [error instanceof Error ? error : new Error(String(error))],
-      }]
-    }
-  }, [currentPage, networkStatus])
+      try {
+        const results = await cancellationChainRef.current.process(
+          trigger,
+          context
+        )
+
+        // Update references
+        previousPageRef.current = currentPage
+        navigationTimestampRef.current = context.timestamp
+
+        return results
+      } catch (error) {
+        console.error('Cancellation chain execution failed:', error)
+        return [
+          {
+            cancelled: false,
+            affectedCount: 0,
+            reason: 'manual-cancel',
+            duration: 0,
+            errors: [error instanceof Error ? error : new Error(String(error))],
+          },
+        ]
+      }
+    },
+    [currentPage, networkStatus]
+  )
 
   // Page change cancellation
   useEffect(() => {
@@ -472,7 +500,12 @@ export function usePrefetchCancellation(config: CancellationConfig = {}) {
         void executeCancellation('network-slow')
       }
     }
-  }, [networkStatus.isOnline, networkStatus.connectionSpeed, enableNetworkCancellation, executeCancellation])
+  }, [
+    networkStatus.isOnline,
+    networkStatus.connectionSpeed,
+    enableNetworkCancellation,
+    executeCancellation,
+  ])
 
   // Component unmount cleanup
   useEffect(() => {
@@ -482,29 +515,38 @@ export function usePrefetchCancellation(config: CancellationConfig = {}) {
   }, [executeCancellation])
 
   // Manual cancellation functions - Open/Closed Principle
-  const cancelAll = useCallback(async (reason?: string) => {
-    return executeCancellation('manual', { reason })
-  }, [executeCancellation])
+  const cancelAll = useCallback(
+    async (reason?: string) => {
+      return executeCancellation('manual', { reason })
+    },
+    [executeCancellation]
+  )
 
-  const cancelPage = useCallback(async (page: number) => {
-    return executeCancellation('user-action', { targetPage: page })
-  }, [executeCancellation])
+  const cancelPage = useCallback(
+    async (page: number) => {
+      return executeCancellation('user-action', { targetPage: page })
+    },
+    [executeCancellation]
+  )
 
-  const reportError = useCallback(async (error: Error) => {
-    return executeCancellation('error-threshold', { error: error.message })
-  }, [executeCancellation])
+  const reportError = useCallback(
+    async (error: Error) => {
+      return executeCancellation('error-threshold', { error: error.message })
+    },
+    [executeCancellation]
+  )
 
   return {
     // State
     activePrefetchCount,
     isChangingPage,
     networkStatus,
-    
+
     // Manual cancellation actions
     cancelAll,
     cancelPage,
     reportError,
-    
+
     // Utilities
     getStats: () => prefetchQueueManager.getStats(),
     isEnabled: (trigger: CancellationTrigger) => {

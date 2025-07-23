@@ -20,12 +20,12 @@
  * - Error boundary integration for graceful failures
  */
 
-export type AbortReason = 
-  | 'user-navigation' 
-  | 'rapid-navigation' 
-  | 'network-change' 
-  | 'manual-cancel' 
-  | 'timeout' 
+export type AbortReason =
+  | 'user-navigation'
+  | 'rapid-navigation'
+  | 'network-change'
+  | 'manual-cancel'
+  | 'timeout'
   | 'component-unmount'
   | 'queue-cleared'
   | 'removed-from-queue'
@@ -115,9 +115,13 @@ class AbortControllerRegistryImpl implements AbortControllerRegistry {
     this.activeControllers.set(requestId, managedController)
 
     // Auto-cleanup on abort
-    managedController.controller.signal.addEventListener('abort', () => {
-      this.activeControllers.delete(requestId)
-    }, { once: true })
+    managedController.controller.signal.addEventListener(
+      'abort',
+      () => {
+        this.activeControllers.delete(requestId)
+      },
+      { once: true }
+    )
 
     return managedController
   }
@@ -175,7 +179,7 @@ class AbortControllerRegistryImpl implements AbortControllerRegistry {
         this.activeControllers.delete(requestId)
       }
     }
-    
+
     // Run cleanup callbacks
     this.cleanupCallbacks.forEach(callback => {
       try {
@@ -219,7 +223,8 @@ class AbortControllerRegistryImpl implements AbortControllerRegistry {
 /**
  * Singleton instance export - Global registry
  */
-export const abortControllerRegistry: AbortControllerRegistry = AbortControllerRegistryImpl.getInstance()
+export const abortControllerRegistry: AbortControllerRegistry =
+  AbortControllerRegistryImpl.getInstance()
 
 /**
  * Utility functions for common abort scenarios
@@ -229,7 +234,10 @@ export const AbortControllerUtils = {
   /**
    * Create controller for prefetch request
    */
-  createForPrefetch: (page: number, requestId: string): ManagedAbortController => {
+  createForPrefetch: (
+    page: number,
+    requestId: string
+  ): ManagedAbortController => {
     return abortControllerRegistry.create(page, requestId)
   },
 
@@ -237,7 +245,7 @@ export const AbortControllerUtils = {
    * Cancel prefetch on rapid navigation
    */
   cancelRapidNavigation: (currentPage?: number): number => {
-    return currentPage 
+    return currentPage
       ? abortControllerRegistry.abortPage(currentPage, 'rapid-navigation')
       : abortControllerRegistry.abortAll('rapid-navigation')
   },

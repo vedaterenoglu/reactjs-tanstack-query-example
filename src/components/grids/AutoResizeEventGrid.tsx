@@ -101,12 +101,17 @@ export const AutoResizeEventGrid = ({
 
   // Auto-resizing grid classes with CSS Grid auto-fit
   // Responsive card sizes: 280px (mobile) to 400px (desktop)
-  const gridClasses = variant === 'compact'
-    ? 'grid gap-4 grid-cols-[repeat(auto-fit,minmax(280px,1fr))] auto-rows-fr'
-    : 'grid gap-6 grid-cols-[repeat(auto-fit,minmax(320px,400px))] auto-rows-fr justify-center'
+  const gridClasses =
+    variant === 'compact'
+      ? 'grid gap-4 grid-cols-[repeat(auto-fit,minmax(280px,1fr))] auto-rows-fr'
+      : 'grid gap-6 grid-cols-[repeat(auto-fit,minmax(320px,400px))] auto-rows-fr justify-center'
 
   return (
-    <section className={className} role="region" aria-label="Auto-resizing events grid">
+    <section
+      className={className}
+      role="region"
+      aria-label="Auto-resizing events grid"
+    >
       {/* Results Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-sm text-muted-foreground font-normal">
@@ -124,11 +129,15 @@ export const AutoResizeEventGrid = ({
 
       {/* Auto-Resizing Events Grid */}
       <ScrollAnimateWrapper animation="fadeUp" threshold={0.1} duration={600}>
-        <div className={gridClasses} role="grid" aria-label="Events grid container">
+        <div
+          className={gridClasses}
+          role="grid"
+          aria-label="Events grid container"
+        >
           {events.map(event => (
-            <div 
-              key={event.slug} 
-              className="min-h-0" 
+            <div
+              key={event.slug}
+              className="min-h-0"
               role="gridcell"
               aria-label={`Event: ${event.name}`}
             >

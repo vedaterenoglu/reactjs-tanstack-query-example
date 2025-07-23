@@ -20,7 +20,10 @@
  * - Observer pattern integration for React state updates
  */
 
-import { AbortControllerUtils, generateRequestId } from './abortControllerFactory'
+import {
+  AbortControllerUtils,
+  generateRequestId,
+} from './abortControllerFactory'
 
 import type { ManagedAbortController } from './abortControllerFactory'
 
@@ -38,7 +41,7 @@ export interface PrefetchCommand {
   readonly strategy: PrefetchStrategy
   readonly createdAt: number
   readonly abortController: ManagedAbortController
-  
+
   execute(): Promise<void>
   canExecute(): boolean
   getEstimatedDuration(): number
@@ -98,7 +101,11 @@ export interface ProcessorStats {
  */
 class PriorityPrefetchQueue implements PrefetchQueue {
   private readonly commands: PrefetchCommand[] = []
-  private readonly priorityOrder: Record<PrefetchPriority, number> = { high: 0, normal: 1, low: 2 }
+  private readonly priorityOrder: Record<PrefetchPriority, number> = {
+    high: 0,
+    normal: 1,
+    low: 2,
+  }
 
   enqueue(command: PrefetchCommand): boolean {
     // Prevent duplicate requests for same page
@@ -144,7 +151,7 @@ class PriorityPrefetchQueue implements PrefetchQueue {
 
   removeByPage(page: number): number {
     const initialLength = this.commands.length
-    
+
     for (let i = this.commands.length - 1; i >= 0; i--) {
       const command = this.commands[i]
       if (command && command.page === page) {
@@ -154,31 +161,41 @@ class PriorityPrefetchQueue implements PrefetchQueue {
         this.commands.splice(i, 1)
       }
     }
-    
+
     return initialLength - this.commands.length
   }
 
   private findInsertPosition(command: PrefetchCommand): number {
-    const commandPriorityValue = this.priorityOrder[command.priority]
-    
+    const commandPriorityValue = (this.priorityOrder as Record<string, number>)[
+      command.priority
+    ]
+
+    if (commandPriorityValue === undefined) {
+      return this.commands.length
+    }
+
     for (let i = 0; i < this.commands.length; i++) {
       const existingCommand = this.commands[i]
       if (!existingCommand) continue
-      
-      const existingPriorityValue = this.priorityOrder[existingCommand.priority] as number
-      
+
+      const existingPriorityValue = (
+        this.priorityOrder as Record<string, number>
+      )[existingCommand.priority] as number
+
       // Higher priority (lower number) goes first
       if (commandPriorityValue < existingPriorityValue) {
         return i
       }
-      
+
       // Same priority - sort by creation time (FIFO)
-      if (commandPriorityValue === existingPriorityValue && 
-          command.createdAt < existingCommand.createdAt) {
+      if (
+        commandPriorityValue === existingPriorityValue &&
+        command.createdAt < existingCommand.createdAt
+      ) {
         return i
       }
     }
-    
+
     return this.commands.length
   }
 }
@@ -190,20 +207,16 @@ class PrefetchQueueProcessor implements QueueProcessor {
   private readonly queue: PrefetchQueue
   private readonly observers = new Set<QueueObserver>()
   private readonly activeCommands = new Map<string, PrefetchCommand>()
-  
+
   private isRunningState = false
   private isPausedState = false
   private processingInterval: NodeJS.Timeout | null = null
   private stats: ProcessorStats
-  
+
   private readonly maxConcurrentRequests: number
   private readonly processingIntervalMs: number
 
-  constructor(
-    queue: PrefetchQueue, 
-    maxConcurrent = 2, 
-    intervalMs = 100
-  ) {
+  constructor(queue: PrefetchQueue, maxConcurrent = 2, intervalMs = 100) {
     this.queue = queue
     this.maxConcurrentRequests = maxConcurrent
     this.processingIntervalMs = intervalMs
@@ -281,7 +294,10 @@ class PrefetchQueueProcessor implements QueueProcessor {
     }
 
     // Process commands while under concurrency limit
-    while (this.activeCommands.size < this.maxConcurrentRequests && !this.queue.isEmpty()) {
+    while (
+      this.activeCommands.size < this.maxConcurrentRequests &&
+      !this.queue.isEmpty()
+    ) {
       const command = this.queue.dequeue()
       if (!command || !command.canExecute()) {
         continue
@@ -304,7 +320,8 @@ class PrefetchQueueProcessor implements QueueProcessor {
       this.notifyCommandComplete(command, true)
     } catch (error) {
       this.stats.failedCommands++
-      const commandError = error instanceof Error ? error : new Error(String(error))
+      const commandError =
+        error instanceof Error ? error : new Error(String(error))
       this.notifyCommandError(command, commandError)
       this.notifyCommandComplete(command, false)
     } finally {
@@ -332,7 +349,10 @@ class PrefetchQueueProcessor implements QueueProcessor {
     }
   }
 
-  private notifyCommandComplete(command: PrefetchCommand, success: boolean): void {
+  private notifyCommandComplete(
+    command: PrefetchCommand,
+    success: boolean
+  ): void {
     for (const observer of this.observers) {
       try {
         observer.onCommandComplete(command, success)
@@ -470,7 +490,10 @@ export function createPrefetchCommand(
   executor: () => Promise<void>
 ): PrefetchCommand {
   const requestId = generateRequestId(page)
-  const abortController = AbortControllerUtils.createForPrefetch(page, requestId)
+  const abortController = AbortControllerUtils.createForPrefetch(
+    page,
+    requestId
+  )
 
   return {
     id: requestId,
@@ -479,19 +502,19 @@ export function createPrefetchCommand(
     strategy,
     createdAt: Date.now(),
     abortController,
-    
+
     async execute(): Promise<void> {
       if (this.abortController.isAborted()) {
         throw new Error('Command was aborted before execution')
       }
-      
+
       await executor()
     },
-    
+
     canExecute(): boolean {
       return !this.abortController.isAborted()
     },
-    
+
     getEstimatedDuration(): number {
       // Simple estimation - could be enhanced with historical data
       return strategy === 'delayed' ? 2000 : 1000

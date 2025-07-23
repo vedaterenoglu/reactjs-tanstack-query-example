@@ -1,3 +1,8 @@
+/**
+ * ClerkProvider - Authentication provider wrapper for Clerk
+ * Configures Clerk authentication with publishable key from environment
+ */
+
 import { ClerkProvider as ClerkReactProvider } from '@clerk/clerk-react'
 import { type ReactNode } from 'react'
 

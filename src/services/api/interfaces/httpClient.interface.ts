@@ -1,3 +1,8 @@
+/**
+ * HTTP Client interfaces - Type definitions for HTTP client implementation
+ * Defines HttpRequestConfig, HttpResponse, HttpError, and HttpClient interfaces
+ */
+
 export interface HttpRequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   headers?: Record<string, string>

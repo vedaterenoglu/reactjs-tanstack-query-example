@@ -15,7 +15,7 @@ import {
   selectSearchQuery,
   selectFilteredEvents,
 } from '@/store/slices/events/eventSelectors'
-import { 
+import {
   initializePagination,
   searchEvents,
   clearFilters,
@@ -54,25 +54,31 @@ export const EventsListPage = () => {
   const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { events: allEvents, isLoading, error, refetch, hasData } = useEventsWithInit()
-  
+  const {
+    events: allEvents,
+    isLoading,
+    error,
+    refetch,
+    hasData,
+  } = useEventsWithInit()
+
   // URL parameter parsing - Single Source of Truth Pattern
   const searchQueryFromUrl = searchParams.get('search')
-  
+
   // Pagination selectors
   const currentPageEvents = useSelector(selectCurrentPageEvents)
   const totalPages = useSelector(selectTotalPages)
   const isChangingPage = useSelector(selectIsChangingPage)
   const currentSearchQuery = useSelector(selectSearchQuery)
-  
+
   // Filtering selectors - Observer Pattern for Redux state
   const filteredEvents = useSelector(selectFilteredEvents)
-  
+
   // Strategy Pattern: Different display strategies based on state
   // Single Source of Truth: Filtered events take precedence when search is active
   const displayEvents = useMemo(() => {
     let result: typeof allEvents = []
-    
+
     // Strategy 1: Search query is active - use filtered events from Redux
     if (currentSearchQuery) {
       result = filteredEvents
@@ -85,20 +91,29 @@ export const EventsListPage = () => {
     else {
       result = allEvents || []
     }
-    
-    return result
-  }, [currentSearchQuery, filteredEvents, totalPages, currentPageEvents, allEvents])
 
-  const handleEventClick = useCallback((event: Event) => {
-    // Command Pattern: Execute navigation command with event slug
-    // Strategy Pattern: Navigate to single event page using slug for SEO-friendly URLs
-    void navigate(`/events/${encodeURIComponent(event.slug)}`)
-  }, [navigate])
+    return result
+  }, [
+    currentSearchQuery,
+    filteredEvents,
+    totalPages,
+    currentPageEvents,
+    allEvents,
+  ])
+
+  const handleEventClick = useCallback(
+    (event: Event) => {
+      // Command Pattern: Execute navigation command with event slug
+      // Strategy Pattern: Navigate to single event page using slug for SEO-friendly URLs
+      void navigate(`/events/${encodeURIComponent(event.slug)}`)
+    },
+    [navigate]
+  )
 
   const handleRetry = useCallback(() => {
     refetch()
   }, [refetch])
-  
+
   // URL Parameter Sync - Observer Pattern
   // Sync Redux state with URL parameters (URL as Single Source of Truth)
   useEffect(() => {
@@ -110,7 +125,7 @@ export const EventsListPage = () => {
       void dispatch(clearFilters())
     }
   }, [searchQueryFromUrl, currentSearchQuery, dispatch, searchParams])
-  
+
   // Initialize pagination when component mounts and we have data
   useEffect(() => {
     const eventsCount = allEvents?.length || 0
@@ -119,15 +134,15 @@ export const EventsListPage = () => {
       void dispatch(initializePagination())
     }
   }, [dispatch, hasData, allEvents?.length, totalPages, currentSearchQuery])
-  
+
   // Scroll to top when page changes
   const handlePageChange = useCallback(() => {
     // Smooth scroll to top of page
-    window.scrollTo({ 
-      top: 0, 
-      behavior: 'smooth' 
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
     })
-    
+
     // Optional: Focus management for accessibility
     const mainElement = document.querySelector('main')
     if (mainElement) {
@@ -137,7 +152,8 @@ export const EventsListPage = () => {
 
   // Determine state flags
   const isEmpty = hasData && displayEvents.length === 0
-  const showPagination = totalPages > 1 && hasData && !isEmpty && !currentSearchQuery
+  const showPagination =
+    totalPages > 1 && hasData && !isEmpty && !currentSearchQuery
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -159,10 +175,10 @@ export const EventsListPage = () => {
           onRefresh={handleRetry}
         >
           {/* Content with Fade Transition */}
-          <div 
+          <div
             className={`transition-all duration-500 ease-in-out ${
-              isChangingPage 
-                ? 'opacity-40 scale-[0.98] blur-[1px]' 
+              isChangingPage
+                ? 'opacity-40 scale-[0.98] blur-[1px]'
                 : 'opacity-100 scale-100 blur-0'
             }`}
           >
@@ -174,7 +190,7 @@ export const EventsListPage = () => {
               filteredCount={displayEvents.length}
             />
           </div>
-          
+
           {/* Pagination Controls */}
           {showPagination && (
             <div className="mt-8">

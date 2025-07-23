@@ -1,44 +1,56 @@
-import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { EventDescription } from '@/components/events/EventDescription'
+import { EventDetailsCard } from '@/components/events/EventDetailsCard'
+import { EventHeader } from '@/components/events/EventHeader'
+import { EventHeroSection } from '@/components/events/EventHeroSection'
 import { StateFrame } from '@/components/frames'
-import { Button } from '@/components/ui/button'
+import { BackNavigation } from '@/components/navigation/BackNavigation'
+import { getAppUrl } from '@/lib/config/env'
 import { useSingleEvent } from '@/lib/hooks/useSingleEvent'
+import {
+  processPayment,
+  validatePaymentRequest,
+} from '@/services/payment/paymentService'
 
 /**
- * SingleEventPage Component - Displays detailed view of a single event
+ * SingleEventPage Component - Container component orchestrating event display components
  *
  * Design Patterns Applied:
- * 1. **Container/Presentational Pattern**: This is a container component that:
+ * 1. **Container/Presentational Pattern**: Pure container component that:
  *    - Handles data fetching through useSingleEvent hook
  *    - Manages loading, error, and data states
- *    - Delegates presentation to semantic HTML structure
+ *    - Orchestrates extracted presentational components
+ *    - Delegates all presentation to specialized components
  *
- * 2. **Custom Hook Pattern**: Uses useSingleEvent for data fetching abstraction
+ * 2. **Compound Component Pattern**: Composes multiple related event components
  *
- * 3. **Template Method Pattern**: Follows existing page structure patterns
+ * 3. **Custom Hook Pattern**: Uses useSingleEvent for data fetching abstraction
  *
- * 4. **Error Boundary Pattern**: Implements error handling with retry capability
+ * 4. **Dependency Injection Pattern**: Injects formatted data and handlers to components
  *
  * SOLID Principles:
- * - **SRP**: Only responsible for orchestrating single event display
- * - **OCP**: Extensible through composition and props
- * - **LSP**: Can be substituted with other page components
- * - **ISP**: Minimal interface, focused on single event display
- * - **DIP**: Depends on abstractions (useSingleEvent hook, Event type, UI components)
+ * - **SRP**: Only responsible for orchestrating component composition
+ * - **OCP**: Extensible through component composition without modification
+ * - **LSP**: Can be substituted with other page containers
+ * - **ISP**: Components receive focused, minimal prop interfaces
+ * - **DIP**: Depends on component and hook abstractions
  *
  * React 19 Patterns:
- * - Suspense-ready with loading states
- * - Error boundaries with graceful degradation
- * - Proper semantic HTML structure
+ * - Component composition over inheritance
  * - Custom hook integration for data management
+ * - Presentational component orchestration
  */
 
 export const SingleEventPage = () => {
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
-  
+
+  // Payment processing state
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+
   // Custom hook integration following DIP and Facade patterns
   const { event, isLoading, error, retry } = useSingleEvent(slug)
 
@@ -78,6 +90,47 @@ export const SingleEventPage = () => {
     retry()
   }, [retry])
 
+  const handlePurchase = useCallback(
+    async (quantity: number) => {
+      if (!slug) return
+
+      try {
+        setIsProcessingPayment(true)
+        setPaymentError(null)
+
+        // Construct redirect URLs for Stripe using environment configuration
+        const successUrl = getAppUrl(`/events/${slug}/payment-success`)
+        const cancelUrl = getAppUrl(`/events/${slug}/payment-cancel`)
+
+        // Validate payment request
+        const paymentRequest = validatePaymentRequest({
+          eventSlug: slug,
+          quantity,
+          successUrl,
+          cancelUrl,
+        })
+
+        // Process secure payment with server-side validation
+        const paymentResponse = await processPayment(paymentRequest)
+
+        // Redirect to Stripe checkout
+        window.location.href = paymentResponse.checkoutUrl
+      } catch (error) {
+        console.error('Payment processing failed:', error)
+
+        // Handle payment errors with user-friendly messages
+        if (error && typeof error === 'object' && 'message' in error) {
+          setPaymentError(error.message as string)
+        } else {
+          setPaymentError('Payment processing failed. Please try again.')
+        }
+      } finally {
+        setIsProcessingPayment(false)
+      }
+    },
+    [slug]
+  )
+
   // Early return for invalid slug
   if (!slug) {
     return (
@@ -85,10 +138,7 @@ export const SingleEventPage = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Event Not Found</h1>
           <p className="text-muted-foreground mb-6">Invalid event URL</p>
-          <Button onClick={handleBackClick} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back
-          </Button>
+          <BackNavigation onBackClick={handleBackClick} label="Go Back" />
         </div>
       </div>
     )
@@ -97,16 +147,7 @@ export const SingleEventPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Back Navigation */}
-      <div className="mb-6">
-        <Button
-          onClick={handleBackClick}
-          variant="ghost"
-          className="hover:bg-muted"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Events
-        </Button>
-      </div>
+      <BackNavigation onBackClick={handleBackClick} />
 
       <StateFrame
         error={error}
@@ -122,89 +163,30 @@ export const SingleEventPage = () => {
         {event && (
           <article className="max-w-4xl mx-auto">
             {/* Hero Image Section */}
-            <div className="relative mb-8 rounded-lg overflow-hidden shadow-lg">
-              <img
-                src={event.imageUrl}
-                alt={event.alt}
-                className="w-full h-64 md:h-80 lg:h-96 object-cover"
-                loading="eager" // Load immediately for hero image
-              />
-              
-              {/* Price Badge */}
-              <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full text-lg font-bold shadow-lg">
-                {formattedPrice}
-              </div>
-            </div>
+            <EventHeroSection event={event} formattedPrice={formattedPrice} />
 
             {/* Event Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main Content */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Event Title */}
-                <header>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                    {event.name}
-                  </h1>
-                  <p className="text-xl text-muted-foreground">
-                    {event.city}
-                  </p>
-                </header>
+                {/* Event Header */}
+                <EventHeader event={event} />
 
                 {/* Event Description */}
-                <section>
-                  <h2 className="text-xl font-semibold mb-3">About This Event</h2>
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {event.description}
-                  </p>
-                </section>
+                <EventDescription event={event} />
               </div>
 
               {/* Event Details Sidebar */}
               <div className="lg:col-span-1">
-                <div className="bg-muted/50 rounded-lg p-6 space-y-4 sticky top-8">
-                  <h2 className="text-xl font-semibold mb-4">Event Details</h2>
-                  
-                  {/* Date & Time */}
-                  <div className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="font-medium">{formattedDate}</p>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{formattedTime}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="font-medium">Location</p>
-                      <p className="text-muted-foreground">{event.location}</p>
-                    </div>
-                  </div>
-
-                  {/* Organizer */}
-                  <div className="flex items-start gap-3">
-                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="font-medium">Organized by</p>
-                      <p className="text-muted-foreground">{event.organizerName}</p>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-start gap-3">
-                    <DollarSign className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="font-medium">Ticket Price</p>
-                      <p className="text-2xl font-bold text-primary">
-                        {formattedPrice}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <EventDetailsCard
+                  event={event}
+                  formattedDate={formattedDate}
+                  formattedTime={formattedTime}
+                  formattedPrice={formattedPrice}
+                  onPurchase={handlePurchase}
+                  isProcessingPayment={isProcessingPayment}
+                  paymentError={paymentError}
+                />
               </div>
             </div>
           </article>

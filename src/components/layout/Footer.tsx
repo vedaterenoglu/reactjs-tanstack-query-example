@@ -1,3 +1,8 @@
+/**
+ * Footer - Basic footer component with copyright information
+ * Displays year and author with responsive styling
+ */
+
 interface FooterProps {
   year?: number
   author: string

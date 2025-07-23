@@ -1,3 +1,8 @@
+/**
+ * Layout - Main application layout component
+ * Contains Navbar, main content area with Outlet, and Footer
+ */
+
 import { Outlet } from 'react-router-dom'
 
 import { Footer, Navbar } from '@/components/layout'

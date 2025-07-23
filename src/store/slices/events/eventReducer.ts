@@ -41,19 +41,19 @@ const initialState: EventsState = {
   error: null,
   lastFetched: null,
   pagination: null,
-  
+
   // Enhanced pagination state
   currentPage: 1,
   itemsPerPage: 12, // Fixed at 12 events per page
   totalPages: 0,
-  
+
   // Page caching system
   cachedPages: {},
-  
+
   // Prefetch state
   prefetchingPage: null,
   prefetchedPages: [],
-  
+
   // Enhanced prefetch features
   prefetchQueue: [],
   activePrefetches: {},
@@ -70,7 +70,7 @@ const initialState: EventsState = {
     prefetchEnabled: true,
   },
   failedPrefetches: {},
-  
+
   // UI state
   isChangingPage: false,
 }
@@ -119,12 +119,13 @@ export function eventReducer(
       const successAction = action as EventAction & {
         type: typeof EVENT_ACTIONS.FETCH_EVENTS_SUCCESS
       }
-      
+
       // Calculate total pages when we have total count
-      const totalPages = successAction.payload.total !== undefined
-        ? Math.ceil(successAction.payload.total / state.itemsPerPage)
-        : state.totalPages
-      
+      const totalPages =
+        successAction.payload.total !== undefined
+          ? Math.ceil(successAction.payload.total / state.itemsPerPage)
+          : state.totalPages
+
       const newState = {
         ...state,
         events: successAction.payload.events,
@@ -133,14 +134,17 @@ export function eventReducer(
         error: null,
         lastFetched: Date.now(),
         totalPages,
-        pagination: successAction.payload.total !== undefined ? {
-          limit: state.pagination?.limit || state.itemsPerPage,
-          offset: state.pagination?.offset || 0,
-          total: successAction.payload.total,
-          hasMore: successAction.payload.hasMore,
-        } : state.pagination,
+        pagination:
+          successAction.payload.total !== undefined
+            ? {
+                limit: state.pagination?.limit || state.itemsPerPage,
+                offset: state.pagination?.offset || 0,
+                total: successAction.payload.total,
+                hasMore: successAction.payload.hasMore,
+              }
+            : state.pagination,
       }
-      
+
       return newState
     }
 
@@ -170,21 +174,25 @@ export function eventReducer(
         type: typeof EVENT_ACTIONS.FETCH_EVENT_SUCCESS
       }
       const newEvent = successAction.payload.event
-      
+
       // Check if event already exists in the list
-      const existingEventIndex = state.events.findIndex(e => e.slug === newEvent.slug)
-      const updatedEvents = existingEventIndex >= 0
-        ? state.events.map((event, index) => 
-            index === existingEventIndex ? newEvent : event
-          )
-        : [...state.events, newEvent]
+      const existingEventIndex = state.events.findIndex(
+        e => e.slug === newEvent.slug
+      )
+      const updatedEvents =
+        existingEventIndex >= 0
+          ? state.events.map((event, index) =>
+              index === existingEventIndex ? newEvent : event
+            )
+          : [...state.events, newEvent]
 
       return {
         ...state,
         events: updatedEvents,
-        filteredEvents: state.searchQuery || state.cityFilter 
-          ? state.filteredEvents // Keep current filter if active
-          : updatedEvents, // Update filtered list if no filters
+        filteredEvents:
+          state.searchQuery || state.cityFilter
+            ? state.filteredEvents // Keep current filter if active
+            : updatedEvents, // Update filtered list if no filters
         selectedEvent: newEvent,
         isLoading: false,
         error: null,
@@ -296,8 +304,9 @@ export function eventReducer(
           limit: paginationAction.payload.limit,
           offset: paginationAction.payload.offset,
           total: paginationAction.payload.total,
-          hasMore: paginationAction.payload.total 
-            ? (paginationAction.payload.offset + paginationAction.payload.limit) < paginationAction.payload.total
+          hasMore: paginationAction.payload.total
+            ? paginationAction.payload.offset + paginationAction.payload.limit <
+              paginationAction.payload.total
             : undefined,
         },
       }
@@ -341,7 +350,7 @@ export function eventReducer(
       const invalidateAction = action as EventAction & {
         type: typeof EVENT_ACTIONS.INVALIDATE_PAGE_CACHE
       }
-      
+
       // If specific page provided, remove only that page
       if (invalidateAction.payload.page !== undefined) {
         const newCachedPages = { ...state.cachedPages }
@@ -351,7 +360,7 @@ export function eventReducer(
           cachedPages: newCachedPages,
         }
       }
-      
+
       // Otherwise, clear all cached pages
       return {
         ...state,
@@ -375,10 +384,14 @@ export function eventReducer(
       }
       return {
         ...state,
-        prefetchedPages: [...state.prefetchedPages, prefetchedAction.payload.page],
-        prefetchingPage: state.prefetchingPage === prefetchedAction.payload.page 
-          ? null 
-          : state.prefetchingPage,
+        prefetchedPages: [
+          ...state.prefetchedPages,
+          prefetchedAction.payload.page,
+        ],
+        prefetchingPage:
+          state.prefetchingPage === prefetchedAction.payload.page
+            ? null
+            : state.prefetchingPage,
       }
     }
 

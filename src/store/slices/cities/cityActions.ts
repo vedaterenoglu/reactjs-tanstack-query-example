@@ -1,3 +1,8 @@
+/**
+ * City actions - Redux action types, interfaces, and action creators for city management
+ * Follows FSA (Flux Standard Action) pattern with typed actions and creators
+ */
+
 import type { City } from '@/lib/types/city.types'
 
 // Action Types - Following traditional Redux naming convention

@@ -35,7 +35,7 @@ import {
 
 /**
  * Custom Hooks for Event State Management
- * 
+ *
  * Design Patterns Applied:
  * 1. **Custom Hook Pattern**: Extracts stateful logic into reusable hooks
  * 2. **Facade Pattern**: Hides Redux complexity behind clean component API
@@ -108,10 +108,7 @@ export const useEvents = () => {
     [dispatch]
   )
 
-  const clearSearchData = useCallback(
-    () => dispatch(clearSearch()),
-    [dispatch]
-  )
+  const clearSearchData = useCallback(() => dispatch(clearSearch()), [dispatch])
 
   const clearFiltersData = useCallback(
     () => dispatch(clearFilters()),
@@ -134,8 +131,11 @@ export const useEvents = () => {
   )
 
   const retryEventOperationData = useCallback(
-    (lastOperation?: 'fetch' | 'search' | 'filter', query?: string, citySlug?: string) =>
-      dispatch(retryEventOperation(lastOperation, query, citySlug)),
+    (
+      lastOperation?: 'fetch' | 'search' | 'filter',
+      query?: string,
+      citySlug?: string
+    ) => dispatch(retryEventOperation(lastOperation, query, citySlug)),
     [dispatch]
   )
 
@@ -200,14 +200,11 @@ export const useEventSearch = () => {
     [dispatch]
   )
 
-  const retrySearch = useCallback(
-    () => {
-      if (searchContext.searchQuery) {
-        dispatch(retryEventOperation('search', searchContext.searchQuery))
-      }
-    },
-    [dispatch, searchContext.searchQuery]
-  )
+  const retrySearch = useCallback(() => {
+    if (searchContext.searchQuery) {
+      dispatch(retryEventOperation('search', searchContext.searchQuery))
+    }
+  }, [dispatch, searchContext.searchQuery])
 
   return {
     searchQuery: searchContext.searchQuery,
@@ -352,7 +349,6 @@ export const useEventsWithInit = () => {
   const eventData = useEvents()
   const { shouldRefresh } = useEventInitialization()
 
-
   // Auto-refresh stale data
   useEffect(() => {
     if (shouldRefresh && !eventData.isLoading) {
@@ -406,17 +402,18 @@ export const useEventPagination = () => {
   const hasMore = useSelector(selectHasMore)
   const isLoading = useSelector(selectIsLoading)
 
-  const loadMore = useCallback(
-    () => dispatch(loadMoreEvents()),
-    [dispatch]
-  )
+  const loadMore = useCallback(() => dispatch(loadMoreEvents()), [dispatch])
 
   return {
     pagination,
     hasMore,
     isLoading,
     loadMore,
-    currentPage: pagination ? Math.floor(pagination.offset / pagination.limit) + 1 : 1,
-    totalPages: pagination?.total ? Math.ceil(pagination.total / pagination.limit) : 1,
+    currentPage: pagination
+      ? Math.floor(pagination.offset / pagination.limit) + 1
+      : 1,
+    totalPages: pagination?.total
+      ? Math.ceil(pagination.total / pagination.limit)
+      : 1,
   }
 }
