@@ -1,11 +1,11 @@
 {
-  "name": "reactjs-redux-thunk-example",
+  "name": "reactjs-redux-toolkit-example",
   "private": true,
-  "version": "1.0.1",
+  "version": "0.0.1",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vedaterenoglu/reactjs-redux-thunk-example.git"
+    "url": "https://github.com/vedaterenoglu/reactjs-redux-toolkit-example.git"
   },
   "keywords": [
     "Node.js",
@@ -23,7 +23,7 @@
     "linkedin": "https://www.linkedin.com/in/vedaterenoglu/"
   },
   "license": "MIT",
-  "homepage": "https://reactjs-redux-thunk-example.demo.vedaterenoglu.com",
+  "homepage": "https://reactjs-redux-toolkit-example.demo.vedaterenoglu.com",
   "scripts": {
     "dev": "vite --port 3061 --host",
     "build": "rm -rf dist && tsc -b && vite build",
