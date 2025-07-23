@@ -1,17 +1,17 @@
-# 🎫 Events Portfolio - React Redux TypeScript
+# 🎫 ReactJS Redux Toolkit Example
 
 <div align="center">
 
 ![React](https://img.shields.io/badge/React-19.1.0-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Redux](https://img.shields.io/badge/Redux-5.0.1-764ABC?style=for-the-badge&logo=redux&logoColor=white)
+![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2.5.0-764ABC?style=for-the-badge&logo=redux&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-7.0.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1.11-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://choosealicense.com/licenses/mit/)
 [![SOLID Principles](https://img.shields.io/badge/Architecture-SOLID-blue.svg?style=for-the-badge)](https://en.wikipedia.org/wiki/SOLID)
 
-**A production-ready event management platform showcasing modern React patterns, Redux state management, and clean architecture principles.**
+**A production-ready event management platform demonstrating complete Redux → Redux Toolkit migration with modern React patterns and clean architecture principles.**
 
 </div>
 
@@ -19,7 +19,7 @@
 
 ## 🎯 Project Overview
 
-This is a comprehensive **event booking platform** built with React 19 and TypeScript, demonstrating advanced state management patterns, payment processing, and modern development practices. The application features city-based event browsing, detailed event pages, ticket purchasing with Stripe integration, and a fully responsive design system.
+This is a comprehensive **event booking platform** built with React 19 and TypeScript, showcasing a complete **Redux → Redux Toolkit migration**. The application demonstrates modern state management patterns, payment processing, and advanced development practices. Features include city-based event browsing, detailed event pages, ticket purchasing with Stripe integration, and a fully responsive design system built with Redux Toolkit's powerful features.
 
 ### 🏗️ Architecture Philosophy
 
@@ -893,7 +893,7 @@ Detailed technical documentation for each major system:
 
 ### 🔧 **Technical Implementation**
 
-- **[🔄 State Management Architecture](./src/documents/readme-sub-documents/state-management-architecture.md)** - Redux patterns and async handling
+- **[🔄 State Management Architecture](./src/documents/readme-sub-documents/state-management-architecture.md)** - Redux Toolkit patterns and async handling
 - **[🎨 UI & Theming System](./src/documents/readme-sub-documents/ui-theming-system.md)** - Design system and component library
 
 ### 🚀 **Deployment & DevOps**
@@ -912,8 +912,8 @@ Detailed technical documentation for each major system:
 ### 1️⃣ Clone & Install
 
 ```bash
-git clone <repository-url>
-cd reactjs-redux-thunk-example
+git clone https://github.com/vedaterenoglu/reactjs-redux-toolkit-example.git
+cd reactjs-redux-toolkit-example
 npm install
 ```
 
@@ -954,9 +954,11 @@ src/
 │   └── 📁 utils/              # Utility functions
 ├── 📁 routes/                 # Page components
 ├── 📁 services/               # API services and facades
-├── 📁 store/                  # Redux store and slices
-│   ├── 📁 slices/cities/      # City state management
-│   └── 📁 slices/events/      # Event state management
+├── 📁 store/                  # Redux Toolkit store and slices
+│   ├── 📁 slices/cities/      # City RTK slice (citySlice.ts)
+│   ├── 📁 slices/events/      # Event RTK slice (eventSlice.ts)
+│   ├── hooks.ts               # Typed Redux hooks
+│   └── index.ts               # Store configuration
 └── 📁 mock/                   # Development mock data
 ```
 
@@ -972,10 +974,9 @@ src/
 
 ### **State Management**
 
-- **Redux 5.0.1** - Predictable state container
-- **Redux Thunk 3.1.0** - Async action handling
+- **Redux Toolkit 2.5.0** - Modern Redux with reduced boilerplate
 - **Redux Persist 6.0.0** - State persistence across sessions
-- **Reselect 5.1.1** - Memoized state selectors
+- **React Redux 9.2.0** - React bindings for Redux
 
 ### **UI & Styling**
 
@@ -989,10 +990,11 @@ src/
 - **Zod 4.0.5** - Runtime schema validation
 - **React Hook Form 7.60.0** - Performant form management
 
-### **Payment Processing**
+### **Development Tools**
 
-- **Stripe Checkout** - Secure payment processing
-- **Server-side Validation** - Price manipulation prevention
+- **ESLint** - Code linting with security plugins
+- **Prettier 3.6.2** - Code formatting
+- **Storybook 9.0.17** - Component documentation
 
 ---
 
@@ -1007,8 +1009,8 @@ src/
 
 ### **State Management Patterns**
 
-- ✅ **Redux Toolkit** - Modern Redux with less boilerplate
-- ✅ **Memoized Selectors** - Performance-optimized data access
+- ✅ **Redux Toolkit Migration** - Complete migration from traditional Redux
+- ✅ **createSlice & createAsyncThunk** - Modern Redux patterns
 - ✅ **Custom Hooks** - Business logic abstraction
 - ✅ **Error Boundaries** - Graceful error handling
 
@@ -1092,20 +1094,133 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
+## 🎯 Extra Features Implementation
+
+### 🔍 RTK Query Integration
+
+This project demonstrates **RTK Query** implementation alongside traditional Redux Toolkit patterns, showcasing both approaches for different use cases:
+
+#### **RTK Query Features Implemented**
+
+```typescript
+// Advanced RTK Query API slice with caching and invalidation
+export const apiSlice = createApi({
+  reducerPath: 'api',
+  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  tagTypes: ['Event', 'EventList', 'City', 'CityList'],
+  endpoints: builder => ({
+    getEvents: builder.query<Event[], EventsQueryParams>({
+      query: params => ({ url: '/events', params }),
+      providesTags: ['EventList'],
+      keepUnusedDataFor: 300, // 5 minutes
+    }),
+    getEventBySlug: builder.query<Event, string>({
+      query: slug => `/events/${slug}`,
+      providesTags: (result, error, slug) => [{ type: 'Event', id: slug }],
+      keepUnusedDataFor: 600, // 10 minutes
+    }),
+  }),
+})
+```
+
+#### **Key RTK Query Benefits Demonstrated**
+
+- **🔄 Automatic Caching**: Intelligent request deduplication and cache management
+- **🔄 Background Refetching**: Automatic data synchronization on focus/reconnect  
+- **⚡ Optimistic Updates**: Immediate UI updates with automatic rollback on errors
+- **🏷️ Tag-based Invalidation**: Smart cache invalidation using entity tags
+- **🎣 Generated Hooks**: Auto-generated hooks (`useGetEventsQuery`, `useGetEventBySlugQuery`)
+
+#### **Hybrid Architecture Pattern**
+
+The project showcases a **hybrid approach** combining both patterns:
+
+```typescript
+// RTK Query for read operations (caching benefits)
+const { data: events, isLoading } = useGetEventsQuery({ city: 'austin' })
+
+// Traditional createAsyncThunk for complex operations (full control)
+const dispatch = useAppDispatch()
+await dispatch(searchEvents(cityName)) // Backend search with Redux state integration
+```
+
+#### **When to Use Each Pattern**
+
+- **RTK Query**: Simple CRUD operations, data fetching with caching needs
+- **createAsyncThunk**: Complex business logic, multi-step operations, custom state management
+
+### 📚 Storybook Component Documentation
+
+Complete **Storybook 9.0.17** implementation with comprehensive component stories:
+
+#### **Story Coverage**
+
+- **📦 8 Component Stories**: Complete coverage of major UI components
+- **🎭 Multiple Variants**: Each component showcased with different states and props
+- **📖 Auto-documentation**: Automatic prop documentation with TypeScript integration
+- **🎨 Interactive Controls**: Live component manipulation through Storybook controls
+
+#### **Implemented Stories**
+
+```typescript
+// Example: CityCard component stories
+export default {
+  title: 'Components/Cards/CityCard',
+  component: CityCard,
+  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  argTypes: {
+    city: { control: 'object' },
+    variant: { control: 'select', options: ['default', 'compact'] },
+    disabled: { control: 'boolean' },
+    onSelect: { action: 'city-selected' },
+  },
+} satisfies Meta<typeof CityCard>
+
+// Multiple story variants
+export const Default: Story = { args: { city: mockCity } }
+export const Compact: Story = { args: { city: mockCity, variant: 'compact' } }
+export const Disabled: Story = { args: { city: mockCity, disabled: true } }
+```
+
+#### **Story Files Implemented**
+
+1. **CityCard.stories.tsx** - City selection card variants
+2. **EventCard.stories.tsx** - Event display card states  
+3. **AutoResizeEventGrid.stories.tsx** - Responsive grid demonstrations
+4. **EventListContainer.stories.tsx** - Container component with state
+5. **CitiesGrid.stories.tsx** - Grid layout variations
+6. **EventGrid.stories.tsx** - Event grid with different datasets
+7. **SearchBox.stories.tsx** - Search component with debouncing demo
+8. **EventListHeader.stories.tsx** - Header component variants
+
+#### **Storybook Development Benefits**
+
+- **🔧 Isolated Development**: Build components in isolation
+- **📱 Responsive Testing**: Test components across different viewport sizes
+- **🎯 Accessibility Testing**: Built-in accessibility addon integration
+- **📸 Visual Regression**: Component snapshot testing capabilities
+- **👥 Design System**: Living documentation for design team collaboration
+
+#### **Running Storybook**
+
+```bash
+npm run storybook  # Start Storybook server on http://localhost:6006
+npm run build-storybook  # Build static Storybook for deployment
+```
+
+---
+
 ## 👨‍💻 Author
 
-**Vedat Erenoglu**
+### Vedat Erenoglu
 
-- 🌐 Website: [vedaterenoglu.com](https://vedaterenoglu.com)
+- 🌐 Website: <https://vedaterenoglu.com>
 - 💼 LinkedIn: [@vedaterenoglu](https://www.linkedin.com/in/vedaterenoglu/)
 - 📧 Email: info@vedaterenoglu.com
 
 ---
 
-<div align="center">
-
 **⭐ Star this repository if you find it helpful for learning modern React patterns!**
 
-_Built with ❤️ using React 19, TypeScript, Redux, and modern development practices_
-
-</div>
+Built with ❤️ using React 19, TypeScript, Redux Toolkit, and modern development practices

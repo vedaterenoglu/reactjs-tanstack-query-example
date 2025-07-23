@@ -1,6 +1,6 @@
 # 🚀 Deployment Guide
 
-Complete deployment instructions for both Vercel and Docker environments.
+Complete deployment instructions for **ReactJS Redux Toolkit Example** application, covering Vercel deployment and local development setup.
 
 ---
 

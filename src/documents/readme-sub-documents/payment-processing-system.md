@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Payment Processing System provides secure, user-friendly ticket purchasing with Stripe integration. It features test mode support, server-side validation, and comprehensive error handling.
+The Payment Processing System provides secure, user-friendly ticket purchasing with Stripe integration. Built with **Redux Toolkit state management**, it features test mode support, server-side validation, and comprehensive error handling with modern async patterns.
 
 ## 🎯 Core Features
 

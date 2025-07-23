@@ -13,7 +13,6 @@ import type {
   PageCache,
   EventsQueryParams,
 } from '@/lib/types/event.types'
-import { showErrorNotification } from '@/lib/utils/notifications'
 import { eventApiService } from '@/services/eventApiService'
 import type { RootState } from '@/store'
 
@@ -219,6 +218,32 @@ export const refreshEvents = createAsyncThunk<
   dispatch(eventSlice.actions.invalidateCache())
   const response = await dispatch(fetchEvents())
   return response.payload as { events: Event[]; total?: number }
+})
+
+// NEW: Search events thunk for backend filtering (mirrors traditional Redux)
+export const searchEvents = createAsyncThunk<
+  { events: Event[]; total?: number },
+  string,
+  { state: RootState }
+>('events/searchEvents', async (searchQuery, { dispatch }) => {
+  // Update search query in state first
+  dispatch(eventSlice.actions.setSearchQuery(searchQuery))
+
+  // Make backend API call with search parameter (same as traditional Redux)
+  const fetchParams: EventsQueryParams = {
+    search: searchQuery,  // Backend filters by city
+    limit: 50,           // Get more results for search
+    offset: 0,
+    sortBy: 'date',
+    order: 'asc',
+  }
+
+  const response = await eventApiService.getEvents(fetchParams)
+
+  return {
+    events: response.data,
+    ...(response.pagination?.total && { total: response.pagination.total }),
+  }
 })
 
 // Events slice with synchronous and asynchronous actions
@@ -465,11 +490,14 @@ const eventSlice = createSlice({
       .addCase(fetchEvents.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.error.message || 'Failed to fetch events'
-        showErrorNotification(state.error)
+        console.error('Failed to fetch events:', state.error)
       })
 
       // Fetch single event
       .addCase(fetchEventBySlug.fulfilled, (state, action) => {
+        // Set the selected event (CRITICAL FIX)
+        state.selectedEvent = action.payload
+        
         // Update or add the event to the events array
         const existingIndex = state.events.findIndex(
           e => e.slug === action.payload.slug
@@ -521,7 +549,7 @@ const eventSlice = createSlice({
       })
       .addCase(fetchEventBySlug.rejected, (state, action) => {
         state.error = action.error.message || 'Failed to fetch event'
-        showErrorNotification(state.error)
+        console.error('Failed to fetch event:', state.error)
       })
 
       // Fetch events page
@@ -547,7 +575,7 @@ const eventSlice = createSlice({
       .addCase(fetchEventsPage.rejected, (state, action) => {
         state.isChangingPage = false
         state.error = action.error.message || 'Failed to fetch events page'
-        showErrorNotification(state.error)
+        console.error('Failed to fetch events page:', state.error)
       })
 
       // Refresh events
@@ -560,6 +588,30 @@ const eventSlice = createSlice({
           )
         }
         state.lastFetched = Date.now()
+      })
+
+      // Search events (backend filtering)
+      .addCase(searchEvents.pending, state => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(searchEvents.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.events = action.payload.events
+        state.filteredEvents = action.payload.events // Backend already filtered
+
+        if (action.payload.total) {
+          state.totalPages = Math.ceil(
+            action.payload.total / state.itemsPerPage
+          )
+        }
+        state.lastFetched = Date.now()
+        state.error = null
+      })
+      .addCase(searchEvents.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.error.message || 'Failed to search events'
+        console.error('Failed to search events:', state.error)
       })
 
       // Handle redux-persist rehydrate

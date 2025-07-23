@@ -2,7 +2,7 @@
 
 ## Overview
 
-The UI & Theming System provides a comprehensive design system built on Tailwind CSS 4.1.11 and Radix UI components. It features dark/light mode support, consistent design tokens, and accessible component patterns.
+The UI & Theming System provides a comprehensive design system built on **Tailwind CSS 4.1.11** and **Radix UI components**. Integrated with **Redux Toolkit patterns**, it features dark/light mode support, consistent design tokens, and accessible component patterns with modern state management.
 
 ## 🎯 Core Features
 
@@ -17,7 +17,7 @@ The UI & Theming System provides a comprehensive design system built on Tailwind
 
 - **shadcn/ui Base**: Pre-built accessible component primitives
 - **Custom Components**: Extended components with project-specific styling
-- **Variant System**: Multiple component variants using class-variance-authority
+- **Variant System**: Multiple component variants using **Class Variance Authority 0.7.1**
 - **Composition Pattern**: Components built through composition
 
 ### Design Tokens

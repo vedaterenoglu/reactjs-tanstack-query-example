@@ -46,8 +46,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Add labels for better container management
 LABEL maintainer="Vedat Erenoglu <info@vedaterenoglu.com>"
-LABEL description="Events Portfolio - React Redux TypeScript Application"
-LABEL version="1.0.1"
+LABEL description="ReactJS Redux Toolkit Example"
+LABEL version="0.0.1"
 
 # Expose port 80
 EXPOSE 80

@@ -7,7 +7,6 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { REHYDRATE } from 'redux-persist'
 
 import type { City, CitiesState } from '@/lib/types/city.types'
-import { showErrorNotification } from '@/lib/utils/notifications'
 import { cityService } from '@/services/cityService'
 import type { RootState, AppDispatch } from '@/store'
 
@@ -142,7 +141,7 @@ const citySlice = createSlice({
       .addCase(fetchCities.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.error.message || 'Failed to fetch cities'
-        showErrorNotification(state.error)
+        console.error('Failed to fetch cities:', state.error)
       })
 
       // Select city by slug
@@ -151,7 +150,7 @@ const citySlice = createSlice({
       })
       .addCase(selectCityBySlug.rejected, (state, action) => {
         state.error = action.error.message || 'City not found'
-        showErrorNotification(state.error)
+        console.error('City not found:', state.error)
       })
 
       // Handle redux-persist rehydrate

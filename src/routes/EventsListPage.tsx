@@ -9,8 +9,8 @@ import type { Event } from '@/lib/types/event.types'
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
   fetchEventsPage,
-  setSearchQuery,
   clearFilters,
+  searchEvents,
 } from '@/store/slices/events'
 import {
   selectCurrentPageEvents,
@@ -116,9 +116,9 @@ export const EventsListPage = () => {
   // URL Parameter Sync - Observer Pattern
   // Sync Redux state with URL parameters (URL as Single Source of Truth)
   useEffect(() => {
-    // Backend filtering using search parameter
+    // Backend filtering using search parameter (mirrors traditional Redux)
     if (searchQueryFromUrl) {
-      void dispatch(setSearchQuery(searchQueryFromUrl))
+      void dispatch(searchEvents(searchQueryFromUrl))
     } else if (!searchQueryFromUrl && currentSearchQuery) {
       // URL has no search parameter, clear filters
       void dispatch(clearFilters())

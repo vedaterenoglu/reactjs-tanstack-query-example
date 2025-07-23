@@ -2,16 +2,16 @@
 
 ## Overview
 
-The State Management Architecture is built on Redux 5.0.1 with Redux Toolkit, providing predictable state updates, efficient data flow, and powerful developer tools. It features comprehensive async handling, memoized selectors, and persistence capabilities.
+The State Management Architecture is built on **Redux Toolkit 2.5.0**, showcasing a complete migration from traditional Redux to modern RTK patterns. It provides predictable state updates, efficient data flow, and powerful developer tools with significantly reduced boilerplate code.
 
 ## 🎯 Core Features
 
-### Redux Store Structure
+### Redux Toolkit Store Structure
 
-- **Modular Slices**: Feature-based state organization
-- **Async Thunks**: Comprehensive async action handling
-- **Memoized Selectors**: Performance-optimized data access
-- **State Persistence**: Automatic state persistence with Redux Persist
+- **createSlice**: Modern slice creation with automatic action creators
+- **createAsyncThunk**: Built-in async action handling
+- **configureStore**: Zero-config store setup with DevTools
+- **State Persistence**: Redux Persist 6.0.0 integration
 
 ### Advanced State Patterns
 
@@ -32,18 +32,15 @@ The State Management Architecture is built on Redux 5.0.1 with Redux Toolkit, pr
 ### Store Configuration
 
 ```typescript
-// Root store configuration
+// Redux Toolkit store configuration
 export const store = configureStore({
-  reducer: {
-    cities: citiesReducer,
-    events: eventsReducer,
-  },
+  reducer: persistedReducer,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
-    }).concat(thunk),
+    }),
   devTools: process.env.NODE_ENV !== 'production',
 })
 
@@ -59,7 +56,7 @@ const persistConfig = {
 ### Slice Architecture
 
 ```typescript
-// Feature slice structure
+// RTK createSlice implementation
 const eventsSlice = createSlice({
   name: 'events',
   initialState: {
@@ -231,12 +228,12 @@ export const selectEventsWithMetadata = createSelector(
 - **ISP**: Focused selectors for specific data needs
 - **DIP**: Components depend on selector abstractions
 
-### Redux Patterns
+### Redux Toolkit Patterns
 
-- **Normalized State**: Flat data structure for efficient updates
-- **Action Creators**: Consistent action creation patterns
-- **Selector Pattern**: Encapsulated state access logic
-- **Thunk Pattern**: Async action handling with side effects
+- **createSlice**: Automatic action creators and reducers
+- **createAsyncThunk**: Built-in async handling with pending/fulfilled/rejected
+- **Immer Integration**: Immutable updates with mutable syntax
+- **RTK Query**: Data fetching and caching (demonstrated in event search)
 
 ### Performance Patterns
 

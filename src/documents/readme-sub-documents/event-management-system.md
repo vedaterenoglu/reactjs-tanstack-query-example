@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Event Management System provides comprehensive event browsing, filtering, and detailed viewing capabilities. It features advanced pagination, prefetching, and responsive design patterns.
+The Event Management System provides comprehensive event browsing, filtering, and detailed viewing capabilities. Built with **Redux Toolkit patterns**, it showcases modern async state management, event filtering via backend API integration, and responsive design patterns.
 
 ## 🎯 Core Features
 
@@ -27,12 +27,12 @@ The Event Management System provides comprehensive event browsing, filtering, an
 - **Loading States**: Smooth transitions between pages
 - **Accessibility**: Full ARIA support and keyboard navigation
 
-### Data Prefetching
+### Redux Toolkit Integration
 
-- **Intelligent Prefetching**: Automatic next page prefetching
-- **Request Cancellation**: AbortController for efficient resource usage
-- **Network Monitoring**: Adaptive behavior based on connection quality
-- **Cache Management**: Smart caching with TTL and invalidation
+- **createAsyncThunk**: Modern async actions (searchEvents, fetchEventBySlug)
+- **Backend API Integration**: City-based event filtering via API search parameter
+- **State Management**: Centralized event state with selectedEvent handling
+- **Error Handling**: Comprehensive error states with user feedback
 
 ## 🏗️ Technical Implementation
 

@@ -54,5 +54,6 @@ export {
   fetchEventBySlug,
   fetchEventsPage,
   refreshEvents,
+  searchEvents,
 } from './eventSlice'
 export * from './eventSelectors'
