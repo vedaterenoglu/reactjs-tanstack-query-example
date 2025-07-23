@@ -1126,7 +1126,7 @@ export const apiSlice = createApi({
 #### **Key RTK Query Benefits Demonstrated**
 
 - **🔄 Automatic Caching**: Intelligent request deduplication and cache management
-- **🔄 Background Refetching**: Automatic data synchronization on focus/reconnect  
+- **🔄 Background Refetching**: Automatic data synchronization on focus/reconnect
 - **⚡ Optimistic Updates**: Immediate UI updates with automatic rollback on errors
 - **🏷️ Tag-based Invalidation**: Smart cache invalidation using entity tags
 - **🎣 Generated Hooks**: Auto-generated hooks (`useGetEventsQuery`, `useGetEventBySlugQuery`)
@@ -1186,7 +1186,7 @@ export const Disabled: Story = { args: { city: mockCity, disabled: true } }
 #### **Story Files Implemented**
 
 1. **CityCard.stories.tsx** - City selection card variants
-2. **EventCard.stories.tsx** - Event display card states  
+2. **EventCard.stories.tsx** - Event display card states
 3. **AutoResizeEventGrid.stories.tsx** - Responsive grid demonstrations
 4. **EventListContainer.stories.tsx** - Container component with state
 5. **CitiesGrid.stories.tsx** - Grid layout variations

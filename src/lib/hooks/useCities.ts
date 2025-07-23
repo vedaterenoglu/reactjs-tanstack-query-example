@@ -44,7 +44,8 @@ export const useCities = () => {
 
   // Memoized action dispatchers following Command Pattern
   const fetchCitiesData = useCallback(
-    (options?: { forceRefresh?: boolean; searchQuery?: string }) => dispatch(fetchCities(options)),
+    (options?: { forceRefresh?: boolean; searchQuery?: string }) =>
+      dispatch(fetchCities(options)),
     [dispatch]
   )
 
@@ -193,10 +194,7 @@ export const useCityInitialization = () => {
 
   const refresh = useCallback(() => dispatch(refreshCities()), [dispatch])
 
-  const retry = useCallback(
-    () => dispatch(retryCityOperation()),
-    [dispatch]
-  )
+  const retry = useCallback(() => dispatch(retryCityOperation()), [dispatch])
 
   // Auto-initialize on mount if needed
   useEffect(() => {

@@ -233,8 +233,8 @@ export const searchEvents = createAsyncThunk<
 
   // Make backend API call with search parameter (same as traditional Redux)
   const fetchParams: EventsQueryParams = {
-    search: searchQuery,  // Backend filters by city
-    limit: 50,           // Get more results for search
+    search: searchQuery, // Backend filters by city
+    limit: 50, // Get more results for search
     offset: 0,
     sortBy: 'date',
     order: 'asc',
@@ -503,7 +503,7 @@ const eventSlice = createSlice({
       .addCase(fetchEventBySlug.fulfilled, (state, action) => {
         // Set the selected event (CRITICAL FIX)
         state.selectedEvent = action.payload
-        
+
         // Update or add the event to the events array
         const existingIndex = state.events.findIndex(
           e => e.slug === action.payload.slug

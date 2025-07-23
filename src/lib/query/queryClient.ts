@@ -24,7 +24,8 @@ export const queryClient = new QueryClient({
       // Retry failed requests 3 times
       retry: 3,
       // Exponential backoff for retries
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex: number) =>
+        Math.min(1000 * 2 ** attemptIndex, 30000),
       // Refetch on window focus
       refetchOnWindowFocus: true,
       // Don't refetch on reconnect by default
@@ -59,7 +60,11 @@ export interface QueryOptions<TData = unknown> {
 }
 
 // Type-safe mutation options helper
-export interface MutationOptions<TData = unknown, TError = Error, TVariables = void> {
+export interface MutationOptions<
+  TData = unknown,
+  TError = Error,
+  TVariables = void,
+> {
   onSuccess?: (data: TData, variables: TVariables) => void | Promise<void>
   onError?: (error: TError, variables: TVariables) => void | Promise<void>
   onSettled?: (
@@ -100,7 +105,9 @@ export const setQueryData = <TData>(
 }
 
 // Utility function to get query data
-export const getQueryData = <TData>(queryKey: readonly unknown[]): TData | undefined => {
+export const getQueryData = <TData>(
+  queryKey: readonly unknown[]
+): TData | undefined => {
   return queryClient.getQueryData<TData>(queryKey)
 }
 
@@ -115,8 +122,8 @@ export const resetQueries = async (queryKey: readonly unknown[]) => {
 }
 
 // Utility function to remove queries
-export const removeQueries = async (queryKey: readonly unknown[]) => {
-  await queryClient.removeQueries({ queryKey })
+export const removeQueries = (queryKey: readonly unknown[]) => {
+  queryClient.removeQueries({ queryKey })
 }
 
 // Export type for use in components
