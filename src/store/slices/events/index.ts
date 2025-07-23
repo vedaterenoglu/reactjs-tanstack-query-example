@@ -1,5 +1,5 @@
 /**
- * Events Redux Slice - Traditional Redux Implementation
+ * Events Redux Slice - Redux Toolkit Implementation
  *
  * Design Patterns Applied:
  * 1. **Module Pattern**: Encapsulates all event-related Redux logic
@@ -13,20 +13,46 @@
  * - **DIP**: Consumers depend on interfaces, not implementations
  *
  * Exports:
- * - Actions and action creators
+ * - Actions from createSlice
  * - Reducer function
  * - Memoized selectors
  * - Async thunk operations
  *
- * Following traditional Redux patterns for consistency with cities slice
- * Implements immutable state management and proper separation of concerns
+ * Following Redux Toolkit patterns with less boilerplate
+ * Implements SOLID principles and immutable state management with Immer
  */
 
 export {
-  EVENT_ACTIONS,
-  eventActionCreators,
-  type EventAction,
-} from './eventActions'
-export { eventReducer } from './eventReducer'
+  eventReducer,
+  setSearchQuery,
+  clearSearch,
+  filterEvents,
+  setCityFilter,
+  clearFilters,
+  selectEvent,
+  clearSelection,
+  invalidateCache,
+  setLastFetched,
+  setPagination,
+  setCurrentPage,
+  setTotalPages,
+  cachePageResults,
+  invalidatePageCache,
+  setPrefetchingPage,
+  markPagePrefetched,
+  setPageChanging,
+  clearPrefetchState,
+  addToPrefetchQueue,
+  removeFromPrefetchQueue,
+  setActivePrefetch,
+  removeActivePrefetch,
+  addFailedPrefetch,
+  clearFailedPrefetches,
+  updateNetworkStatus,
+  updatePrefetchConfig,
+  fetchEvents,
+  fetchEventBySlug,
+  fetchEventsPage,
+  refreshEvents,
+} from './eventSlice'
 export * from './eventSelectors'
-export * from './eventThunks'

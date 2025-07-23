@@ -11,7 +11,7 @@ import storage from 'redux-persist/lib/storage'
 import { cityReducer } from './slices/cities'
 import { eventReducer } from './slices/events'
 
-import type { Action } from 'redux'
+import type { Action, ThunkAction } from '@reduxjs/toolkit'
 import type { PersistConfig } from 'redux-persist'
 
 // Create root reducer with city and event slices
@@ -57,3 +57,6 @@ export type AppThunk<ReturnType = void> = ThunkAction<
 
 // Re-export ThunkAction type for backward compatibility
 export type { ThunkAction } from '@reduxjs/toolkit'
+
+// Export typed hooks for better TypeScript integration
+export { useAppDispatch, useAppSelector } from './hooks'
