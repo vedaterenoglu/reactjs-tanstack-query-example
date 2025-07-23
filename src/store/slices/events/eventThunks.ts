@@ -52,6 +52,7 @@ import {
 export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
   return async (dispatch, getState) => {
     try {
+      
       // Check cache validity - avoid redundant API calls
       const state = getState()
       const isCacheStale = selectIsCacheStale(state)
@@ -77,7 +78,6 @@ export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
 
       // Call API facade - abstracts HTTP implementation details
       const response = await eventApiService.getEvents(params)
-      
 
       // Dispatch success action with fetched data
       dispatch(
@@ -98,24 +98,18 @@ export const fetchEvents = (params?: EventsQueryParams): AppThunk => {
         )
       }
 
-      // Auto-filter if search query provided
+      // Update search query state if search parameter provided
       if (params?.search) {
-        const filteredEvents = eventApiService.searchEventsLocally(
-          response.data,
-          params.search
-        )
-        dispatch(eventActionCreators.filterEvents(filteredEvents))
         dispatch(eventActionCreators.setSearchQuery(params.search))
+        // Trust server-side filtering - response.data already contains filtered results
+        dispatch(eventActionCreators.filterEvents(response.data))
       }
 
-      // Auto-filter by city if provided
+      // Update city filter state if city parameter provided
       if (params?.city) {
-        const cityFilteredEvents = eventApiService.filterEventsByCity(
-          response.data,
-          params.city
-        )
-        dispatch(eventActionCreators.filterEvents(cityFilteredEvents))
         dispatch(eventActionCreators.setCityFilter(params.city))
+        // Trust server-side filtering - response.data already contains filtered results
+        dispatch(eventActionCreators.filterEvents(response.data))
       }
     } catch (error) {
       console.error('[fetchEvents] API call failed:', error)
@@ -190,35 +184,25 @@ export const refreshEvents = (): AppThunk => {
 }
 
 /**
- * Search events by query - implements hybrid server/client search
- * Uses local filtering if data exists, otherwise fetches from server
+ * Search events by query - implements backend search via API
+ * Always fetches from server to get accurate filtered results
  */
 export const searchEvents = (query: string): AppThunk => {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     try {
       // Update search query in state
       dispatch(eventActionCreators.setSearchQuery(query))
 
-      const state = getState()
-      const allEvents = selectEvents(state)
-
-      // No events loaded yet - fetch with search
-      if (allEvents.length === 0) {
-        return dispatch(fetchEvents({ 
-          search: query,
-          limit: 12,
-          offset: 0,
-          sortBy: 'date',
-          order: 'asc'
-        }))
+      // Always fetch from backend with search parameter for accurate results
+      const fetchParams = { 
+        search: query,
+        limit: 50, // Get more results for search
+        offset: 0,
+        sortBy: 'date' as const,
+        order: 'asc' as const
       }
-
-      // Local search on existing data for better performance
-      const filteredEvents = eventApiService.searchEventsLocally(
-        allEvents,
-        query
-      )
-      dispatch(eventActionCreators.filterEvents(filteredEvents))
+      
+      return dispatch(fetchEvents(fetchParams))
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -354,6 +338,13 @@ export const initializeEvents = (): AppThunk => {
       const state = getState()
       const cacheAge = selectCacheAge(state)
       const currentEvents = selectEvents(state)
+      const searchQuery = selectSearchQuery(state)
+      const cityFilter = selectCityFilter(state)
+
+      // Don't initialize if there's an active search or city filter
+      if (searchQuery || cityFilter) {
+        return
+      }
 
       // Load fresh data if no cache or cache is very old (> 1 hour)
       const INITIALIZATION_CACHE_LIMIT = 60 * 60 * 1000 // 1 hour

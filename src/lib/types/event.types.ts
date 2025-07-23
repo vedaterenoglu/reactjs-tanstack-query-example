@@ -149,9 +149,60 @@ export const EventsStateSchema = z.object({
   // Page caching system
   cachedPages: z.record(z.string(), PageCacheSchema).default({}),
   
-  // Prefetch state
+  // Enhanced prefetch state following Strategy Pattern + Interface Segregation
   prefetchingPage: z.number().int().positive().nullable().default(null),
   prefetchedPages: z.array(z.number()).default([]),
+  
+  // Prefetch queue management (Command Pattern)
+  prefetchQueue: z.array(z.object({
+    page: z.number().int().positive(),
+    priority: z.enum(['high', 'normal', 'low']).default('normal'),
+    strategy: z.enum(['immediate', 'delayed', 'network-aware']).default('immediate'),
+    timestamp: z.number(),
+    requestId: z.string().uuid(),
+  })).default([]),
+  
+  // Active prefetch tracking (Factory Pattern for AbortController management)
+  activePrefetches: z.record(z.string(), z.object({
+    page: z.number(),
+    startTime: z.number(),
+    abortReason: z.string().optional(),
+  })).default({}),
+  
+  // Network awareness state (Observer Pattern)
+  networkStatus: z.object({
+    isOnline: z.boolean().default(true),
+    connectionSpeed: z.enum(['fast', 'slow', 'unknown']).default('unknown'),
+    dataSaver: z.boolean().default(false),
+    lastChecked: z.number().optional(),
+  }).default(() => ({
+    isOnline: true,
+    connectionSpeed: 'unknown' as const,
+    dataSaver: false,
+  })),
+  
+  // Prefetch configuration (Strategy Pattern)
+  prefetchConfig: z.object({
+    maxConcurrentRequests: z.number().int().positive().default(2),
+    networkAwareThreshold: z.number().default(1000), // ms
+    delayMs: z.number().default(500),
+    enabledStrategies: z.array(z.string()).default(['immediate', 'delayed']),
+    prefetchEnabled: z.boolean().default(true),
+  }).default(() => ({
+    maxConcurrentRequests: 2,
+    networkAwareThreshold: 1000,
+    delayMs: 500,
+    enabledStrategies: ['immediate', 'delayed'],
+    prefetchEnabled: true,
+  })),
+  
+  // Failed prefetch tracking for retry logic
+  failedPrefetches: z.record(z.string(), z.object({
+    page: z.number(),
+    error: z.string(),
+    retryCount: z.number().default(0),
+    lastAttempt: z.number(),
+  })).default({}),
   
   // UI state
   isChangingPage: z.boolean().default(false),

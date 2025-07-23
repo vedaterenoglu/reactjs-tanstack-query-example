@@ -54,6 +54,23 @@ const initialState: EventsState = {
   prefetchingPage: null,
   prefetchedPages: [],
   
+  // Enhanced prefetch features
+  prefetchQueue: [],
+  activePrefetches: {},
+  networkStatus: {
+    isOnline: true,
+    connectionSpeed: 'unknown',
+    dataSaver: false,
+  },
+  prefetchConfig: {
+    maxConcurrentRequests: 2,
+    networkAwareThreshold: 1000,
+    delayMs: 500,
+    enabledStrategies: ['immediate', 'delayed'],
+    prefetchEnabled: true,
+  },
+  failedPrefetches: {},
+  
   // UI state
   isChangingPage: false,
 }
@@ -108,7 +125,7 @@ export function eventReducer(
         ? Math.ceil(successAction.payload.total / state.itemsPerPage)
         : state.totalPages
       
-      return {
+      const newState = {
         ...state,
         events: successAction.payload.events,
         filteredEvents: successAction.payload.events,
@@ -123,6 +140,8 @@ export function eventReducer(
           hasMore: successAction.payload.hasMore,
         } : state.pagination,
       }
+      
+      return newState
     }
 
     case EVENT_ACTIONS.FETCH_EVENTS_FAILURE: {

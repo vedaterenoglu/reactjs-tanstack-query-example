@@ -216,6 +216,14 @@ export class EventApiService {
       return events
     }
 
+    // DEBUG: Check filtering logic
+    console.warn('API FILTER DEBUG:', {
+      targetCitySlug: citySlug,
+      totalEvents: events.length,
+      sampleEventSlugs: events.slice(0, 3).map(e => ({ city: e.city, citySlug: e.citySlug })),
+      filterResult: events.filter(event => event.citySlug === citySlug).length
+    })
+
     return events.filter(event => event.citySlug === citySlug)
   }
 

@@ -69,8 +69,8 @@ export const CityCard = ({
   // Check if this city is currently selected
   const isSelected = selectedCity?.citySlug === city.citySlug
 
-  // Determine if select button should be visible (hover or selected state)
-  const showButton = showSelectButton && (isHovered || isSelected)
+  // Determine if select button should be visible (hover state only)
+  const showButton = showSelectButton && isHovered
 
   // Event handlers
   const handleSelectClick = useCallback(() => {
@@ -216,11 +216,6 @@ export const CityCard = ({
           >
             {isLoading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            ) : isSelected ? (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Selected
-              </>
             ) : (
               'Select'
             )}

@@ -1,5 +1,6 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
@@ -11,8 +12,14 @@ import {
   selectCurrentPageEvents,
   selectTotalPages,
   selectIsChangingPage,
+  selectSearchQuery,
+  selectFilteredEvents,
 } from '@/store/slices/events/eventSelectors'
-import { initializePagination } from '@/store/slices/events/eventThunks'
+import { 
+  initializePagination,
+  searchEvents,
+  clearFilters,
+} from '@/store/slices/events/eventThunks'
 
 /**
  * EventsListPage Component - Container component for displaying events list
@@ -45,36 +52,73 @@ import { initializePagination } from '@/store/slices/events/eventThunks'
 
 export const EventsListPage = () => {
   const dispatch = useDispatch<AppDispatch>()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { events: allEvents, isLoading, error, refetch, hasData } = useEventsWithInit()
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  
+  // URL parameter parsing - Single Source of Truth Pattern
+  const searchQueryFromUrl = searchParams.get('search')
   
   // Pagination selectors
   const currentPageEvents = useSelector(selectCurrentPageEvents)
   const totalPages = useSelector(selectTotalPages)
   const isChangingPage = useSelector(selectIsChangingPage)
+  const currentSearchQuery = useSelector(selectSearchQuery)
   
-  // Use paginated events if available, otherwise fallback to all events
-  // Safety check: only use pagination if properly initialized
-  const displayEvents = (totalPages > 1 && currentPageEvents.length > 0) 
-    ? currentPageEvents 
-    : (allEvents || [])
+  // Filtering selectors - Observer Pattern for Redux state
+  const filteredEvents = useSelector(selectFilteredEvents)
+  
+  // Strategy Pattern: Different display strategies based on state
+  // Single Source of Truth: Filtered events take precedence when search is active
+  const displayEvents = useMemo(() => {
+    let result: typeof allEvents = []
+    
+    // Strategy 1: Search query is active - use filtered events from Redux
+    if (currentSearchQuery) {
+      result = filteredEvents
+    }
+    // Strategy 2: No search + pagination active - use paginated events
+    else if (totalPages > 1 && currentPageEvents.length > 0) {
+      result = currentPageEvents
+    }
+    // Strategy 3: No search + no pagination - use all events
+    else {
+      result = allEvents || []
+    }
+    
+    return result
+  }, [currentSearchQuery, filteredEvents, totalPages, currentPageEvents, allEvents])
 
   const handleEventClick = useCallback((event: Event) => {
-    setSelectedEvent(event)
-    // TODO: Navigate to event details page
-  }, [])
+    // Command Pattern: Execute navigation command with event slug
+    // Strategy Pattern: Navigate to single event page using slug for SEO-friendly URLs
+    void navigate(`/events/${encodeURIComponent(event.slug)}`)
+  }, [navigate])
 
   const handleRetry = useCallback(() => {
     refetch()
   }, [refetch])
   
+  // URL Parameter Sync - Observer Pattern
+  // Sync Redux state with URL parameters (URL as Single Source of Truth)
+  useEffect(() => {
+    // Backend filtering using search parameter
+    if (searchQueryFromUrl) {
+      void dispatch(searchEvents(searchQueryFromUrl))
+    } else if (!searchQueryFromUrl && currentSearchQuery) {
+      // URL has no search parameter, clear filters
+      void dispatch(clearFilters())
+    }
+  }, [searchQueryFromUrl, currentSearchQuery, dispatch, searchParams])
+  
   // Initialize pagination when component mounts and we have data
   useEffect(() => {
     const eventsCount = allEvents?.length || 0
-    if (hasData && eventsCount > 0) {
+    // Don't initialize pagination during search to prevent overriding search results
+    if (hasData && eventsCount > 0 && !currentSearchQuery) {
       void dispatch(initializePagination())
     }
-  }, [dispatch, hasData, allEvents?.length, totalPages])
+  }, [dispatch, hasData, allEvents?.length, totalPages, currentSearchQuery])
   
   // Scroll to top when page changes
   const handlePageChange = useCallback(() => {
@@ -93,7 +137,7 @@ export const EventsListPage = () => {
 
   // Determine state flags
   const isEmpty = hasData && displayEvents.length === 0
-  const showPagination = totalPages > 1 && hasData && !isEmpty
+  const showPagination = totalPages > 1 && hasData && !isEmpty && !currentSearchQuery
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -143,15 +187,6 @@ export const EventsListPage = () => {
           )}
         </EventsStateFrame>
       </main>
-
-      {/* Debug info - remove in production */}
-      {selectedEvent && (
-        <div className="mt-8 p-4 bg-muted rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            Selected: {selectedEvent.name} (ID: {selectedEvent.slug})
-          </p>
-        </div>
-      )}
     </div>
   )
 }

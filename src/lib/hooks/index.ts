@@ -30,6 +30,9 @@ export {
   useEventPagination,
 } from './useEvents'
 
+// Single event hook
+export { useSingleEvent } from './useSingleEvent'
+
 // Animation hooks
 export {
   useScrollAnimation,

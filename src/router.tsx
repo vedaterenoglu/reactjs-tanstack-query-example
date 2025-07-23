@@ -15,6 +15,9 @@ const Authenticated = lazy(() =>
 const EventsListPage = lazy(() =>
   import('@/routes').then(module => ({ default: module.EventsListPage }))
 )
+const SingleEventPage = lazy(() =>
+  import('@/routes').then(module => ({ default: module.SingleEventPage }))
+)
 
 export const router = createBrowserRouter([
   {
@@ -62,6 +65,20 @@ export const router = createBrowserRouter([
             }
           >
             <EventsListPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'events/:slug',
+        element: (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            }
+          >
+            <SingleEventPage />
           </Suspense>
         ),
       },

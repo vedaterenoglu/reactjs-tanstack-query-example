@@ -1,11 +1,13 @@
 import { Calendar } from 'lucide-react'
 import { useCallback, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { StateFrame } from '@/components/frames'
 import { CitiesGrid } from '@/components/grids'
 import { SearchSection } from '@/components/sections'
 import { Button } from '@/components/ui/button'
 import { useCitiesWithInit, useCitySearch } from '@/lib/hooks'
+import type { City } from '@/lib/types/city.types'
 
 /**
  * HomePage Container Component - Semantic homepage with local events discovery functionality
@@ -59,6 +61,8 @@ export const HomePage = ({
   gridColumns = 'auto',
   className = '',
 }: HomePageProps) => {
+  const navigate = useNavigate()
+  
   // Custom hook integration following DIP and Facade patterns
   const {
     filteredCities,
@@ -99,16 +103,17 @@ export const HomePage = ({
   }, [retryOperation])
 
   const handleCitySelect = useCallback(
-    (/* city: City */) => {
-      // TODO: Navigate to booking page or show booking modal
+    (city: City) => {
+      // Command Pattern: Execute navigation command with city slug
+      // Strategy Pattern: Navigate to events with search filter using citySlug
+      void navigate(`/events?search=${encodeURIComponent(city.citySlug)}`)
     },
-    []
+    [navigate]
   )
 
   const handleGetAllEvents = useCallback(() => {
-    // TODO: Navigate to all events page or implement all events functionality
-    // This will be implemented when the all events route is created
-  }, [])
+    void navigate('/events')
+  }, [navigate])
 
   // Dynamic grid classes based on gridColumns prop
   const gridClasses = useMemo(() => {

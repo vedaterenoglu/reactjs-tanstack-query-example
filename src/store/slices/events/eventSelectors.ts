@@ -46,6 +46,22 @@ const defaultEventsState: EventsState = {
   prefetchingPage: null,
   prefetchedPages: [],
   isChangingPage: false,
+  // Enhanced prefetch state defaults
+  prefetchQueue: [],
+  activePrefetches: {},
+  networkStatus: {
+    isOnline: true,
+    connectionSpeed: 'unknown' as const,
+    dataSaver: false,
+  },
+  prefetchConfig: {
+    maxConcurrentRequests: 2,
+    networkAwareThreshold: 1000,
+    delayMs: 500,
+    enabledStrategies: ['immediate', 'delayed'],
+    prefetchEnabled: true,
+  },
+  failedPrefetches: {},
 }
 
 export const selectEventsState = (state: RootState): EventsState =>
@@ -414,6 +430,337 @@ export const selectSearchContext = createSelector(
     totalCount,
     isSearchActive: Boolean(searchQuery || cityFilter),
     hasResults: filteredCount > 0,
+  })
+)
+
+// Enhanced Prefetch Selectors - Memoized state tracking for intelligent prefetching
+// Using Reselect patterns for optimal performance and React 19 integration
+
+/**
+ * Enhanced Prefetch State Selectors - Memoization Pattern + Single Responsibility
+ * Each selector focuses on one specific aspect of prefetch state
+ */
+
+// Base prefetch state selectors
+export const selectPrefetchQueue = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.prefetchQueue || []
+)
+
+export const selectActivePrefetches = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.activePrefetches || {}
+)
+
+export const selectNetworkStatus = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.networkStatus || {
+    isOnline: true,
+    connectionSpeed: 'unknown' as const,
+    dataSaver: false,
+  }
+)
+
+export const selectPrefetchConfig = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.prefetchConfig || {
+    maxConcurrentRequests: 2,
+    networkAwareThreshold: 1000,
+    delayMs: 500,
+    enabledStrategies: ['immediate', 'delayed'],
+    prefetchEnabled: true,
+  }
+)
+
+export const selectFailedPrefetches = createSelector(
+  [selectEventsState],
+  eventsState => eventsState.failedPrefetches || {}
+)
+
+// Derived prefetch selectors - Computed values following Open/Closed Principle
+export const selectPrefetchQueueLength = createSelector(
+  [selectPrefetchQueue],
+  queue => queue.length
+)
+
+export const selectActivePrefetchCount = createSelector(
+  [selectActivePrefetches],
+  activePrefetches => Object.keys(activePrefetches).length
+)
+
+export const selectFailedPrefetchCount = createSelector(
+  [selectFailedPrefetches],
+  failedPrefetches => Object.keys(failedPrefetches).length
+)
+
+export const selectIsPrefetchEnabled = createSelector(
+  [selectPrefetchConfig, selectNetworkStatus],
+  (config, networkStatus) => 
+    config.prefetchEnabled && 
+    networkStatus.isOnline && 
+    !networkStatus.dataSaver
+)
+
+export const selectCanPrefetchMore = createSelector(
+  [selectActivePrefetchCount, selectPrefetchConfig],
+  (activeCount, config) => activeCount < config.maxConcurrentRequests
+)
+
+// Priority-based queue selectors - Strategy Pattern implementation
+export const selectHighPriorityPrefetches = createSelector(
+  [selectPrefetchQueue],
+  queue => queue.filter(item => item.priority === 'high')
+)
+
+export const selectNormalPriorityPrefetches = createSelector(
+  [selectPrefetchQueue],
+  queue => queue.filter(item => item.priority === 'normal')
+)
+
+export const selectLowPriorityPrefetches = createSelector(
+  [selectPrefetchQueue],
+  queue => queue.filter(item => item.priority === 'low')
+)
+
+// Network-aware selectors - Observer Pattern integration
+export const selectIsOnline = createSelector(
+  [selectNetworkStatus],
+  networkStatus => networkStatus.isOnline
+)
+
+export const selectConnectionSpeed = createSelector(
+  [selectNetworkStatus],
+  networkStatus => networkStatus.connectionSpeed
+)
+
+export const selectDataSaverEnabled = createSelector(
+  [selectNetworkStatus],
+  networkStatus => networkStatus.dataSaver
+)
+
+export const selectShouldUseFastStrategy = createSelector(
+  [selectConnectionSpeed],
+  speed => speed === 'fast'
+)
+
+export const selectShouldUseConservativeStrategy = createSelector(
+  [selectConnectionSpeed, selectDataSaverEnabled],
+  (speed, dataSaver) => speed === 'slow' || dataSaver
+)
+
+// Page-specific prefetch selectors - Parameter-based with memoization
+export const selectIsPageInQueue = createSelector(
+  [selectPrefetchQueue, (_state: RootState, page: number) => page],
+  (queue, page) => queue.some(item => item.page === page)
+)
+
+export const selectIsPagePrefetching = createSelector(
+  [selectActivePrefetches, (_state: RootState, page: number) => page],
+  (activePrefetches, page) => 
+    Object.values(activePrefetches).some(prefetch => prefetch.page === page)
+)
+
+export const selectPagePrefetchStatus = createSelector(
+  [
+    selectIsPagePrefetched, 
+    selectIsPageInQueue, 
+    selectIsPagePrefetching,
+    (_state: RootState, page: number) => page
+  ],
+  (isPrefetched, isQueued, isPrefetching, page) => ({
+    page,
+    isPrefetched,
+    isQueued,
+    isPrefetching,
+    status: isPrefetching ? 'prefetching' : 
+            isQueued ? 'queued' : 
+            isPrefetched ? 'prefetched' : 'none'
+  })
+)
+
+// Failed prefetch tracking - Error handling selectors
+export const selectPagePrefetchErrors = createSelector(
+  [selectFailedPrefetches, (_state: RootState, page: number) => page],
+  (failedPrefetches, page) => {
+    return Object.entries(failedPrefetches)
+      .filter(([, failure]) => failure.page === page)
+      .map(([key, failure]) => ({ requestId: key, ...failure }))
+  }
+)
+
+export const selectHasPagePrefetchFailed = createSelector(
+  [selectPagePrefetchErrors],
+  errors => errors.length > 0
+)
+
+export const selectPagePrefetchRetryCount = createSelector(
+  [selectPagePrefetchErrors],
+  errors => errors.reduce((max, error) => Math.max(max, error.retryCount), 0)
+)
+
+// Strategy-based selectors - Strategy Pattern for prefetch behavior
+export const selectCurrentPrefetchStrategy = createSelector(
+  [selectNetworkStatus],
+  (networkStatus) => {
+    if (!networkStatus.isOnline || networkStatus.dataSaver) {
+      return 'disabled'
+    }
+    
+    if (networkStatus.connectionSpeed === 'fast') {
+      return 'aggressive'
+    }
+    
+    if (networkStatus.connectionSpeed === 'slow') {
+      return 'conservative'
+    }
+    
+    return 'normal'
+  }
+)
+
+export const selectPrefetchDelay = createSelector(
+  [selectPrefetchConfig, selectCurrentPrefetchStrategy],
+  (config, strategy) => {
+    switch (strategy) {
+      case 'aggressive':
+        return Math.min(config.delayMs, 200)
+      case 'conservative':
+        return Math.max(config.delayMs, 2000)
+      case 'disabled':
+        return 0
+      default:
+        return config.delayMs
+    }
+  }
+)
+
+export const selectMaxConcurrentPrefetches = createSelector(
+  [selectPrefetchConfig, selectCurrentPrefetchStrategy],
+  (config, strategy) => {
+    switch (strategy) {
+      case 'aggressive':
+        return Math.min(config.maxConcurrentRequests, 3)
+      case 'conservative':
+        return 1
+      case 'disabled':
+        return 0
+      default:
+        return config.maxConcurrentRequests
+    }
+  }
+)
+
+// Next/Previous page prefetch recommendations - Strategy Pattern
+export const selectNextPagePrefetchRecommendation = createSelector(
+  [
+    selectNextPageNumber, 
+    selectIsPagePrefetched, 
+    selectIsPageInQueue,
+    selectIsPrefetchEnabled,
+    selectCanPrefetchMore
+  ],
+  (nextPage, isPagePrefetched, isPageInQueue, prefetchEnabled, canPrefetchMore) => {
+    if (!nextPage || !prefetchEnabled || !canPrefetchMore) {
+      return { shouldPrefetch: false, reason: 'conditions-not-met' }
+    }
+    
+    // Use state for parameter-based selector
+    const isPrefetched = isPagePrefetched
+    const isQueued = isPageInQueue
+    
+    if (isPrefetched) {
+      return { shouldPrefetch: false, reason: 'already-prefetched' }
+    }
+    
+    if (isQueued) {
+      return { shouldPrefetch: false, reason: 'already-queued' }
+    }
+    
+    return { 
+      shouldPrefetch: true, 
+      page: nextPage,
+      priority: 'normal' as const,
+      strategy: 'immediate' as const
+    }
+  }
+)
+
+export const selectPreviousPagePrefetchRecommendation = createSelector(
+  [
+    selectPreviousPageNumber,
+    selectIsPagePrefetched,
+    selectIsPageInQueue, 
+    selectIsPrefetchEnabled,
+    selectCanPrefetchMore
+  ],
+  (prevPage, isPagePrefetched, isPageInQueue, prefetchEnabled, canPrefetchMore) => {
+    if (!prevPage || !prefetchEnabled || !canPrefetchMore) {
+      return { shouldPrefetch: false, reason: 'conditions-not-met' }
+    }
+    
+    const isPrefetched = isPagePrefetched
+    const isQueued = isPageInQueue
+    
+    if (isPrefetched) {
+      return { shouldPrefetch: false, reason: 'already-prefetched' }
+    }
+    
+    if (isQueued) {
+      return { shouldPrefetch: false, reason: 'already-queued' }
+    }
+    
+    return { 
+      shouldPrefetch: true, 
+      page: prevPage,
+      priority: 'low' as const,
+      strategy: 'delayed' as const
+    }
+  }
+)
+
+// Performance monitoring selectors - Memoization for React DevTools
+export const selectPrefetchPerformanceMetrics = createSelector(
+  [
+    selectPrefetchQueueLength,
+    selectActivePrefetchCount,
+    selectFailedPrefetchCount,
+    selectPrefetchedPages,
+    selectCurrentPrefetchStrategy
+  ],
+  (queueLength, activeCount, failedCount, prefetchedPages, strategy) => ({
+    queueLength,
+    activeCount,
+    failedCount,
+    prefetchedCount: prefetchedPages.length,
+    strategy,
+    efficiency: prefetchedPages.length > 0 
+      ? (prefetchedPages.length / (prefetchedPages.length + failedCount)) * 100 
+      : 0,
+    timestamp: Date.now()
+  })
+)
+
+// Debug selectors for development - Single Responsibility for debugging
+export const selectPrefetchDebugInfo = createSelector(
+  [
+    selectEventsState,
+    selectPrefetchPerformanceMetrics,
+    selectCurrentPrefetchStrategy
+  ],
+  (eventsState, metrics, strategy) => ({
+    state: {
+      prefetchQueue: eventsState.prefetchQueue || [],
+      activePrefetches: eventsState.activePrefetches || {},
+      networkStatus: eventsState.networkStatus,
+      config: eventsState.prefetchConfig,
+    },
+    metrics,
+    strategy,
+    recommendations: {
+      shouldOptimize: metrics.efficiency < 80,
+      shouldReduceConcurrency: metrics.failedCount > 3,
+      shouldIncreaseConcurrency: metrics.efficiency > 95 && metrics.activeCount < 2,
+    }
   })
 )
 
