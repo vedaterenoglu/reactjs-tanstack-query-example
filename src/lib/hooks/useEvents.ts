@@ -10,7 +10,6 @@ import {
   setCityFilter,
   clearSearch,
   clearFilters,
-  selectEvent,
   selectEvents,
   selectFilteredEvents,
   selectSelectedEvent,
@@ -89,10 +88,7 @@ export const useEvents = () => {
     [dispatch]
   )
 
-  const refreshData = useCallback(
-    () => dispatch(refreshEvents()),
-    [dispatch]
-  )
+  const refreshData = useCallback(() => dispatch(refreshEvents()), [dispatch])
 
   const searchEventsData = useCallback(
     (query: string) => dispatch(setSearchQuery(query)),
@@ -112,7 +108,7 @@ export const useEvents = () => {
   )
 
   const selectEventData = useCallback(
-    (eventSlug: string) => dispatch(selectEvent(eventSlug)),
+    (eventSlug: string) => dispatch(fetchEventBySlug(eventSlug)),
     [dispatch]
   )
 
@@ -190,10 +186,8 @@ export const useEventSearch = () => {
   )
 
   const retrySearch = useCallback(() => {
-    if (searchContext.searchQuery) {
-      dispatch(refreshEvents('search', searchContext.searchQuery))
-    }
-  }, [dispatch, searchContext.searchQuery])
+    void dispatch(refreshEvents())
+  }, [dispatch])
 
   return {
     searchQuery: searchContext.searchQuery,
@@ -222,7 +216,7 @@ export const useEventSelection = () => {
   const error = useAppSelector(selectError)
 
   const selectEventById = useCallback(
-    (eventSlug: string) => dispatch(selectEvent(eventSlug)),
+    (eventSlug: string) => dispatch(fetchEventBySlug(eventSlug)),
     [dispatch]
   )
 
@@ -260,7 +254,7 @@ export const useEventFilters = () => {
   const filteredEvents = useAppSelector(selectFilteredEvents)
   const isLoading = useAppSelector(selectIsLoading)
 
-  const setCityFilter = useCallback(
+  const setCityFilterData = useCallback(
     (citySlug: string) => dispatch(setCityFilter(citySlug)),
     [dispatch]
   )
@@ -281,7 +275,7 @@ export const useEventFilters = () => {
     hasActiveFilters,
     filteredEvents,
     isLoading,
-    setCityFilter,
+    setCityFilter: setCityFilterData,
     clearCityFilter,
     clearAllFilters,
   }
@@ -301,15 +295,12 @@ export const useEventInitialization = () => {
   const error = useAppSelector(selectError)
 
   const initialize = useCallback(() => {
-    dispatch(fetchEvents())
+    void dispatch(fetchEvents())
   }, [dispatch])
 
   const refresh = useCallback(() => dispatch(refreshEvents()), [dispatch])
 
-  const retry = useCallback(
-    () => dispatch(refreshEvents('fetch')),
-    [dispatch]
-  )
+  const retry = useCallback(() => dispatch(refreshEvents()), [dispatch])
 
   // Auto-initialize on mount if needed
   useEffect(() => {
@@ -341,7 +332,7 @@ export const useEventsWithInit = () => {
   // Auto-refresh stale data
   useEffect(() => {
     if (shouldRefresh && !eventData.isLoading) {
-      eventData.refreshEvents()
+      void eventData.refreshEvents()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldRefresh, eventData.isLoading, eventData.refreshEvents])

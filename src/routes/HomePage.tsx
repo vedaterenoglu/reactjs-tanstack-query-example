@@ -95,11 +95,11 @@ export const HomePage = ({
   // Memoized event handlers following Performance Pattern
   const handleRefresh = useCallback(() => {
     clearSearch() // Clear search text first
-    refreshCities() // Then refresh cities data
+    void refreshCities() // Then refresh cities data
   }, [clearSearch, refreshCities])
 
   const handleRetry = useCallback(() => {
-    retryOperation()
+    void retryOperation()
   }, [retryOperation])
 
   const handleCitySelect = useCallback(

@@ -77,7 +77,7 @@ export const CityCard = ({
     if (disabled || isLoading) return
 
     try {
-      selectCity(city.citySlug)
+      void selectCity(city.citySlug)
       onSelect?.(city)
     } catch (error) {
       console.error('Failed to select city:', error)

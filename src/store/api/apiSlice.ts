@@ -1,7 +1,7 @@
 /**
  * RTK Query API Slice - Enhanced API operations with automatic caching
  * Complements existing async thunks with advanced caching and invalidation
- * 
+ *
  * Design Patterns Applied:
  * - Facade Pattern: Clean API interface hiding RTK Query complexity
  * - Observer Pattern: Automatic cache invalidation and updates
@@ -11,17 +11,17 @@
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
-import type { 
-  Event, 
-  EventsApiResponse, 
+import type {
+  Event,
+  EventsApiResponse,
   SingleEventApiResponse,
-  EventsQueryParams 
+  EventsQueryParams,
 } from '@/lib/types/event.types'
 
 // Base query configuration
 const baseQuery = fetchBaseQuery({
   baseUrl: '/api', // Simplified base URL
-  prepareHeaders: (headers) => {
+  prepareHeaders: headers => {
     headers.set('Content-Type', 'application/json')
     return headers
   },
@@ -39,8 +39,8 @@ export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery,
   tagTypes: Object.values(API_TAGS),
-  
-  endpoints: (builder) => ({
+
+  endpoints: builder => ({
     // Event Endpoints - Simplified for demonstration
     getEvents: builder.query<Event[], Partial<EventsQueryParams>>({
       query: (params = {}) => ({
@@ -54,11 +54,14 @@ export const apiSlice = createApi({
           ...(params.search && { search: params.search }),
         },
       }),
-      transformResponse: (response: EventsApiResponse): Event[] => response.data,
-      providesTags: (result) =>
+      transformResponse: (response: EventsApiResponse): Event[] =>
+        response.data,
+      providesTags: result =>
         result
           ? [
-              ...result.map(({ slug }) => ({ type: API_TAGS.Event, id: slug } as const)),
+              ...result.map(
+                ({ slug }) => ({ type: API_TAGS.Event, id: slug }) as const
+              ),
               { type: API_TAGS.EventList, id: 'LIST' },
             ]
           : [{ type: API_TAGS.EventList, id: 'LIST' }],
@@ -66,29 +69,33 @@ export const apiSlice = createApi({
     }),
 
     getEventBySlug: builder.query<Event, string>({
-      query: (slug) => `/events/${slug}`,
-      transformResponse: (response: SingleEventApiResponse): Event => response.data,
-      providesTags: (_result, _error, slug) => [{ type: API_TAGS.Event, id: slug }],
+      query: slug => `/events/${slug}`,
+      transformResponse: (response: SingleEventApiResponse): Event =>
+        response.data,
+      providesTags: (_result, _error, slug) => [
+        { type: API_TAGS.Event, id: slug },
+      ],
       keepUnusedDataFor: 600, // 10 minutes
     }),
 
     // Admin Mutations (for future enhancement)
     createEvent: builder.mutation<Event, Partial<Event>>({
-      query: (event) => ({
+      query: event => ({
         url: '/api/admin/events',
         method: 'POST',
         body: event,
       }),
-      transformResponse: (response: SingleEventApiResponse): Event => response.data,
+      transformResponse: (response: SingleEventApiResponse): Event =>
+        response.data,
       invalidatesTags: [{ type: API_TAGS.EventList, id: 'LIST' }],
       // Optimistic update for immediate UI feedback
       async onQueryStarted(_newEvent, { dispatch, queryFulfilled }) {
         try {
           const { data: createdEvent } = await queryFulfilled
-          
+
           // Update the events list cache optimistically
           dispatch(
-            apiSlice.util.updateQueryData('getEvents', {}, (draft) => {
+            apiSlice.util.updateQueryData('getEvents', {}, draft => {
               draft.unshift(createdEvent)
             })
           )
@@ -98,13 +105,17 @@ export const apiSlice = createApi({
       },
     }),
 
-    updateEvent: builder.mutation<Event, { slug: string; updates: Partial<Event> }>({
+    updateEvent: builder.mutation<
+      Event,
+      { slug: string; updates: Partial<Event> }
+    >({
       query: ({ slug, updates }) => ({
         url: `/api/admin/events/${slug}`,
         method: 'PUT',
         body: updates,
       }),
-      transformResponse: (response: SingleEventApiResponse): Event => response.data,
+      transformResponse: (response: SingleEventApiResponse): Event =>
+        response.data,
       invalidatesTags: (_result, _error, { slug }) => [
         { type: API_TAGS.Event, id: slug },
         { type: API_TAGS.EventList, id: 'LIST' },
@@ -113,7 +124,7 @@ export const apiSlice = createApi({
       async onQueryStarted({ slug, updates }, { dispatch, queryFulfilled }) {
         // Optimistically update individual event cache
         const patchResult = dispatch(
-          apiSlice.util.updateQueryData('getEventBySlug', slug, (draft) => {
+          apiSlice.util.updateQueryData('getEventBySlug', slug, draft => {
             Object.assign(draft, updates)
           })
         )
@@ -128,7 +139,7 @@ export const apiSlice = createApi({
     }),
 
     deleteEvent: builder.mutation<void, string>({
-      query: (slug) => ({
+      query: slug => ({
         url: `/api/admin/events/${slug}`,
         method: 'DELETE',
       }),
@@ -139,7 +150,7 @@ export const apiSlice = createApi({
       // Optimistic removal
       async onQueryStarted(slug, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          apiSlice.util.updateQueryData('getEvents', {}, (draft) => {
+          apiSlice.util.updateQueryData('getEvents', {}, draft => {
             const index = draft.findIndex(event => event.slug === slug)
             if (index !== -1) {
               draft.splice(index, 1)

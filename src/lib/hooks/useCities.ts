@@ -1,13 +1,12 @@
 import { useCallback, useEffect } from 'react'
 
-import type { CitySearchOptions } from '@/lib/types/city.types'
 import { useAppDispatch, useAppSelector } from '@/store'
 import {
   fetchCities,
   refreshCities,
   searchCities,
   clearSearch,
-  selectCity,
+  selectCityBySlug,
   initializeCities,
   retryCityOperation,
   selectCities,
@@ -45,7 +44,7 @@ export const useCities = () => {
 
   // Memoized action dispatchers following Command Pattern
   const fetchCitiesData = useCallback(
-    (options?: CitySearchOptions) => dispatch(fetchCities(options)),
+    (options?: { forceRefresh?: boolean; searchQuery?: string }) => dispatch(fetchCities(options)),
     [dispatch]
   )
 
@@ -65,7 +64,7 @@ export const useCities = () => {
   )
 
   const selectCityData = useCallback(
-    (citySlug: string) => dispatch(selectCity(citySlug)),
+    (citySlug: string) => dispatch(selectCityBySlug(citySlug)),
     [dispatch]
   )
 
@@ -75,8 +74,7 @@ export const useCities = () => {
   )
 
   const retryCityOperationData = useCallback(
-    (lastOperation?: 'fetch' | 'search', query?: string) =>
-      dispatch(retryCityOperation(lastOperation, query)),
+    () => dispatch(retryCityOperation()),
     [dispatch]
   )
 
@@ -129,8 +127,8 @@ export const useCitySearch = () => {
   )
 
   const retrySearch = useCallback(
-    () => dispatch(retryCityOperation('search', searchQuery)),
-    [dispatch, searchQuery]
+    () => dispatch(retryCityOperation()),
+    [dispatch]
   )
 
   return {
@@ -158,7 +156,7 @@ export const useCitySelection = () => {
   const error = useAppSelector(selectError)
 
   const selectCityById = useCallback(
-    (citySlug: string) => dispatch(selectCity(citySlug)),
+    (citySlug: string) => dispatch(selectCityBySlug(citySlug)),
     [dispatch]
   )
 
@@ -190,13 +188,13 @@ export const useCityInitialization = () => {
   const error = useAppSelector(selectError)
 
   const initialize = useCallback(() => {
-    dispatch(initializeCities())
+    void dispatch(initializeCities())
   }, [dispatch])
 
   const refresh = useCallback(() => dispatch(refreshCities()), [dispatch])
 
   const retry = useCallback(
-    () => dispatch(retryCityOperation('fetch')),
+    () => dispatch(retryCityOperation()),
     [dispatch]
   )
 
@@ -238,7 +236,7 @@ export const useCitiesWithInit = () => {
   // Auto-refresh stale data
   useEffect(() => {
     if (shouldRefresh && !cityData.isLoading) {
-      cityData.refreshCities()
+      void cityData.refreshCities()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldRefresh, cityData.isLoading, cityData.refreshCities])

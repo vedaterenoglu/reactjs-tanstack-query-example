@@ -3,14 +3,15 @@
  * Manages city data, search, selection, and caching with RTK patterns
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { REHYDRATE } from 'redux-persist'
 
+import type { City, CitiesState } from '@/lib/types/city.types'
 import { showErrorNotification } from '@/lib/utils/notifications'
 import { cityService } from '@/services/cityService'
 import type { RootState, AppDispatch } from '@/store'
 
-import type { City, CitiesState } from './city.types'
+import type { PayloadAction } from '@reduxjs/toolkit'
 
 // Initial state with type safety
 const initialState: CitiesState = {
@@ -58,13 +59,14 @@ export const fetchCities = createAsyncThunk<
   return response.data
 })
 
-export const refreshCities = createAsyncThunk<City[], void, { state: RootState }>(
-  'cities/refreshCities',
-  async (_, { dispatch }) => {
-    const response = await dispatch(fetchCities({ forceRefresh: true }))
-    return response.payload as City[]
-  }
-)
+export const refreshCities = createAsyncThunk<
+  City[],
+  void,
+  { state: RootState }
+>('cities/refreshCities', async (_, { dispatch }) => {
+  const response = await dispatch(fetchCities({ forceRefresh: true }))
+  return response.payload as City[]
+})
 
 export const selectCityBySlug = createAsyncThunk<
   City,
@@ -126,8 +128,12 @@ const citySlice = createSlice({
         state.filteredCities = state.searchQuery
           ? action.payload.filter(
               city =>
-                city.city.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-                city.citySlug.toLowerCase().includes(state.searchQuery.toLowerCase())
+                city.city
+                  .toLowerCase()
+                  .includes(state.searchQuery.toLowerCase()) ||
+                city.citySlug
+                  .toLowerCase()
+                  .includes(state.searchQuery.toLowerCase())
             )
           : action.payload
         state.lastFetched = Date.now()
@@ -152,7 +158,9 @@ const citySlice = createSlice({
       .addMatcher(
         action => action.type === REHYDRATE,
         (state, action) => {
-          const rehydrateAction = action as { payload?: { cities?: CitiesState } }
+          const rehydrateAction = action as {
+            payload?: { cities?: CitiesState }
+          }
           if (rehydrateAction.payload?.cities) {
             return {
               ...state,
@@ -160,49 +168,52 @@ const citySlice = createSlice({
               isLoading: false,
             }
           }
+          return state
         }
       )
   },
 })
 
 // Export actions and reducer
-export const { setSearchQuery, clearSearch, selectCity, clearSelection, invalidateCache } =
-  citySlice.actions
+export const {
+  setSearchQuery,
+  clearSearch,
+  selectCity,
+  clearSelection,
+  invalidateCache,
+} = citySlice.actions
 export const cityReducer = citySlice.reducer
 
 // Thunk wrappers for backward compatibility
-export const searchCities = (query: string) => async (
-  dispatch: AppDispatch,
-  getState: () => RootState
-) => {
-  dispatch(setSearchQuery(query))
+export const searchCities =
+  (query: string) =>
+  async (dispatch: AppDispatch, getState: () => RootState) => {
+    dispatch(setSearchQuery(query))
 
-  // Fetch cities if not already loaded
-  const state = getState()
-  if (state.cities.cities.length === 0) {
-    await dispatch(fetchCities({ searchQuery: query }))
+    // Fetch cities if not already loaded
+    const state = getState()
+    if (state.cities.cities.length === 0) {
+      await dispatch(fetchCities({ searchQuery: query }))
+    }
   }
-}
 
 export const clearCitySearch = () => (dispatch: AppDispatch) => {
   dispatch(clearSearch())
 }
 
-export const initializeCities = () => async (
-  dispatch: AppDispatch,
-  getState: () => RootState
-) => {
-  const state = getState()
-  const currentTime = Date.now()
-  const cacheAge = state.cities.lastFetched
-    ? currentTime - state.cities.lastFetched
-    : Infinity
+export const initializeCities =
+  () => async (dispatch: AppDispatch, getState: () => RootState) => {
+    const state = getState()
+    const currentTime = Date.now()
+    const cacheAge = state.cities.lastFetched
+      ? currentTime - state.cities.lastFetched
+      : Infinity
 
-  // Initialize if cache is stale or empty
-  if (cacheAge > CACHE_DURATION || state.cities.cities.length === 0) {
-    await dispatch(fetchCities())
+    // Initialize if cache is stale or empty
+    if (cacheAge > CACHE_DURATION || state.cities.cities.length === 0) {
+      await dispatch(fetchCities())
+    }
   }
-}
 
 export const retryCityOperation = () => async (dispatch: AppDispatch) => {
   await dispatch(fetchCities({ forceRefresh: true }))

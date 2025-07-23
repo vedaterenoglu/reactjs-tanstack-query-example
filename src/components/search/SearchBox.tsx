@@ -97,7 +97,7 @@ export const SearchBox = ({
 
     const timeoutId = setTimeout(() => {
       if (inputValue.trim()) {
-        search(inputValue.trim())
+        void search(inputValue.trim())
       } else if (searchQuery) {
         // Clear search if input is empty but query exists
         clearSearch()
@@ -136,7 +136,7 @@ export const SearchBox = ({
   )
 
   const handleRetryClick = useCallback(() => {
-    retrySearch()
+    void retrySearch()
   }, [retrySearch])
 
   // Determine current state for UI feedback

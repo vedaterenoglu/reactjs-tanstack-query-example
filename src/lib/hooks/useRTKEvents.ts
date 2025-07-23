@@ -1,7 +1,7 @@
 /**
  * RTK Query Events Hook - Enhanced data fetching with automatic caching
  * Demonstrates RTK Query integration alongside existing async thunks
- * 
+ *
  * Design Patterns Applied:
  * - Facade Pattern: Clean interface hiding RTK Query complexity
  * - Adapter Pattern: Adapts RTK Query hooks to match existing hook patterns
@@ -18,7 +18,6 @@ import {
   useGetEventBySlugQuery,
   useLazyGetEventBySlugQuery,
 } from '@/store/api/apiSlice'
-
 
 /**
  * Enhanced events hook using RTK Query for optimal caching and performance
@@ -41,25 +40,30 @@ export const useRTKEvents = (params: Partial<EventsQueryParams> = {}) => {
   })
 
   // Derived state for backward compatibility with existing hooks
-  const derivedState = useMemo(() => ({
-    // Data state
-    events,
-    hasData: events.length > 0,
-    isEmpty: events.length === 0,
-    eventsCount: events.length,
+  const derivedState = useMemo(
+    () => ({
+      // Data state
+      events,
+      hasData: events.length > 0,
+      isEmpty: events.length === 0,
+      eventsCount: events.length,
 
-    // Loading states (RTK Query provides more granular loading states)
-    isLoading, // Initial load
-    isFetching, // Any fetch operation (including background)
-    isRefreshing: isFetching && !isLoading, // Background refresh
+      // Loading states (RTK Query provides more granular loading states)
+      isLoading, // Initial load
+      isFetching, // Any fetch operation (including background)
+      isRefreshing: isFetching && !isLoading, // Background refresh
 
-    // Error state
-    isError,
-    error: error ? (error as { message?: string }).message || 'Failed to fetch events' : null,
+      // Error state
+      isError,
+      error: error
+        ? (error as { message?: string }).message || 'Failed to fetch events'
+        : null,
 
-    // Actions
-    refetch, // Manual refetch
-  }), [events, isLoading, isFetching, isError, error, refetch])
+      // Actions
+      refetch, // Manual refetch
+    }),
+    [events, isLoading, isFetching, isError, error, refetch]
+  )
 
   return derivedState
 }
@@ -72,31 +76,38 @@ export const useLazyRTKEvents = () => {
   const [trigger, result] = useLazyGetEventsQuery()
 
   const fetchEvents = useMemo(
-    () => (params: Partial<EventsQueryParams> = {}) => {
-      return trigger(params, true) // Subscribe to cache updates
-    },
+    () =>
+      (params: Partial<EventsQueryParams> = {}) => {
+        return trigger(params, true) // Subscribe to cache updates
+      },
     [trigger]
   )
 
-  const derivedState = useMemo(() => ({
-    // Data state
-    events: result.data || [],
-    hasData: (result.data?.length || 0) > 0,
-    isEmpty: (result.data?.length || 0) === 0,
-    eventsCount: result.data?.length || 0,
+  const derivedState = useMemo(
+    () => ({
+      // Data state
+      events: result.data || [],
+      hasData: (result.data?.length || 0) > 0,
+      isEmpty: (result.data?.length || 0) === 0,
+      eventsCount: result.data?.length || 0,
 
-    // Loading states
-    isLoading: result.isLoading,
-    isFetching: result.isFetching,
-    isUninitialized: result.isUninitialized,
+      // Loading states
+      isLoading: result.isLoading,
+      isFetching: result.isFetching,
+      isUninitialized: result.isUninitialized,
 
-    // Error state
-    isError: result.isError,
-    error: result.error ? (result.error as { message?: string }).message || 'Failed to fetch events' : null,
+      // Error state
+      isError: result.isError,
+      error: result.error
+        ? (result.error as { message?: string }).message ||
+          'Failed to fetch events'
+        : null,
 
-    // Actions
-    fetchEvents,
-  }), [result, fetchEvents])
+      // Actions
+      fetchEvents,
+    }),
+    [result, fetchEvents]
+  )
 
   return derivedState
 }
@@ -114,26 +125,31 @@ export const useRTKEvent = (slug: string, options: { skip?: boolean } = {}) => {
     error,
     refetch,
   } = useGetEventBySlugQuery(slug, {
-    skip: options.skip,
+    skip: options.skip ?? false,
     refetchOnMountOrArgChange: 60, // Individual events change less frequently
   })
 
-  const derivedState = useMemo(() => ({
-    // Data state
-    event: event || null,
-    hasEvent: !!event,
+  const derivedState = useMemo(
+    () => ({
+      // Data state
+      event: event || null,
+      hasEvent: !!event,
 
-    // Loading states
-    isLoading,
-    isFetching,
+      // Loading states
+      isLoading,
+      isFetching,
 
-    // Error state
-    isError,
-    error: error ? (error as { message?: string }).message || 'Event not found' : null,
+      // Error state
+      isError,
+      error: error
+        ? (error as { message?: string }).message || 'Event not found'
+        : null,
 
-    // Actions
-    refetch,
-  }), [event, isLoading, isFetching, isError, error, refetch])
+      // Actions
+      refetch,
+    }),
+    [event, isLoading, isFetching, isError, error, refetch]
+  )
 
   return derivedState
 }
@@ -151,23 +167,28 @@ export const useLazyRTKEvent = () => {
     [trigger]
   )
 
-  const derivedState = useMemo(() => ({
-    // Data state
-    event: result.data || null,
-    hasEvent: !!result.data,
+  const derivedState = useMemo(
+    () => ({
+      // Data state
+      event: result.data || null,
+      hasEvent: !!result.data,
 
-    // Loading states
-    isLoading: result.isLoading,
-    isFetching: result.isFetching,
-    isUninitialized: result.isUninitialized,
+      // Loading states
+      isLoading: result.isLoading,
+      isFetching: result.isFetching,
+      isUninitialized: result.isUninitialized,
 
-    // Error state
-    isError: result.isError,
-    error: result.error ? (result.error as { message?: string }).message || 'Event not found' : null,
+      // Error state
+      isError: result.isError,
+      error: result.error
+        ? (result.error as { message?: string }).message || 'Event not found'
+        : null,
 
-    // Actions
-    fetchEvent,
-  }), [result, fetchEvent])
+      // Actions
+      fetchEvent,
+    }),
+    [result, fetchEvent]
+  )
 
   return derivedState
 }
@@ -179,42 +200,45 @@ export const useLazyRTKEvent = () => {
 export const useRTKEventsUtils = () => {
   // These would be used for cache management
   // Currently returning placeholder functions for demonstration
-  
-  const utils = useMemo(() => ({
-    // Cache invalidation
-    invalidateEvents: () => {
-      // apiSlice.util.invalidateTags(['EventList'])
-      console.warn('Would invalidate events cache')
-    },
-    
-    // Prefetch for performance
-    prefetchEvent: (slug: string) => {
-      // dispatch(apiSlice.util.prefetch('getEventBySlug', slug))
-      console.warn(`Would prefetch event: ${slug}`)
-    },
-    
-    // Cache inspection (for debugging)
-    getCacheStatus: () => {
-      // return apiSlice.util.selectCachedArgsForQuery(state, 'getEvents')
-      return { cached: true, timestamp: Date.now() }
-    },
-  }), [])
+
+  const utils = useMemo(
+    () => ({
+      // Cache invalidation
+      invalidateEvents: () => {
+        // apiSlice.util.invalidateTags(['EventList'])
+        console.warn('Would invalidate events cache')
+      },
+
+      // Prefetch for performance
+      prefetchEvent: (slug: string) => {
+        // dispatch(apiSlice.util.prefetch('getEventBySlug', slug))
+        console.warn(`Would prefetch event: ${slug}`)
+      },
+
+      // Cache inspection (for debugging)
+      getCacheStatus: () => {
+        // return apiSlice.util.selectCachedArgsForQuery(state, 'getEvents')
+        return { cached: true, timestamp: Date.now() }
+      },
+    }),
+    []
+  )
 
   return utils
 }
 
 /**
  * Example usage patterns for RTK Query hooks:
- * 
+ *
  * // Automatic data fetching with caching
  * const { events, isLoading, refetch } = useRTKEvents({ limit: 10 })
- * 
+ *
  * // Lazy loading for search
  * const { fetchEvents, events, isLoading } = useLazyRTKEvents()
- * 
+ *
  * // Single event with cache
  * const { event, isLoading } = useRTKEvent('event-slug')
- * 
+ *
  * // Cache management
  * const { invalidateEvents, prefetchEvent } = useRTKEventsUtils()
  */

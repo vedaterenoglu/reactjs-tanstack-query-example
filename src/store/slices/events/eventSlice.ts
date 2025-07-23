@@ -4,13 +4,20 @@
  * Complete implementation with async thunks
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { REHYDRATE } from 'redux-persist'
 
-import type { Event, EventsState, PageCache, EventsQueryParams } from '@/lib/types/event.types'
+import type {
+  Event,
+  EventsState,
+  PageCache,
+  EventsQueryParams,
+} from '@/lib/types/event.types'
 import { showErrorNotification } from '@/lib/utils/notifications'
 import { eventApiService } from '@/services/eventApiService'
 import type { RootState } from '@/store'
+
+import type { PayloadAction } from '@reduxjs/toolkit'
 
 // Extract types from EventsState for better type safety
 type PrefetchQueueItem = EventsState['prefetchQueue'][number]
@@ -88,13 +95,27 @@ export const fetchEvents = createAsyncThunk<
   const currentTime = Date.now()
 
   // Check cache validity
-  const isCacheStale = !lastFetched || currentTime - lastFetched > CACHE_DURATION
-  if (!isCacheStale && state.events.events.length > 0 && !params.search && !params.city) {
+  const isCacheStale =
+    !lastFetched || currentTime - lastFetched > CACHE_DURATION
+  if (
+    !isCacheStale &&
+    state.events.events.length > 0 &&
+    !params.search &&
+    !params.city
+  ) {
     return { events: state.events.events }
   }
 
-  // Fetch from API
-  const response = await eventApiService.getEvents(params)
+  // Fetch from API with required defaults
+  const queryParams = {
+    limit: params.limit || 12,
+    offset: params.offset || 0,
+    sortBy: params.sortBy || ('date' as const),
+    order: params.order || ('asc' as const),
+    ...(params.city && { city: params.city }),
+    ...(params.search && { search: params.search }),
+  }
+  const response = await eventApiService.getEvents(queryParams)
 
   // Update search/filter state if params provided
   if (params.search) {
@@ -106,74 +127,89 @@ export const fetchEvents = createAsyncThunk<
 
   return {
     events: response.data,
-    total: response.pagination?.total,
+    ...(response.pagination?.total && { total: response.pagination.total }),
   }
 })
 
-export const fetchEventBySlug = createAsyncThunk<Event, string, { state: RootState }>(
-  'events/fetchEventBySlug',
-  async (slug, { getState }) => {
-    const state = getState()
-    
-    // Check if event exists in local cache first
-    const cachedEvent = state.events.events.find(event => event.slug === slug)
-    if (cachedEvent) {
-      return cachedEvent
-    }
+export const fetchEventBySlug = createAsyncThunk<
+  Event,
+  string,
+  { state: RootState }
+>('events/fetchEventBySlug', async (slug, { getState }) => {
+  const state = getState()
 
-    const response = await eventApiService.getEventBySlug(slug)
-    return response.data
+  // Check if event exists in local cache first
+  const cachedEvent = state.events.events.find(event => event.slug === slug)
+  if (cachedEvent) {
+    return cachedEvent
   }
-)
+
+  const response = await eventApiService.getEventBySlug(slug)
+  return response
+})
 
 export const fetchEventsPage = createAsyncThunk<
   { events: Event[]; page: number; total?: number },
   { page: number; useCache?: boolean; isPrefetch?: boolean },
   { state: RootState }
->('events/fetchEventsPage', async ({ page, useCache = true, isPrefetch = false }, { getState, dispatch }) => {
-  const state = getState()
-  const pageKey = `page-${page}`
+>(
+  'events/fetchEventsPage',
+  async (
+    { page, useCache = true, isPrefetch = false },
+    { getState, dispatch }
+  ) => {
+    const state = getState()
+    const pageKey = `page-${page}`
 
-  // Check page cache
-  if (useCache && state.events.cachedPages[pageKey]) {
-    const cached = state.events.cachedPages[pageKey]
-    const isStale = Date.now() - cached.timestamp > CACHE_DURATION
-    if (!isStale) {
-      return { events: cached.events, page, total: state.events.totalPages * state.events.itemsPerPage }
+    // Check page cache
+    if (useCache && state.events.cachedPages[pageKey]) {
+      const cached = state.events.cachedPages[pageKey]
+      const isStale = Date.now() - cached.timestamp > CACHE_DURATION
+      if (!isStale) {
+        return {
+          events: cached.events,
+          page,
+          total: state.events.totalPages * state.events.itemsPerPage,
+        }
+      }
+    }
+
+    // Mark as prefetching if it's a prefetch operation
+    if (isPrefetch) {
+      dispatch(eventSlice.actions.setPrefetchingPage(page))
+    }
+
+    const offset = (page - 1) * state.events.itemsPerPage
+    const response = await eventApiService.getEvents({
+      limit: state.events.itemsPerPage,
+      offset,
+      sortBy: 'date',
+      order: 'asc',
+    })
+
+    // Cache the results
+    dispatch(
+      eventSlice.actions.cachePageResults({
+        pageKey,
+        pageData: {
+          events: response.data,
+          timestamp: Date.now(),
+        },
+      })
+    )
+
+    // Mark as prefetched
+    if (isPrefetch) {
+      dispatch(eventSlice.actions.markPagePrefetched(page))
+    }
+
+    return {
+      events: response.data,
+      page,
+      ...(response.pagination?.total && { total: response.pagination.total }),
     }
   }
-
-  // Mark as prefetching if it's a prefetch operation
-  if (isPrefetch) {
-    dispatch(eventSlice.actions.setPrefetchingPage(page))
-  }
-
-  const offset = (page - 1) * state.events.itemsPerPage
-  const response = await eventApiService.getEvents({
-    limit: state.events.itemsPerPage,
-    offset,
-  })
-
-  // Cache the results
-  dispatch(eventSlice.actions.cachePageResults({
-    pageKey,
-    pageData: {
-      events: response.data,
-      timestamp: Date.now(),
-    },
-  }))
-
-  // Mark as prefetched
-  if (isPrefetch) {
-    dispatch(eventSlice.actions.markPagePrefetched(page))
-  }
-
-  return {
-    events: response.data,
-    page,
-    total: response.pagination?.total,
-  }
-})
+)
 
 export const refreshEvents = createAsyncThunk<
   { events: Event[]; total?: number },
@@ -405,16 +441,24 @@ const eventSlice = createSlice({
         state.filteredEvents = state.searchQuery
           ? action.payload.events.filter(
               (event: Event) =>
-                event.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-                event.description.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-                event.city.toLowerCase().includes(state.searchQuery.toLowerCase())
+                event.name
+                  .toLowerCase()
+                  .includes(state.searchQuery.toLowerCase()) ||
+                event.description
+                  .toLowerCase()
+                  .includes(state.searchQuery.toLowerCase()) ||
+                event.city
+                  .toLowerCase()
+                  .includes(state.searchQuery.toLowerCase())
             )
           : action.payload.events
-        
+
         if (action.payload.total) {
-          state.totalPages = Math.ceil(action.payload.total / state.itemsPerPage)
+          state.totalPages = Math.ceil(
+            action.payload.total / state.itemsPerPage
+          )
         }
-        
+
         state.lastFetched = Date.now()
         state.error = null
       })
@@ -427,24 +471,36 @@ const eventSlice = createSlice({
       // Fetch single event
       .addCase(fetchEventBySlug.fulfilled, (state, action) => {
         // Update or add the event to the events array
-        const existingIndex = state.events.findIndex(e => e.slug === action.payload.slug)
+        const existingIndex = state.events.findIndex(
+          e => e.slug === action.payload.slug
+        )
         if (existingIndex >= 0) {
           state.events[existingIndex] = action.payload
         } else {
           state.events.push(action.payload)
         }
-        
+
         // Update filtered events if filters are active
         if (state.searchQuery || state.cityFilter) {
-          const matchesSearch = !state.searchQuery || 
-            action.payload.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-            action.payload.description.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-            action.payload.city.toLowerCase().includes(state.searchQuery.toLowerCase())
-          
-          const matchesCity = !state.cityFilter || action.payload.citySlug === state.cityFilter
-          
+          const matchesSearch =
+            !state.searchQuery ||
+            action.payload.name
+              .toLowerCase()
+              .includes(state.searchQuery.toLowerCase()) ||
+            action.payload.description
+              .toLowerCase()
+              .includes(state.searchQuery.toLowerCase()) ||
+            action.payload.city
+              .toLowerCase()
+              .includes(state.searchQuery.toLowerCase())
+
+          const matchesCity =
+            !state.cityFilter || action.payload.citySlug === state.cityFilter
+
           if (matchesSearch && matchesCity) {
-            const filteredIndex = state.filteredEvents.findIndex(e => e.slug === action.payload.slug)
+            const filteredIndex = state.filteredEvents.findIndex(
+              e => e.slug === action.payload.slug
+            )
             if (filteredIndex >= 0) {
               state.filteredEvents[filteredIndex] = action.payload
             } else {
@@ -453,7 +509,9 @@ const eventSlice = createSlice({
           }
         } else {
           // No filters, add to filtered events too
-          const filteredIndex = state.filteredEvents.findIndex(e => e.slug === action.payload.slug)
+          const filteredIndex = state.filteredEvents.findIndex(
+            e => e.slug === action.payload.slug
+          )
           if (filteredIndex >= 0) {
             state.filteredEvents[filteredIndex] = action.payload
           } else {
@@ -476,11 +534,13 @@ const eventSlice = createSlice({
         state.events = action.payload.events
         state.filteredEvents = action.payload.events
         state.currentPage = action.payload.page
-        
+
         if (action.payload.total) {
-          state.totalPages = Math.ceil(action.payload.total / state.itemsPerPage)
+          state.totalPages = Math.ceil(
+            action.payload.total / state.itemsPerPage
+          )
         }
-        
+
         state.lastFetched = Date.now()
         state.error = null
       })
@@ -495,7 +555,9 @@ const eventSlice = createSlice({
         state.events = action.payload.events
         state.filteredEvents = action.payload.events
         if (action.payload.total) {
-          state.totalPages = Math.ceil(action.payload.total / state.itemsPerPage)
+          state.totalPages = Math.ceil(
+            action.payload.total / state.itemsPerPage
+          )
         }
         state.lastFetched = Date.now()
       })
@@ -504,7 +566,9 @@ const eventSlice = createSlice({
       .addMatcher(
         action => action.type === REHYDRATE,
         (state, action) => {
-          const rehydrateAction = action as { payload?: { events?: EventsState } }
+          const rehydrateAction = action as {
+            payload?: { events?: EventsState }
+          }
           if (rehydrateAction.payload?.events) {
             return {
               ...state,

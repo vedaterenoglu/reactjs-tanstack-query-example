@@ -1,7 +1,7 @@
 /**
  * RTK Query Example Component - Demonstrates RTK Query integration
  * Shows how RTK Query complements existing async thunks for enhanced performance
- * 
+ *
  * Design Patterns Applied:
  * - Component Composition: Composed of smaller demonstration components
  * - Strategy Pattern: Different data fetching strategies shown
@@ -12,7 +12,11 @@
 import { useState } from 'react'
 
 import { useEvents } from '@/lib/hooks/useEvents'
-import { useRTKEvents, useLazyRTKEvents, useRTKEvent } from '@/lib/hooks/useRTKEvents'
+import {
+  useRTKEvents,
+  useLazyRTKEvents,
+  useRTKEvent,
+} from '@/lib/hooks/useRTKEvents'
 
 /**
  * Comparison component showing RTK Query vs Async Thunks
@@ -28,8 +32,9 @@ export const RTKQueryExample: React.FC = () => {
           RTK Query Integration Example
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          This example demonstrates how RTK Query enhances data fetching with automatic caching,
-          background updates, and optimistic updates alongside existing async thunks.
+          This example demonstrates how RTK Query enhances data fetching with
+          automatic caching, background updates, and optimistic updates
+          alongside existing async thunks.
         </p>
       </div>
 
@@ -39,7 +44,8 @@ export const RTKQueryExample: React.FC = () => {
           onClick={() => setShowComparison(!showComparison)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          {showComparison ? 'Hide' : 'Show'} RTK Query vs Async Thunks Comparison
+          {showComparison ? 'Hide' : 'Show'} RTK Query vs Async Thunks
+          Comparison
         </button>
       </div>
 
@@ -66,9 +72,10 @@ export const RTKQueryExample: React.FC = () => {
  * Shows automatic data fetching with RTK Query
  */
 const AutomaticFetchingExample: React.FC = () => {
-  const { events, isLoading, isFetching, isRefreshing, eventsCount, refetch } = useRTKEvents({
-    limit: 5,
-  })
+  const { events, isLoading, isFetching, isRefreshing, eventsCount, refetch } =
+    useRTKEvents({
+      limit: 5,
+    })
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
@@ -92,9 +99,10 @@ const AutomaticFetchingExample: React.FC = () => {
 
       <div className="space-y-3">
         <div className="text-sm text-gray-600">
-          Found {eventsCount} events • {isLoading ? 'Initial load...' : 'Cached with auto-updates'}
+          Found {eventsCount} events •{' '}
+          {isLoading ? 'Initial load...' : 'Cached with auto-updates'}
         </div>
-        
+
         {isLoading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
@@ -103,10 +111,15 @@ const AutomaticFetchingExample: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-2">
-            {events.slice(0, 3).map((event) => (
-              <div key={event.slug} className="p-3 border rounded-lg hover:bg-gray-50">
+            {events.slice(0, 3).map(event => (
+              <div
+                key={event.slug}
+                className="p-3 border rounded-lg hover:bg-gray-50"
+              >
                 <h3 className="font-medium text-gray-900">{event.name}</h3>
-                <p className="text-sm text-gray-600">{event.city} • ${event.price}</p>
+                <p className="text-sm text-gray-600">
+                  {event.city} • ${event.price}
+                </p>
               </div>
             ))}
           </div>
@@ -119,9 +132,9 @@ const AutomaticFetchingExample: React.FC = () => {
 /**
  * Shows lazy fetching with RTK Query
  */
-const LazyFetchingExample: React.FC<{ onEventSelect: (slug: string) => void }> = ({ 
-  onEventSelect 
-}) => {
+const LazyFetchingExample: React.FC<{
+  onEventSelect: (slug: string) => void
+}> = ({ onEventSelect }) => {
   const { fetchEvents, events, isLoading, eventsCount } = useLazyRTKEvents()
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -142,10 +155,10 @@ const LazyFetchingExample: React.FC<{ onEventSelect: (slug: string) => void }> =
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search events..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyPress={e => e.key === 'Enter' && handleSearch()}
           />
           <button
             onClick={handleSearch}
@@ -163,14 +176,16 @@ const LazyFetchingExample: React.FC<{ onEventSelect: (slug: string) => void }> =
         )}
 
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {events.map((event) => (
+          {events.map(event => (
             <div
               key={event.slug}
               className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
               onClick={() => onEventSelect(event.slug)}
             >
               <h3 className="font-medium text-gray-900">{event.name}</h3>
-              <p className="text-sm text-gray-600">{event.city} • ${event.price}</p>
+              <p className="text-sm text-gray-600">
+                {event.city} • ${event.price}
+              </p>
             </div>
           ))}
         </div>
@@ -213,14 +228,16 @@ const SingleEventExample: React.FC<{ slug: string }> = ({ slug }) => {
         </h2>
         <span className="text-sm text-green-600">✓ Cached</span>
       </div>
-      
+
       {event && (
         <div className="space-y-3">
           <h3 className="text-2xl font-bold text-gray-900">{event.name}</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium text-gray-700">Location:</span>
-              <p className="text-gray-600">{event.location}, {event.city}</p>
+              <p className="text-gray-600">
+                {event.location}, {event.city}
+              </p>
             </div>
             <div>
               <span className="font-medium text-gray-700">Price:</span>
@@ -232,7 +249,9 @@ const SingleEventExample: React.FC<{ slug: string }> = ({ slug }) => {
             </div>
             <div>
               <span className="font-medium text-gray-700">Date:</span>
-              <p className="text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
+              <p className="text-gray-600">
+                {new Date(event.date).toLocaleDateString()}
+              </p>
             </div>
           </div>
           <div>
@@ -251,7 +270,7 @@ const SingleEventExample: React.FC<{ slug: string }> = ({ slug }) => {
 const ComparisonSection: React.FC = () => {
   // RTK Query hook
   const rtkQueryData = useRTKEvents({ limit: 3 })
-  
+
   // Existing async thunk hook
   const asyncThunkData = useEvents()
 
@@ -260,7 +279,7 @@ const ComparisonSection: React.FC = () => {
       <h2 className="text-xl font-semibold text-gray-900 mb-6">
         RTK Query vs Async Thunks Comparison
       </h2>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* RTK Query side */}
         <div className="bg-white rounded-lg p-4">
@@ -271,13 +290,21 @@ const ComparisonSection: React.FC = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Loading:</span>
-              <span className={rtkQueryData.isLoading ? 'text-orange-600' : 'text-green-600'}>
+              <span
+                className={
+                  rtkQueryData.isLoading ? 'text-orange-600' : 'text-green-600'
+                }
+              >
                 {rtkQueryData.isLoading ? 'Yes' : 'No'}
               </span>
             </div>
             <div className="flex justify-between">
               <span>Background Fetch:</span>
-              <span className={rtkQueryData.isRefreshing ? 'text-blue-600' : 'text-gray-500'}>
+              <span
+                className={
+                  rtkQueryData.isRefreshing ? 'text-blue-600' : 'text-gray-500'
+                }
+              >
                 {rtkQueryData.isRefreshing ? 'Active' : 'Idle'}
               </span>
             </div>
@@ -301,7 +328,13 @@ const ComparisonSection: React.FC = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Loading:</span>
-              <span className={asyncThunkData.isLoading ? 'text-orange-600' : 'text-green-600'}>
+              <span
+                className={
+                  asyncThunkData.isLoading
+                    ? 'text-orange-600'
+                    : 'text-green-600'
+                }
+              >
                 {asyncThunkData.isLoading ? 'Yes' : 'No'}
               </span>
             </div>

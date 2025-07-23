@@ -6,10 +6,7 @@
 import { useCallback, useEffect } from 'react'
 
 import { useAppDispatch, useAppSelector } from '@/store'
-import {
-  fetchEventsPage,
-  setCurrentPage,
-} from '@/store/slices/events'
+import { fetchEventsPage, setCurrentPage } from '@/store/slices/events'
 import {
   selectCurrentPage,
   selectTotalPages,

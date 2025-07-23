@@ -44,7 +44,7 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [
-          'persist/PERSIST', 
+          'persist/PERSIST',
           'persist/REHYDRATE',
           // RTK Query actions are serializable
         ],

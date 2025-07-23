@@ -45,14 +45,14 @@ export const useSingleEvent = (slug?: string) => {
 
   const retry = useCallback(() => {
     if (slug) {
-      fetchEvent(slug)
+      void fetchEvent(slug)
     }
   }, [slug, fetchEvent])
 
   // Effect for automatic data fetching
   useEffect(() => {
     if (slug && (!event || event.slug !== slug)) {
-      fetchEvent(slug)
+      void fetchEvent(slug)
     }
   }, [slug, event, fetchEvent])
 

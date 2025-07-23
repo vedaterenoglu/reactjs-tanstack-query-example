@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
-
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
@@ -111,7 +110,7 @@ export const EventsListPage = () => {
   )
 
   const handleRetry = useCallback(() => {
-    refetch()
+    void refetch()
   }, [refetch])
 
   // URL Parameter Sync - Observer Pattern

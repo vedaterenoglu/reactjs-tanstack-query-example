@@ -23,7 +23,6 @@
 
 import { useCallback, useEffect, useRef, useMemo } from 'react'
 
-
 import { AbortControllerUtils } from '@/lib/utils/prefetch/abortControllerFactory'
 import {
   prefetchQueueManager,
