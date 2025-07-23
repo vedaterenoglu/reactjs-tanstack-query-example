@@ -3,23 +3,16 @@
  * Combines city and event reducers with Redux DevTools and persistence support
  */
 
-import { composeWithDevTools } from '@redux-devtools/extension'
-import {
-  legacy_createStore as createStore,
-  applyMiddleware,
-  combineReducers,
-} from 'redux'
+import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import { persistStore, persistReducer } from 'redux-persist'
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2'
 import storage from 'redux-persist/lib/storage'
-import { thunk } from 'redux-thunk'
 
 import { cityReducer } from './slices/cities'
 import { eventReducer } from './slices/events'
 
 import type { Action } from 'redux'
 import type { PersistConfig } from 'redux-persist'
-import type { ThunkDispatch, ThunkAction } from 'redux-thunk'
 
 // Create root reducer with city and event slices
 const rootReducer = combineReducers({
@@ -42,17 +35,25 @@ const persistedReducer = persistReducer<RootState, Action>(
   rootReducer
 )
 
-export const store = createStore(
-  persistedReducer,
-  composeWithDevTools(applyMiddleware(thunk))
-)
+export const store = configureStore({
+  reducer: persistedReducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+      },
+    }),
+})
 
 export const persistor = persistStore(store)
 
-export type AppDispatch = ThunkDispatch<RootState, unknown, Action>
+export type AppDispatch = typeof store.dispatch
 export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
   RootState,
   unknown,
   Action
 >
+
+// Re-export ThunkAction type for backward compatibility
+export type { ThunkAction } from '@reduxjs/toolkit'
