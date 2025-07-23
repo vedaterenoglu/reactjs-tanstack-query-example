@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+
+import type { Event } from '@/lib/types/event.types'
 
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
 import { useEventsWithInit } from '@/lib/hooks/useEvents'
-import type { Event } from '@/lib/types/event.types'
-import type { AppDispatch } from '@/store'
+import { useAppDispatch, useAppSelector } from '@/store'
+import {
+  fetchEventsPage,
+  setSearchQuery,
+  clearFilters,
+} from '@/store/slices/events'
 import {
   selectCurrentPageEvents,
   selectTotalPages,
@@ -15,11 +20,6 @@ import {
   selectSearchQuery,
   selectFilteredEvents,
 } from '@/store/slices/events/eventSelectors'
-import {
-  initializePagination,
-  searchEvents,
-  clearFilters,
-} from '@/store/slices/events/eventThunks'
 
 /**
  * EventsListPage Component - Container component for displaying events list
@@ -51,7 +51,7 @@ import {
  */
 
 export const EventsListPage = () => {
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const {
@@ -66,13 +66,13 @@ export const EventsListPage = () => {
   const searchQueryFromUrl = searchParams.get('search')
 
   // Pagination selectors
-  const currentPageEvents = useSelector(selectCurrentPageEvents)
-  const totalPages = useSelector(selectTotalPages)
-  const isChangingPage = useSelector(selectIsChangingPage)
-  const currentSearchQuery = useSelector(selectSearchQuery)
+  const currentPageEvents = useAppSelector(selectCurrentPageEvents)
+  const totalPages = useAppSelector(selectTotalPages)
+  const isChangingPage = useAppSelector(selectIsChangingPage)
+  const currentSearchQuery = useAppSelector(selectSearchQuery)
 
   // Filtering selectors - Observer Pattern for Redux state
-  const filteredEvents = useSelector(selectFilteredEvents)
+  const filteredEvents = useAppSelector(selectFilteredEvents)
 
   // Strategy Pattern: Different display strategies based on state
   // Single Source of Truth: Filtered events take precedence when search is active
@@ -119,7 +119,7 @@ export const EventsListPage = () => {
   useEffect(() => {
     // Backend filtering using search parameter
     if (searchQueryFromUrl) {
-      void dispatch(searchEvents(searchQueryFromUrl))
+      void dispatch(setSearchQuery(searchQueryFromUrl))
     } else if (!searchQueryFromUrl && currentSearchQuery) {
       // URL has no search parameter, clear filters
       void dispatch(clearFilters())
@@ -131,7 +131,7 @@ export const EventsListPage = () => {
     const eventsCount = allEvents?.length || 0
     // Don't initialize pagination during search to prevent overriding search results
     if (hasData && eventsCount > 0 && !currentSearchQuery) {
-      void dispatch(initializePagination())
+      void dispatch(fetchEventsPage({ page: 1 }))
     }
   }, [dispatch, hasData, allEvents?.length, totalPages, currentSearchQuery])
 

@@ -4,9 +4,12 @@
  */
 
 import { useCallback, useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
 
-import type { AppDispatch } from '@/store'
+import { useAppDispatch, useAppSelector } from '@/store'
+import {
+  fetchEventsPage,
+  setCurrentPage,
+} from '@/store/slices/events'
 import {
   selectCurrentPage,
   selectTotalPages,
@@ -15,10 +18,6 @@ import {
   selectIsChangingPage,
   selectPaginationInfo,
 } from '@/store/slices/events/eventSelectors'
-import {
-  goToPreviousPage,
-  goToNextPage,
-} from '@/store/slices/events/eventThunks'
 
 /**
  * Pagination Controls Component - Traditional React + Redux Pattern
@@ -68,31 +67,35 @@ interface PaginationControlsProps {
  * Extracts all pagination state and actions into reusable hook
  */
 function usePagination(onPageChange?: (page: number) => void) {
-  const dispatch = useDispatch<AppDispatch>()
+  const dispatch = useAppDispatch()
 
   // Redux state selectors
-  const currentPage = useSelector(selectCurrentPage)
-  const totalPages = useSelector(selectTotalPages)
-  const canGoPrevious = useSelector(selectCanGoPrevious)
-  const canGoNext = useSelector(selectCanGoNext)
-  const isChanging = useSelector(selectIsChangingPage)
-  const paginationInfo = useSelector(selectPaginationInfo)
+  const currentPage = useAppSelector(selectCurrentPage)
+  const totalPages = useAppSelector(selectTotalPages)
+  const canGoPrevious = useAppSelector(selectCanGoPrevious)
+  const canGoNext = useAppSelector(selectCanGoNext)
+  const isChanging = useAppSelector(selectIsChangingPage)
+  const paginationInfo = useAppSelector(selectPaginationInfo)
 
   // Memoized action dispatchers
   const handlePreviousPage = useCallback(async () => {
     if (canGoPrevious && !isChanging) {
-      await dispatch(goToPreviousPage())
+      const previousPage = currentPage - 1
+      dispatch(setCurrentPage(previousPage))
+      await dispatch(fetchEventsPage({ page: previousPage }))
       if (onPageChange) {
-        onPageChange(currentPage - 1)
+        onPageChange(previousPage)
       }
     }
   }, [dispatch, canGoPrevious, isChanging, onPageChange, currentPage])
 
   const handleNextPage = useCallback(async () => {
     if (canGoNext && !isChanging) {
-      await dispatch(goToNextPage())
+      const nextPage = currentPage + 1
+      dispatch(setCurrentPage(nextPage))
+      await dispatch(fetchEventsPage({ page: nextPage }))
       if (onPageChange) {
-        onPageChange(currentPage + 1)
+        onPageChange(nextPage)
       }
     }
   }, [dispatch, canGoNext, isChanging, onPageChange, currentPage])
