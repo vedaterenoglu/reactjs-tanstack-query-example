@@ -9,7 +9,7 @@ export const queryKeys = {
     [...queryKeys.events(), 'list', filters] as const,
   cities: () => [...queryKeys.all, 'cities'] as const,
   city: (slug: string) => [...queryKeys.cities(), slug] as const,
-  citiesList: (filters?: { search?: string }) =>
+  citiesList: (filters?: { query?: string; limit?: number; offset?: number }) =>
     [...queryKeys.cities(), 'list', filters || {}] as const,
 } as const
 
