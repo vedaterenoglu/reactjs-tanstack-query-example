@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from 'react'
 
-import type { EventsQueryParams } from '@/lib/types/event.types'
-
 import { useAppDispatch, useAppSelector } from '@/store'
+
+import type { EventsQueryParams } from '@/lib/types/event.types'
 import {
   fetchEvents,
   fetchEventBySlug,
@@ -60,24 +60,24 @@ import {
  * Perfect for main event list components
  */
 export const useEvents = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
   // Memoized selectors following Observer Pattern
-  const events = useAppSelector(selectEvents)
-  const filteredEvents = useAppSelector(selectFilteredEvents)
-  const selectedEvent = useAppSelector(selectSelectedEvent)
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const cityFilter = useAppSelector(selectCityFilter)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
-  const hasData = useAppSelector(selectHasData)
-  const hasResults = useAppSelector(selectHasResults)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const eventsCount = useAppSelector(selectEventsCount)
-  const filteredEventsCount = useAppSelector(selectFilteredEventsCount)
-  const hasActiveFilters = useAppSelector(selectHasActiveFilters)
-  const pagination = useAppSelector(selectPagination)
-  const hasMore = useAppSelector(selectHasMore)
+  const events = useSelector(selectEvents)
+  const filteredEvents = useSelector(selectFilteredEvents)
+  const selectedEvent = useSelector(selectSelectedEvent)
+  const searchQuery = useSelector(selectSearchQuery)
+  const cityFilter = useSelector(selectCityFilter)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
+  const hasData = useSelector(selectHasData)
+  const hasResults = useSelector(selectHasResults)
+  const shouldRefresh = useSelector(selectShouldRefresh)
+  const eventsCount = useSelector(selectEventsCount)
+  const filteredEventsCount = useSelector(selectFilteredEventsCount)
+  const hasActiveFilters = useSelector(selectHasActiveFilters)
+  const pagination = useSelector(selectPagination)
+  const hasMore = useSelector(selectHasMore)
 
   // Memoized action dispatchers following Command Pattern
   const fetchEventsData = useCallback(
@@ -90,18 +90,18 @@ export const useEvents = () => {
     [dispatch]
   )
 
-  const refreshData = useCallback(
+  const refreshEventsData = useCallback(
     () => dispatch(refreshEvents()),
     [dispatch]
   )
 
   const searchEventsData = useCallback(
-    (query: string) => dispatch(setSearchQuery(query)),
+    (query: string) => dispatch(searchEvents(query)),
     [dispatch]
   )
 
   const filterEventsByCityData = useCallback(
-    (citySlug: string) => dispatch(setCityFilter(citySlug)),
+    (citySlug: string) => dispatch(filterEventsByCity(citySlug)),
     [dispatch]
   )
 
@@ -118,21 +118,28 @@ export const useEvents = () => {
   )
 
   const initializeEventsData = useCallback(
-    () => dispatch(fetchEvents()),
+    () => dispatch(initializeEvents()),
     [dispatch]
   )
 
   const loadMoreEventsData = useCallback(
-    () => dispatch(fetchEvents()),
+    () => dispatch(loadMoreEvents()),
     [dispatch]
   )
 
-  const retry = useCallback(() => dispatch(refreshEvents()), [dispatch])
+  const retryEventOperationData = useCallback(
+    (
+      lastOperation?: 'fetch' | 'search' | 'filter',
+      query?: string,
+      citySlug?: string
+    ) => dispatch(retryEventOperation(lastOperation, query, citySlug)),
+    [dispatch]
+  )
 
   // Convenience method for refetching
   const refetch = useCallback(() => {
-    return retry()
-  }, [retry])
+    return refreshEventsData()
+  }, [refreshEventsData])
 
   return {
     // State data
@@ -155,7 +162,7 @@ export const useEvents = () => {
     // Action dispatchers
     fetchEvents: fetchEventsData,
     fetchEventBySlug: fetchEventBySlugData,
-    refreshEvents: refreshData,
+    refreshEvents: refreshEventsData,
     searchEvents: searchEventsData,
     filterEventsByCity: filterEventsByCityData,
     clearSearch: clearSearchData,
@@ -163,7 +170,7 @@ export const useEvents = () => {
     selectEvent: selectEventData,
     initializeEvents: initializeEventsData,
     loadMoreEvents: loadMoreEventsData,
-    retryOperation: refreshData,
+    retryOperation: retryEventOperationData,
     refetch, // Alias for refreshEvents
   }
 }
@@ -174,14 +181,14 @@ export const useEvents = () => {
  * Provides optimized interface for search components
  */
 export const useEventSearch = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const searchContext = useAppSelector(selectSearchContext)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const searchContext = useSelector(selectSearchContext)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   const search = useCallback(
-    (query: string) => dispatch(setSearchQuery(query)),
+    (query: string) => dispatch(searchEvents(query)),
     [dispatch]
   )
 
@@ -192,7 +199,7 @@ export const useEventSearch = () => {
 
   const retrySearch = useCallback(() => {
     if (searchContext.searchQuery) {
-      dispatch(refreshEvents('search', searchContext.searchQuery))
+      dispatch(retryEventOperation('search', searchContext.searchQuery))
     }
   }, [dispatch, searchContext.searchQuery])
 
@@ -216,11 +223,11 @@ export const useEventSearch = () => {
  * Optimized for event card and detail components
  */
 export const useEventSelection = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const selectedEvent = useAppSelector(selectSelectedEvent)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const selectedEvent = useSelector(selectSelectedEvent)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   const selectEventById = useCallback(
     (eventSlug: string) => dispatch(selectEvent(eventSlug)),
@@ -253,16 +260,16 @@ export const useEventSelection = () => {
  * Optimized for filter UI components
  */
 export const useEventFilters = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const cityFilter = useAppSelector(selectCityFilter)
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const hasActiveFilters = useAppSelector(selectHasActiveFilters)
-  const filteredEvents = useAppSelector(selectFilteredEvents)
-  const isLoading = useAppSelector(selectIsLoading)
+  const cityFilter = useSelector(selectCityFilter)
+  const searchQuery = useSelector(selectSearchQuery)
+  const hasActiveFilters = useSelector(selectHasActiveFilters)
+  const filteredEvents = useSelector(selectFilteredEvents)
+  const isLoading = useSelector(selectIsLoading)
 
   const setCityFilter = useCallback(
-    (citySlug: string) => dispatch(setCityFilter(citySlug)),
+    (citySlug: string) => dispatch(filterEventsByCity(citySlug)),
     [dispatch]
   )
 
@@ -294,21 +301,21 @@ export const useEventFilters = () => {
  * Implements smart loading with error recovery
  */
 export const useEventInitialization = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const hasData = useAppSelector(selectHasData)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const hasData = useSelector(selectHasData)
+  const shouldRefresh = useSelector(selectShouldRefresh)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   const initialize = useCallback(() => {
-    dispatch(fetchEvents())
+    dispatch(initializeEvents())
   }, [dispatch])
 
   const refresh = useCallback(() => dispatch(refreshEvents()), [dispatch])
 
   const retry = useCallback(
-    () => dispatch(refreshEvents('fetch')),
+    () => dispatch(retryEventOperation('fetch')),
     [dispatch]
   )
 
@@ -359,10 +366,10 @@ export const useEventsWithInit = () => {
  * Returns event data by slug with selection capabilities
  */
 export const useEvent = (eventSlug?: string) => {
-  const events = useAppSelector(selectEvents)
-  const selectedEvent = useAppSelector(selectSelectedEvent)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const events = useSelector(selectEvents)
+  const selectedEvent = useSelector(selectSelectedEvent)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   // Find specific event by slug
   const event = eventSlug ? events.find(e => e.slug === eventSlug) : undefined
@@ -386,13 +393,13 @@ export const useEvent = (eventSlug?: string) => {
  * Optimized for infinite scroll or pagination components
  */
 export const useEventPagination = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const pagination = useAppSelector(selectPagination)
-  const hasMore = useAppSelector(selectHasMore)
-  const isLoading = useAppSelector(selectIsLoading)
+  const pagination = useSelector(selectPagination)
+  const hasMore = useSelector(selectHasMore)
+  const isLoading = useSelector(selectIsLoading)
 
-  const loadMore = useCallback(() => dispatch(fetchEvents()), [dispatch])
+  const loadMore = useCallback(() => dispatch(loadMoreEvents()), [dispatch])
 
   return {
     pagination,

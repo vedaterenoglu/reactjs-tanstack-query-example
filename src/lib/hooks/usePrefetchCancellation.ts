@@ -22,7 +22,7 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
+import { useAppSelector } from '@/store'
 
 import { AbortControllerUtils } from '@/lib/utils/prefetch/abortControllerFactory'
 import type { AbortReason } from '@/lib/utils/prefetch/abortControllerFactory'
@@ -398,10 +398,10 @@ class CancellationChain {
  */
 export function usePrefetchCancellation(config: CancellationConfig = {}) {
   // Redux state selectors
-  const currentPage = useSelector(selectCurrentPage)
-  const isChangingPage = useSelector(selectIsChangingPage)
-  const networkStatus = useSelector(selectNetworkStatus)
-  const activePrefetchCount = useSelector(selectActivePrefetchCount)
+  const currentPage = useAppSelector(selectCurrentPage)
+  const isChangingPage = useAppSelector(selectIsChangingPage)
+  const networkStatus = useAppSelector(selectNetworkStatus)
+  const activePrefetchCount = useAppSelector(selectActivePrefetchCount)
 
   // Configuration with defaults
   const {

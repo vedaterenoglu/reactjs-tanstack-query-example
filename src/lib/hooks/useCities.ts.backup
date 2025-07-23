@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
 import type { CitySearchOptions } from '@/lib/types/city.types'
-
-import { useAppDispatch, useAppSelector } from '@/store'
+import type { AppDispatch } from '@/store'
 import {
   fetchCities,
   refreshCities,
@@ -30,19 +30,19 @@ import {
  * Implements Single Responsibility Principle for city operations
  */
 export const useCities = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
   // Memoized selectors following Observer Pattern
-  const cities = useAppSelector(selectCities)
-  const filteredCities = useAppSelector(selectFilteredCities)
-  const selectedCity = useAppSelector(selectSelectedCity)
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
-  const hasData = useAppSelector(selectHasData)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const citiesCount = useAppSelector(selectCitiesCount)
-  const filteredCitiesCount = useAppSelector(selectFilteredCitiesCount)
+  const cities = useSelector(selectCities)
+  const filteredCities = useSelector(selectFilteredCities)
+  const selectedCity = useSelector(selectSelectedCity)
+  const searchQuery = useSelector(selectSearchQuery)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
+  const hasData = useSelector(selectHasData)
+  const shouldRefresh = useSelector(selectShouldRefresh)
+  const citiesCount = useSelector(selectCitiesCount)
+  const filteredCitiesCount = useSelector(selectFilteredCitiesCount)
 
   // Memoized action dispatchers following Command Pattern
   const fetchCitiesData = useCallback(
@@ -111,13 +111,13 @@ export const useCities = () => {
  * Provides optimized interface for search components
  */
 export const useCitySearch = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const filteredCities = useAppSelector(selectFilteredCities)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
-  const filteredCount = useAppSelector(selectFilteredCitiesCount)
+  const searchQuery = useSelector(selectSearchQuery)
+  const filteredCities = useSelector(selectFilteredCities)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
+  const filteredCount = useSelector(selectFilteredCitiesCount)
 
   const search = useCallback(
     (query: string) => dispatch(searchCities(query)),
@@ -152,11 +152,11 @@ export const useCitySearch = () => {
  * Optimized for city card and detail components
  */
 export const useCitySelection = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const selectedCity = useAppSelector(selectSelectedCity)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const selectedCity = useSelector(selectSelectedCity)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   const selectCityById = useCallback(
     (citySlug: string) => dispatch(selectCity(citySlug)),
@@ -183,12 +183,12 @@ export const useCitySelection = () => {
  * Implements smart loading with error recovery
  */
 export const useCityInitialization = () => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
-  const hasData = useAppSelector(selectHasData)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const hasData = useSelector(selectHasData)
+  const shouldRefresh = useSelector(selectShouldRefresh)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   const initialize = useCallback(() => {
     dispatch(initializeCities())
@@ -260,10 +260,10 @@ export const useCitiesWithInit = () => {
  * Returns city data by slug with selection capabilities
  */
 export const useCity = (citySlug?: string) => {
-  const cities = useAppSelector(selectCities)
-  const selectedCity = useAppSelector(selectSelectedCity)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const cities = useSelector(selectCities)
+  const selectedCity = useSelector(selectSelectedCity)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   // Find specific city by slug
   const city = citySlug ? cities.find(c => c.citySlug === citySlug) : undefined

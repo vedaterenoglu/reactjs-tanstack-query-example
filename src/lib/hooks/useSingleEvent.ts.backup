@@ -1,5 +1,7 @@
 import { useCallback, useEffect } from 'react'
-import { useAppDispatch, useAppSelector } from '@/store'
+import { useDispatch, useSelector } from 'react-redux'
+
+import type { AppDispatch } from '@/store'
 import {
   fetchEventBySlug,
   selectSelectedEvent,
@@ -29,12 +31,12 @@ import {
  */
 
 export const useSingleEvent = (slug?: string) => {
-  const dispatch = useAppDispatch()
+  const dispatch = useDispatch<AppDispatch>()
 
   // Redux state selectors following Observer Pattern
-  const event = useAppSelector(selectSelectedEvent)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const event = useSelector(selectSelectedEvent)
+  const isLoading = useSelector(selectIsLoading)
+  const error = useSelector(selectError)
 
   // Memoized action dispatchers following Command Pattern
   const fetchEvent = useCallback(

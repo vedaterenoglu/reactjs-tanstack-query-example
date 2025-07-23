@@ -22,7 +22,7 @@
  */
 
 import { useCallback, useEffect, useRef, useMemo } from 'react'
-import { useSelector } from 'react-redux'
+import { useAppSelector } from '@/store'
 
 import { AbortControllerUtils } from '@/lib/utils/prefetch/abortControllerFactory'
 import {
@@ -144,9 +144,9 @@ class PrefetchStrategyFactory {
  */
 export function usePrefetch(config: UsePrefetchConfig = {}) {
   // Redux state selectors
-  const currentPage = useSelector(selectCurrentPage)
-  const nextPage = useSelector(selectNextPageNumber)
-  const previousPage = useSelector(selectPreviousPageNumber)
+  const currentPage = useAppSelector(selectCurrentPage)
+  const nextPage = useAppSelector(selectNextPageNumber)
+  const previousPage = useAppSelector(selectPreviousPageNumber)
   // Memoized recommendations to prevent useCallback dependency changes
   const nextRecommendation = useMemo(
     () => ({
@@ -163,10 +163,10 @@ export function usePrefetch(config: UsePrefetchConfig = {}) {
     }),
     [previousPage]
   )
-  const isPrefetchEnabled = useSelector(selectIsPrefetchEnabled)
-  const currentStrategy = useSelector(selectCurrentPrefetchStrategy)
-  const prefetchDelay = useSelector(selectPrefetchDelay)
-  const networkStatus = useSelector(selectNetworkStatus)
+  const isPrefetchEnabled = useAppSelector(selectIsPrefetchEnabled)
+  const currentStrategy = useAppSelector(selectCurrentPrefetchStrategy)
+  const prefetchDelay = useAppSelector(selectPrefetchDelay)
+  const networkStatus = useAppSelector(selectNetworkStatus)
 
   // Refs for cleanup and preventing stale closures
   const timeoutRefs = useRef<Map<number, NodeJS.Timeout>>(new Map())
