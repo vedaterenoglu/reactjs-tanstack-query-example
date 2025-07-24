@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useCitySearch } from '@/lib/hooks'
 
 /**
  * SearchBox Component - Advanced search input with debouncing, state sync, and accessibility
@@ -58,6 +57,8 @@ interface SearchBoxProps {
   disabled?: boolean
   className?: string
   showRefreshButton?: boolean
+  searchQuery?: string
+  onSearchChange?: (value: string) => void
 }
 
 export const SearchBox = ({
@@ -68,46 +69,31 @@ export const SearchBox = ({
   disabled = false,
   className = '',
   showRefreshButton = true,
+  searchQuery = '',
+  onSearchChange,
 }: SearchBoxProps) => {
-  // Custom hook integration following DIP
-  const {
-    searchQuery,
-    search,
-    clearSearch,
-    isLoading,
-    error,
-    filteredCount,
-    retrySearch,
-  } = useCitySearch()
-
   // Local state for input value (enables debouncing)
-  const [inputValue, setInputValue] = useState(searchQuery || '')
+  const [inputValue, setInputValue] = useState(searchQuery)
 
-  // Sync with Redux state when external changes occur
+  // Sync with external searchQuery when it changes
   useEffect(() => {
-    if (searchQuery !== inputValue) {
-      setInputValue(searchQuery || '')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]) // Only depend on searchQuery, not inputValue to avoid infinite loops
+    setInputValue(searchQuery)
+  }, [searchQuery])
 
-  // Debounced search implementation following Performance Pattern
+  // Debounced search implementation
   useEffect(() => {
     if (inputValue === searchQuery) return // Skip if already synced
 
     const timeoutId = setTimeout(() => {
-      if (inputValue.trim()) {
-        void search(inputValue.trim())
-      } else if (searchQuery) {
-        // Clear search if input is empty but query exists
-        clearSearch()
+      if (onSearchChange) {
+        onSearchChange(inputValue)
       }
     }, debounceMs)
 
     return () => clearTimeout(timeoutId)
-  }, [inputValue, searchQuery, search, clearSearch, debounceMs])
+  }, [inputValue, searchQuery, onSearchChange, debounceMs])
 
-  // Memoized event handlers following Performance Pattern
+  // Memoized event handlers
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setInputValue(event.target.value)
@@ -117,8 +103,10 @@ export const SearchBox = ({
 
   const handleClearClick = useCallback(() => {
     setInputValue('')
-    clearSearch()
-  }, [clearSearch])
+    if (onSearchChange) {
+      onSearchChange('')
+    }
+  }, [onSearchChange])
 
   const handleRefreshClick = useCallback(() => {
     if (onRefresh) {
@@ -135,14 +123,9 @@ export const SearchBox = ({
     [handleClearClick]
   )
 
-  const handleRetryClick = useCallback(() => {
-    void retrySearch()
-  }, [retrySearch])
-
   // Determine current state for UI feedback
   const hasValue = inputValue.length > 0
-  const hasError = Boolean(error)
-  const showClearButton = hasValue && !isLoading
+  const showClearButton = hasValue
 
   return (
     <div className={`relative flex flex-col gap-2 search-mobile ${className}`}>
@@ -162,9 +145,8 @@ export const SearchBox = ({
             onKeyDown={handleKeyDown}
             disabled={disabled}
             autoFocus={autoFocus}
-            className={`pl-10 pr-10 text-base ios-fix ${hasError ? 'border-destructive' : ''}`}
+            className="pl-10 pr-10 text-base ios-fix"
             aria-label="Search cities"
-            aria-describedby={hasError ? 'search-error' : undefined}
             role="searchbox"
             aria-expanded={hasValue}
             aria-autocomplete="list"
@@ -185,12 +167,6 @@ export const SearchBox = ({
             </Button>
           )}
 
-          {/* Loading Indicator */}
-          {isLoading && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          )}
         </div>
 
         {/* Refresh Button */}
@@ -200,53 +176,16 @@ export const SearchBox = ({
             variant="outline"
             size="icon"
             onClick={handleRefreshClick}
-            disabled={disabled || isLoading}
+            disabled={disabled}
             className="min-h-[44px] min-w-[44px] focus-visible-mobile"
             aria-label="Refresh cities data"
             title="Refresh cities data"
           >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-            />
+            <RefreshCw className="h-4 w-4" />
           </Button>
         )}
       </div>
 
-      {/* Status Messages */}
-      <div className="min-h-5 flex items-center justify-between text-sm">
-        {/* Error State */}
-        {hasError && (
-          <div
-            id="search-error"
-            className="flex items-center gap-2 text-destructive"
-          >
-            <span>{error}</span>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={handleRetryClick}
-              className="h-auto p-0 text-destructive underline"
-            >
-              Retry
-            </Button>
-          </div>
-        )}
-
-        {/* Success State with Results Count */}
-        {!hasError && hasValue && !isLoading && (
-          <span className="text-muted-foreground">
-            {filteredCount === 1
-              ? `1 city found`
-              : `${filteredCount} cities found`}
-          </span>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <span className="text-muted-foreground">Searching...</span>
-        )}
-      </div>
     </div>
   )
 }

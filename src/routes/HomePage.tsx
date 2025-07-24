@@ -84,10 +84,9 @@ export const HomePage = ({
     
     const query = searchQuery.toLowerCase()
     return cities.filter(city =>
-      city.city.toLowerCase().includes(query) ||
-      city.tagLine.toLowerCase().includes(query) ||
-      city.info.toLowerCase().includes(query) ||
-      city.country.toLowerCase().includes(query)
+      city.city?.toLowerCase().includes(query) ||
+      city.citySlug?.toLowerCase().includes(query) ||
+      city.alt?.toLowerCase().includes(query)
     )
   }, [cities, searchQuery])
 

@@ -45,6 +45,8 @@ interface SearchSectionProps {
   debounceMs?: number
   autoFocus?: boolean
   disabled?: boolean
+  searchQuery?: string
+  onSearchChange?: (value: string) => void
 }
 
 export const SearchSection = ({
@@ -55,6 +57,8 @@ export const SearchSection = ({
   debounceMs = 300,
   autoFocus = false,
   disabled = false,
+  searchQuery,
+  onSearchChange,
 }: SearchSectionProps) => {
   return (
     <section className={className} aria-labelledby="search-heading">
@@ -69,6 +73,8 @@ export const SearchSection = ({
           autoFocus={autoFocus}
           disabled={disabled}
           showRefreshButton={showRefreshButton}
+          searchQuery={searchQuery}
+          onSearchChange={onSearchChange}
         />
       </div>
     </section>
