@@ -1,82 +1,102 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { useAppDispatch, useAppSelector } from '@/store'
 import {
-  fetchCities,
-  refreshCities,
-  searchCities,
-  clearSearch,
-  selectCityBySlug,
-  initializeCities,
-  retryCityOperation,
-  selectCities,
-  selectFilteredCities,
-  selectSelectedCity,
-  selectSearchQuery,
-  selectIsLoading,
-  selectError,
-  selectHasData,
-  selectShouldRefresh,
-  selectCitiesCount,
-  selectFilteredCitiesCount,
-} from '@/store/slices/cities'
+  useCitiesQuery,
+} from '@/lib/hooks/tanstack/useCitiesQuery'
 
 /**
- * Custom hook for city state management
+ * Custom hook for city state management with TanStack Query
  * Follows React 19 Custom Hook Pattern and Facade Pattern
- * Encapsulates Redux complexity behind clean component API
+ * Encapsulates TanStack Query complexity behind clean component API
  * Implements Single Responsibility Principle for city operations
  */
 export const useCities = () => {
-  const dispatch = useAppDispatch()
+  // Local state for search and selection (client-side state)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCity, setSelectedCity] = useState<{ citySlug: string } | null>(null)
 
-  // Memoized selectors following Observer Pattern
-  const cities = useAppSelector(selectCities)
-  const filteredCities = useAppSelector(selectFilteredCities)
-  const selectedCity = useAppSelector(selectSelectedCity)
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
-  const hasData = useAppSelector(selectHasData)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const citiesCount = useAppSelector(selectCitiesCount)
-  const filteredCitiesCount = useAppSelector(selectFilteredCitiesCount)
+  // TanStack Query for server state
+  const citiesQuery = useCitiesQuery()
 
-  // Memoized action dispatchers following Command Pattern
+  // Filtered cities based on search query
+  const filteredCities = useMemo(() => {
+    const cities = citiesQuery.data || []
+    if (!searchQuery.trim()) return cities
+
+    const query = searchQuery.toLowerCase()
+    return cities.filter(city =>
+      city.city.toLowerCase().includes(query) ||
+      city.citySlug.toLowerCase().includes(query)
+    )
+  }, [citiesQuery.data, searchQuery])
+
+  // Derived state following Single Responsibility
+  const cities = useMemo(() => citiesQuery.data || [], [citiesQuery.data])
+  const isLoading = citiesQuery.isLoading
+  const error = citiesQuery.error
+  const hasData = Boolean(cities.length)
+  const shouldRefresh = citiesQuery.isStale
+  const citiesCount = cities.length
+  const filteredCitiesCount = filteredCities.length
+
+  // Memoized action handlers following Command Pattern
   const fetchCitiesData = useCallback(
-    (options?: { forceRefresh?: boolean; searchQuery?: string }) =>
-      dispatch(fetchCities(options)),
-    [dispatch]
+    async (options?: { forceRefresh?: boolean; searchQuery?: string }) => {
+      if (options?.forceRefresh) {
+        await citiesQuery.refetch()
+      }
+      if (options?.searchQuery !== undefined) {
+        setSearchQuery(options.searchQuery)
+      }
+    },
+    [citiesQuery]
   )
 
   const refreshCitiesData = useCallback(
-    () => dispatch(refreshCities()),
-    [dispatch]
+    async () => {
+      await citiesQuery.refetch()
+    },
+    [citiesQuery]
   )
 
   const searchCitiesData = useCallback(
-    (query: string) => dispatch(searchCities(query)),
-    [dispatch]
+    (query: string) => {
+      setSearchQuery(query)
+    },
+    []
   )
 
   const clearCitiesSearch = useCallback(
-    () => dispatch(clearSearch()),
-    [dispatch]
+    () => {
+      setSearchQuery('')
+    },
+    []
   )
 
   const selectCityData = useCallback(
-    (citySlug: string) => dispatch(selectCityBySlug(citySlug)),
-    [dispatch]
+    (citySlug: string) => {
+      const city = cities.find(c => c.citySlug === citySlug)
+      if (city) {
+        setSelectedCity({ citySlug })
+      }
+    },
+    [cities]
   )
 
   const initializeCitiesData = useCallback(
-    () => dispatch(initializeCities()),
-    [dispatch]
+    async () => {
+      if (!hasData && !isLoading) {
+        await citiesQuery.refetch()
+      }
+    },
+    [hasData, isLoading, citiesQuery]
   )
 
   const retryCityOperationData = useCallback(
-    () => dispatch(retryCityOperation()),
-    [dispatch]
+    async () => {
+      await citiesQuery.refetch()
+    },
+    [citiesQuery]
   )
 
   return {
@@ -104,32 +124,49 @@ export const useCities = () => {
 }
 
 /**
- * Hook for city search functionality
+ * Hook for city search functionality with TanStack Query
  * Focused on search-specific operations following SRP
  * Provides optimized interface for search components
  */
 export const useCitySearch = () => {
-  const dispatch = useAppDispatch()
+  const [searchQuery, setSearchQuery] = useState('')
+  const citiesQuery = useCitiesQuery()
 
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const filteredCities = useAppSelector(selectFilteredCities)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
-  const filteredCount = useAppSelector(selectFilteredCitiesCount)
+  // Filtered cities based on search query
+  const filteredCities = useMemo(() => {
+    const cities = citiesQuery.data || []
+    if (!searchQuery.trim()) return cities
+
+    const query = searchQuery.toLowerCase()
+    return cities.filter(city =>
+      city.city.toLowerCase().includes(query) ||
+      city.citySlug.toLowerCase().includes(query)
+    )
+  }, [citiesQuery.data, searchQuery])
+
+  const isLoading = citiesQuery.isLoading
+  const error = citiesQuery.error
+  const filteredCount = filteredCities.length
 
   const search = useCallback(
-    (query: string) => dispatch(searchCities(query)),
-    [dispatch]
+    (query: string) => {
+      setSearchQuery(query)
+    },
+    []
   )
 
   const clearSearchQuery = useCallback(
-    () => dispatch(clearSearch()),
-    [dispatch]
+    () => {
+      setSearchQuery('')
+    },
+    []
   )
 
   const retrySearch = useCallback(
-    () => dispatch(retryCityOperation()),
-    [dispatch]
+    async () => {
+      await citiesQuery.refetch()
+    },
+    [citiesQuery]
   )
 
   return {
@@ -145,25 +182,33 @@ export const useCitySearch = () => {
 }
 
 /**
- * Hook for city selection functionality
+ * Hook for city selection functionality with TanStack Query
  * Encapsulates selection logic following SRP
  * Optimized for city card and detail components
  */
 export const useCitySelection = () => {
-  const dispatch = useAppDispatch()
+  const [selectedCity, setSelectedCity] = useState<{ citySlug: string } | null>(null)
+  const citiesQuery = useCitiesQuery()
 
-  const selectedCity = useAppSelector(selectSelectedCity)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const isLoading = citiesQuery.isLoading
+  const error = citiesQuery.error
 
   const selectCityById = useCallback(
-    (citySlug: string) => dispatch(selectCityBySlug(citySlug)),
-    [dispatch]
+    (citySlug: string) => {
+      const cities = citiesQuery.data || []
+      const city = cities.find(c => c.citySlug === citySlug)
+      if (city) {
+        setSelectedCity({ citySlug })
+      }
+    },
+    [citiesQuery.data]
   )
 
   const clearSelection = useCallback(
-    () => dispatch({ type: 'cities/CLEAR_SELECTION' }),
-    [dispatch]
+    () => {
+      setSelectedCity(null)
+    },
+    []
   )
 
   return {
@@ -176,30 +221,36 @@ export const useCitySelection = () => {
 }
 
 /**
- * Hook for city data initialization
+ * Hook for city data initialization with TanStack Query
  * Handles app startup and data refresh scenarios
  * Implements smart loading with error recovery
  */
 export const useCityInitialization = () => {
-  const dispatch = useAppDispatch()
+  const citiesQuery = useCitiesQuery()
 
-  const hasData = useAppSelector(selectHasData)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const hasData = Boolean(citiesQuery.data?.length)
+  const shouldRefresh = citiesQuery.isStale
+  const isLoading = citiesQuery.isLoading
+  const error = citiesQuery.error
 
-  const initialize = useCallback(() => {
-    void dispatch(initializeCities())
-  }, [dispatch])
+  const initialize = useCallback(async () => {
+    if (!hasData && !isLoading) {
+      await citiesQuery.refetch()
+    }
+  }, [hasData, isLoading, citiesQuery])
 
-  const refresh = useCallback(() => dispatch(refreshCities()), [dispatch])
+  const refresh = useCallback(async () => {
+    await citiesQuery.refetch()
+  }, [citiesQuery])
 
-  const retry = useCallback(() => dispatch(retryCityOperation()), [dispatch])
+  const retry = useCallback(async () => {
+    await citiesQuery.refetch()
+  }, [citiesQuery])
 
   // Auto-initialize on mount if needed
   useEffect(() => {
     if (!hasData && !isLoading && !error) {
-      initialize()
+      void initialize()
     }
   }, [hasData, isLoading, error, initialize])
 
@@ -215,13 +266,13 @@ export const useCityInitialization = () => {
 }
 
 /**
- * Hook for city data with automatic initialization
+ * Hook for city data with automatic initialization using TanStack Query
  * High-level hook combining data access and initialization
  * Perfect for main components that need complete city functionality
  */
 export const useCitiesWithInit = () => {
   const cityData = useCities()
-  const { initialize, hasData, shouldRefresh } = useCityInitialization()
+  const { initialize, hasData, shouldRefresh, refresh } = useCityInitialization()
 
   console.warn('[useCitiesWithInit] City data state:', {
     filteredCitiesCount: cityData.filteredCities.length,
@@ -231,18 +282,17 @@ export const useCitiesWithInit = () => {
     shouldRefresh,
   })
 
-  // Auto-refresh stale data
+  // Auto-refresh stale data using stable refresh function
   useEffect(() => {
     if (shouldRefresh && !cityData.isLoading) {
-      void cityData.refreshCities()
+      void refresh()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldRefresh, cityData.isLoading, cityData.refreshCities])
+  }, [shouldRefresh, cityData.isLoading, refresh])
 
   // Initialize if no data
   useEffect(() => {
     if (!hasData && !cityData.isLoading && !cityData.error) {
-      initialize()
+      void initialize()
     }
   }, [hasData, cityData.isLoading, cityData.error, initialize])
 
@@ -250,15 +300,17 @@ export const useCitiesWithInit = () => {
 }
 
 /**
- * Hook for individual city lookup
+ * Hook for individual city lookup with TanStack Query
  * Optimized for components that work with specific cities
  * Returns city data by slug with selection capabilities
  */
 export const useCity = (citySlug?: string) => {
-  const cities = useAppSelector(selectCities)
-  const selectedCity = useAppSelector(selectSelectedCity)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const citiesQuery = useCitiesQuery()
+  const { selectedCity } = useCitySelection()
+
+  const cities = citiesQuery.data || []
+  const isLoading = citiesQuery.isLoading
+  const error = citiesQuery.error
 
   // Find specific city by slug
   const city = citySlug ? cities.find(c => c.citySlug === citySlug) : undefined

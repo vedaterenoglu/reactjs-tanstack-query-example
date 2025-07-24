@@ -1,24 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
-import { useEventsWithInit } from '@/lib/hooks/useEvents'
+import { useEventsWithInit, useEventPagination, useEventSearch } from '@/lib/hooks/useEvents'
 import type { Event } from '@/lib/types/event.types'
-import { useAppDispatch, useAppSelector } from '@/store'
-import {
-  fetchEventsPage,
-  clearFilters,
-  searchEvents,
-} from '@/store/slices/events'
-import {
-  selectCurrentPageEvents,
-  selectTotalPages,
-  selectIsChangingPage,
-  selectSearchQuery,
-  selectFilteredEvents,
-} from '@/store/slices/events/eventSelectors'
 
 /**
  * EventsListPage Component - Container component for displaying events list
@@ -50,9 +37,10 @@ import {
  */
 
 export const EventsListPage = () => {
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const [isChangingPage, setIsChangingPage] = useState(false)
+  
   const {
     events: allEvents,
     isLoading,
@@ -64,27 +52,40 @@ export const EventsListPage = () => {
   // URL parameter parsing - Single Source of Truth Pattern
   const searchQueryFromUrl = searchParams.get('search')
 
-  // Pagination selectors
-  const currentPageEvents = useAppSelector(selectCurrentPageEvents)
-  const totalPages = useAppSelector(selectTotalPages)
-  const isChangingPage = useAppSelector(selectIsChangingPage)
-  const currentSearchQuery = useAppSelector(selectSearchQuery)
+  // Pagination hook
+  const {
+    pagination,
+    totalPages,
+    goToPage,
+  } = useEventPagination()
 
-  // Filtering selectors - Observer Pattern for Redux state
-  const filteredEvents = useAppSelector(selectFilteredEvents)
+  // Search hook
+  const {
+    searchQuery: currentSearchQuery,
+    search,
+    clearSearch,
+  } = useEventSearch()
 
   // Strategy Pattern: Different display strategies based on state
   // Single Source of Truth: Filtered events take precedence when search is active
   const displayEvents = useMemo(() => {
     let result: typeof allEvents = []
 
-    // Strategy 1: Search query is active - use filtered events from Redux
+    // Strategy 1: Search query is active - use filtered events
     if (currentSearchQuery) {
-      result = filteredEvents
+      const query = currentSearchQuery.toLowerCase()
+      result = allEvents?.filter(event =>
+        event.name.toLowerCase().includes(query) ||
+        event.description.toLowerCase().includes(query) ||
+        event.organizerName.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query)
+      ) || []
     }
     // Strategy 2: No search + pagination active - use paginated events
-    else if (totalPages > 1 && currentPageEvents.length > 0) {
-      result = currentPageEvents
+    else if (totalPages > 1) {
+      const startIndex = pagination.offset
+      const endIndex = startIndex + pagination.limit
+      result = allEvents?.slice(startIndex, endIndex) || []
     }
     // Strategy 3: No search + no pagination - use all events
     else {
@@ -94,9 +95,9 @@ export const EventsListPage = () => {
     return result
   }, [
     currentSearchQuery,
-    filteredEvents,
     totalPages,
-    currentPageEvents,
+    pagination.offset,
+    pagination.limit,
     allEvents,
   ])
 
@@ -114,28 +115,22 @@ export const EventsListPage = () => {
   }, [refetch])
 
   // URL Parameter Sync - Observer Pattern
-  // Sync Redux state with URL parameters (URL as Single Source of Truth)
+  // Sync search state with URL parameters (URL as Single Source of Truth)
   useEffect(() => {
-    // Backend filtering using search parameter (mirrors traditional Redux)
+    // Backend filtering using search parameter
     if (searchQueryFromUrl) {
-      void dispatch(searchEvents(searchQueryFromUrl))
+      search(searchQueryFromUrl)
     } else if (!searchQueryFromUrl && currentSearchQuery) {
       // URL has no search parameter, clear filters
-      void dispatch(clearFilters())
+      clearSearch()
     }
-  }, [searchQueryFromUrl, currentSearchQuery, dispatch, searchParams])
-
-  // Initialize pagination when component mounts and we have data
-  useEffect(() => {
-    const eventsCount = allEvents?.length || 0
-    // Don't initialize pagination during search to prevent overriding search results
-    if (hasData && eventsCount > 0 && !currentSearchQuery) {
-      void dispatch(fetchEventsPage({ page: 1 }))
-    }
-  }, [dispatch, hasData, allEvents?.length, totalPages, currentSearchQuery])
+  }, [searchQueryFromUrl, currentSearchQuery, search, clearSearch])
 
   // Scroll to top when page changes
-  const handlePageChange = useCallback(() => {
+  const handlePageChange = useCallback((page: number) => {
+    setIsChangingPage(true)
+    goToPage(page)
+    
     // Smooth scroll to top of page
     window.scrollTo({
       top: 0,
@@ -147,7 +142,10 @@ export const EventsListPage = () => {
     if (mainElement) {
       mainElement.focus()
     }
-  }, [])
+    
+    // Reset page transition state
+    setTimeout(() => setIsChangingPage(false), 300)
+  }, [goToPage])
 
   // Determine state flags
   const isEmpty = hasData && displayEvents.length === 0
@@ -165,7 +163,7 @@ export const EventsListPage = () => {
 
       <main>
         <EventsStateFrame
-          error={error}
+          error={error ? error.message : null}
           onRetry={handleRetry}
           errorTitle="Unable to Load Events"
           isLoading={isLoading && !hasData}

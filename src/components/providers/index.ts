@@ -1,7 +1,7 @@
 /**
  * Provider components barrel exports
- * Exports ClerkProvider and ReduxProvider
+ * Exports ClerkProvider and QueryProvider
  */
 
 export { ClerkProvider } from './ClerkProvider'
-export { ReduxProvider } from './ReduxProvider'
+export { QueryProvider } from './QueryProvider'

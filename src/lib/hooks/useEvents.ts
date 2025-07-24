@@ -1,41 +1,17 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { EventsQueryParams } from '@/lib/types/event.types'
-import { useAppDispatch, useAppSelector } from '@/store'
 import {
-  fetchEvents,
-  fetchEventBySlug,
-  refreshEvents,
-  setSearchQuery,
-  setCityFilter,
-  clearSearch,
-  clearFilters,
-  selectEvents,
-  selectFilteredEvents,
-  selectSelectedEvent,
-  selectSearchQuery,
-  selectCityFilter,
-  selectIsLoading,
-  selectError,
-  selectHasData,
-  selectHasResults,
-  selectShouldRefresh,
-  selectEventsCount,
-  selectFilteredEventsCount,
-  selectHasActiveFilters,
-  selectPagination,
-  selectHasMore,
-  selectSearchContext,
-} from '@/store/slices/events'
+  useEventsQuery,
+} from '@/lib/hooks/tanstack/useEventsQuery'
 
 /**
- * Custom Hooks for Event State Management
+ * Custom Hooks for Event State Management with TanStack Query
  *
  * Design Patterns Applied:
  * 1. **Custom Hook Pattern**: Extracts stateful logic into reusable hooks
- * 2. **Facade Pattern**: Hides Redux complexity behind clean component API
- * 3. **Observer Pattern**: Components observe specific state slices through selectors
- * 4. **Command Pattern**: Hook methods dispatch Redux actions as commands
+ * 2. **Facade Pattern**: Hides TanStack Query complexity behind clean component API
+ * 3. **Observer Pattern**: Components observe server state through TanStack Query
+ * 4. **Command Pattern**: Hook methods trigger mutations and queries
  * 5. **Composition Pattern**: Multiple focused hooks for different use cases
  *
  * SOLID Principles:
@@ -43,86 +19,148 @@ import {
  * - **OCP**: New hooks can be added without modifying existing ones
  * - **LSP**: All hooks follow consistent React hook patterns
  * - **ISP**: Focused hook interfaces for specific component needs
- * - **DIP**: Components depend on hook abstractions, not Redux directly
+ * - **DIP**: Components depend on hook abstractions, not TanStack Query directly
  *
  * React 19 Patterns:
  * - Custom Hook Pattern for business logic extraction
  * - Performance optimization through memoized selectors
- * - Clean separation of concerns (data/UI)
+ * - Clean separation of concerns (server/client state)
  * - Reusable stateful logic across components
  */
 
 /**
- * Main events hook - comprehensive event state management
+ * Main events hook - comprehensive event state management with TanStack Query
  * Provides complete access to events data and operations
  * Perfect for main event list components
  */
 export const useEvents = () => {
-  const dispatch = useAppDispatch()
+  // Local state for client-side filtering and selection
+  const [searchQuery, setSearchQuery] = useState('')
+  const [cityFilter, setCityFilter] = useState('')
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null)
 
-  // Memoized selectors following Observer Pattern
-  const events = useAppSelector(selectEvents)
-  const filteredEvents = useAppSelector(selectFilteredEvents)
-  const selectedEvent = useAppSelector(selectSelectedEvent)
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const cityFilter = useAppSelector(selectCityFilter)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
-  const hasData = useAppSelector(selectHasData)
-  const hasResults = useAppSelector(selectHasResults)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const eventsCount = useAppSelector(selectEventsCount)
-  const filteredEventsCount = useAppSelector(selectFilteredEventsCount)
-  const hasActiveFilters = useAppSelector(selectHasActiveFilters)
-  const pagination = useAppSelector(selectPagination)
-  const hasMore = useAppSelector(selectHasMore)
+  // TanStack Query for server state
+  const eventsQuery = useEventsQuery()
 
-  // Memoized action dispatchers following Command Pattern
+  // Derived state - filtered events based on search and city filter
+  const filteredEvents = useMemo(() => {
+    const events = eventsQuery.data?.data || []
+    let filtered = events
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(event =>
+        event.name.toLowerCase().includes(query) ||
+        event.description.toLowerCase().includes(query) ||
+        event.organizerName.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query)
+      )
+    }
+
+    // City filter
+    if (cityFilter) {
+      filtered = filtered.filter(event => event.citySlug === cityFilter)
+    }
+
+    return filtered
+  }, [eventsQuery.data?.data, searchQuery, cityFilter])
+
+  // Computed state following Single Responsibility
+  const events = useMemo(() => eventsQuery.data?.data || [], [eventsQuery.data])
+  const isLoading = eventsQuery.isLoading
+  const error = eventsQuery.error
+  const hasData = Boolean(events.length)
+  const hasResults = Boolean(filteredEvents.length)
+  const shouldRefresh = eventsQuery.isStale
+  const eventsCount = events.length
+  const filteredEventsCount = filteredEvents.length
+  const hasActiveFilters = Boolean(searchQuery || cityFilter)
+  
+  // Pagination state (simplified - could be enhanced with actual pagination)
+  const pagination = useMemo(() => ({
+    page: 1,
+    limit: 20,
+    total: filteredEventsCount,
+    totalPages: Math.ceil(filteredEventsCount / 20),
+    offset: 0,
+  }), [filteredEventsCount])
+  
+  const hasMore = false // Simple implementation, could be enhanced
+
+  // Memoized action handlers following Command Pattern
   const fetchEventsData = useCallback(
-    (params?: EventsQueryParams) => dispatch(fetchEvents(params)),
-    [dispatch]
+    async () => {
+      await eventsQuery.refetch()
+    },
+    [eventsQuery]
   )
 
   const fetchEventBySlugData = useCallback(
-    (slug: string) => dispatch(fetchEventBySlug(slug)),
-    [dispatch]
+    (slug: string) => {
+      setSelectedEvent(slug)
+      // Could trigger individual event query here if needed
+    },
+    []
   )
 
-  const refreshData = useCallback(() => dispatch(refreshEvents()), [dispatch])
+  const refreshData = useCallback(async () => {
+    await eventsQuery.refetch()
+  }, [eventsQuery])
 
   const searchEventsData = useCallback(
-    (query: string) => dispatch(setSearchQuery(query)),
-    [dispatch]
+    (query: string) => {
+      setSearchQuery(query)
+    },
+    []
   )
 
   const filterEventsByCityData = useCallback(
-    (citySlug: string) => dispatch(setCityFilter(citySlug)),
-    [dispatch]
+    (citySlug: string) => {
+      setCityFilter(citySlug)
+    },
+    []
   )
 
-  const clearSearchData = useCallback(() => dispatch(clearSearch()), [dispatch])
-
-  const clearFiltersData = useCallback(
-    () => dispatch(clearFilters()),
-    [dispatch]
+  const clearSearchData = useCallback(
+    () => {
+      setSearchQuery('')
+    },
+    []
   )
+
+  const clearFiltersData = useCallback(() => {
+    setSearchQuery('')
+    setCityFilter('')
+  }, [])
 
   const selectEventData = useCallback(
-    (eventSlug: string) => dispatch(fetchEventBySlug(eventSlug)),
-    [dispatch]
+    (eventSlug: string) => {
+      setSelectedEvent(eventSlug)
+    },
+    []
   )
 
   const initializeEventsData = useCallback(
-    () => dispatch(fetchEvents()),
-    [dispatch]
+    async () => {
+      if (!hasData && !isLoading) {
+        await eventsQuery.refetch()
+      }
+    },
+    [hasData, isLoading, eventsQuery]
   )
 
   const loadMoreEventsData = useCallback(
-    () => dispatch(fetchEvents()),
-    [dispatch]
+    async () => {
+      // For now, just refetch - could be enhanced with infinite query
+      await eventsQuery.refetch()
+    },
+    [eventsQuery]
   )
 
-  const retry = useCallback(() => dispatch(refreshEvents()), [dispatch])
+  const retry = useCallback(async () => {
+    await eventsQuery.refetch()
+  }, [eventsQuery])
 
   // Convenience method for refetching
   const refetch = useCallback(() => {
@@ -164,37 +202,55 @@ export const useEvents = () => {
 }
 
 /**
- * Hook for event search functionality
+ * Hook for event search functionality with TanStack Query
  * Focused on search-specific operations following SRP
  * Provides optimized interface for search components
  */
 export const useEventSearch = () => {
-  const dispatch = useAppDispatch()
+  const [searchQuery, setSearchQuery] = useState('')
+  const eventsQuery = useEventsQuery()
 
-  const searchContext = useAppSelector(selectSearchContext)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  // Filtered events based on search query
+  const filteredEvents = useMemo(() => {
+    const events = eventsQuery.data?.data || []
+    if (!searchQuery.trim()) return events
+
+    const query = searchQuery.toLowerCase()
+    return events.filter(event =>
+      event.name.toLowerCase().includes(query) ||
+      event.description.toLowerCase().includes(query) ||
+      event.organizerName.toLowerCase().includes(query) ||
+      event.location.toLowerCase().includes(query)
+    )
+  }, [eventsQuery.data?.data, searchQuery])
+
+  const isLoading = eventsQuery.isLoading
+  const error = eventsQuery.error
 
   const search = useCallback(
-    (query: string) => dispatch(setSearchQuery(query)),
-    [dispatch]
+    (query: string) => {
+      setSearchQuery(query)
+    },
+    []
   )
 
   const clearSearchQuery = useCallback(
-    () => dispatch(clearSearch()),
-    [dispatch]
+    () => {
+      setSearchQuery('')
+    },
+    []
   )
 
-  const retrySearch = useCallback(() => {
-    void dispatch(refreshEvents())
-  }, [dispatch])
+  const retrySearch = useCallback(async () => {
+    await eventsQuery.refetch()
+  }, [eventsQuery])
 
   return {
-    searchQuery: searchContext.searchQuery,
-    filteredEvents: searchContext.filteredCount,
-    totalEvents: searchContext.totalCount,
-    isSearchActive: searchContext.isSearchActive,
-    hasResults: searchContext.hasResults,
+    searchQuery,
+    filteredEvents: filteredEvents.length,
+    totalEvents: eventsQuery.data?.data?.length || 0,
+    isSearchActive: Boolean(searchQuery.trim()),
+    hasResults: filteredEvents.length > 0,
     isLoading,
     error,
     search,
@@ -204,30 +260,40 @@ export const useEventSearch = () => {
 }
 
 /**
- * Hook for event selection functionality
+ * Hook for event selection functionality with TanStack Query
  * Encapsulates selection logic following SRP
  * Optimized for event card and detail components
  */
 export const useEventSelection = () => {
-  const dispatch = useAppDispatch()
+  const [selectedEvent, setSelectedEvent] = useState<{ slug: string } | null>(null)
+  const eventsQuery = useEventsQuery()
 
-  const selectedEvent = useAppSelector(selectSelectedEvent)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const isLoading = eventsQuery.isLoading
+  const error = eventsQuery.error
 
   const selectEventById = useCallback(
-    (eventSlug: string) => dispatch(fetchEventBySlug(eventSlug)),
-    [dispatch]
+    (eventSlug: string) => {
+      const events = eventsQuery.data?.data || []
+      const event = events.find(e => e.slug === eventSlug)
+      if (event) {
+        setSelectedEvent({ slug: eventSlug })
+      }
+    },
+    [eventsQuery.data]
   )
 
   const clearSelection = useCallback(
-    () => dispatch({ type: 'events/CLEAR_SELECTION' }),
-    [dispatch]
+    () => {
+      setSelectedEvent(null)
+    },
+    []
   )
 
   const fetchEventDetails = useCallback(
-    (eventSlug: string) => dispatch(fetchEventBySlug(eventSlug)),
-    [dispatch]
+    (eventSlug: string) => {
+      selectEventById(eventSlug)
+    },
+    [selectEventById]
   )
 
   return {
@@ -241,32 +307,63 @@ export const useEventSelection = () => {
 }
 
 /**
- * Hook for event filtering functionality
+ * Hook for event filtering functionality with TanStack Query
  * Handles city-based filtering and filter management
  * Optimized for filter UI components
  */
 export const useEventFilters = () => {
-  const dispatch = useAppDispatch()
+  const [cityFilter, setCityFilter] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const eventsQuery = useEventsQuery()
 
-  const cityFilter = useAppSelector(selectCityFilter)
-  const searchQuery = useAppSelector(selectSearchQuery)
-  const hasActiveFilters = useAppSelector(selectHasActiveFilters)
-  const filteredEvents = useAppSelector(selectFilteredEvents)
-  const isLoading = useAppSelector(selectIsLoading)
+  const isLoading = eventsQuery.isLoading
+
+  // Filtered events based on current filters
+  const filteredEvents = useMemo(() => {
+    const events = eventsQuery.data?.data || []
+    let filtered = events
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(event =>
+        event.name.toLowerCase().includes(query) ||
+        event.description.toLowerCase().includes(query) ||
+        event.organizerName.toLowerCase().includes(query) ||
+        event.location.toLowerCase().includes(query)
+      )
+    }
+
+    // City filter
+    if (cityFilter) {
+      filtered = filtered.filter(event => event.citySlug === cityFilter)
+    }
+
+    return filtered
+  }, [eventsQuery.data?.data, searchQuery, cityFilter])
+
+  const hasActiveFilters = Boolean(searchQuery || cityFilter)
 
   const setCityFilterData = useCallback(
-    (citySlug: string) => dispatch(setCityFilter(citySlug)),
-    [dispatch]
+    (citySlug: string) => {
+      setCityFilter(citySlug)
+    },
+    []
   )
 
   const clearCityFilter = useCallback(
-    () => dispatch(clearFilters()),
-    [dispatch]
+    () => {
+      setCityFilter('')
+    },
+    []
   )
 
   const clearAllFilters = useCallback(
-    () => dispatch(clearFilters()),
-    [dispatch]
+    () => {
+      setSearchQuery('')
+      setCityFilter('')
+    },
+    []
   )
 
   return {
@@ -282,30 +379,36 @@ export const useEventFilters = () => {
 }
 
 /**
- * Hook for event data initialization
+ * Hook for event data initialization with TanStack Query
  * Handles app startup and data refresh scenarios
  * Implements smart loading with error recovery
  */
 export const useEventInitialization = () => {
-  const dispatch = useAppDispatch()
+  const eventsQuery = useEventsQuery()
 
-  const hasData = useAppSelector(selectHasData)
-  const shouldRefresh = useAppSelector(selectShouldRefresh)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const hasData = Boolean(eventsQuery.data?.data?.length)
+  const shouldRefresh = eventsQuery.isStale
+  const isLoading = eventsQuery.isLoading
+  const error = eventsQuery.error
 
-  const initialize = useCallback(() => {
-    void dispatch(fetchEvents())
-  }, [dispatch])
+  const initialize = useCallback(async () => {
+    if (!hasData && !isLoading) {
+      await eventsQuery.refetch()
+    }
+  }, [hasData, isLoading, eventsQuery])
 
-  const refresh = useCallback(() => dispatch(refreshEvents()), [dispatch])
+  const refresh = useCallback(async () => {
+    await eventsQuery.refetch()
+  }, [eventsQuery])
 
-  const retry = useCallback(() => dispatch(refreshEvents()), [dispatch])
+  const retry = useCallback(async () => {
+    await eventsQuery.refetch()
+  }, [eventsQuery])
 
   // Auto-initialize on mount if needed
   useEffect(() => {
     if (!hasData && !isLoading && !error) {
-      initialize()
+      void initialize()
     }
   }, [hasData, isLoading, error, initialize])
 
@@ -344,15 +447,17 @@ export const useEventsWithInit = () => {
 }
 
 /**
- * Hook for individual event lookup
+ * Hook for individual event lookup with TanStack Query
  * Optimized for components that work with specific events
  * Returns event data by slug with selection capabilities
  */
 export const useEvent = (eventSlug?: string) => {
-  const events = useAppSelector(selectEvents)
-  const selectedEvent = useAppSelector(selectSelectedEvent)
-  const isLoading = useAppSelector(selectIsLoading)
-  const error = useAppSelector(selectError)
+  const eventsQuery = useEventsQuery()
+  const { selectedEvent } = useEventSelection()
+
+  const events = eventsQuery.data?.data || []
+  const isLoading = eventsQuery.isLoading
+  const error = eventsQuery.error
 
   // Find specific event by slug
   const event = eventSlug ? events.find(e => e.slug === eventSlug) : undefined
@@ -371,29 +476,54 @@ export const useEvent = (eventSlug?: string) => {
 }
 
 /**
- * Hook for event pagination
+ * Hook for event pagination with TanStack Query
  * Handles loading more events and pagination state
  * Optimized for infinite scroll or pagination components
  */
 export const useEventPagination = () => {
-  const dispatch = useAppDispatch()
+  const eventsQuery = useEventsQuery()
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
-  const pagination = useAppSelector(selectPagination)
-  const hasMore = useAppSelector(selectHasMore)
-  const isLoading = useAppSelector(selectIsLoading)
+  const events = eventsQuery.data?.data || []
+  const isLoading = eventsQuery.isLoading
+  const totalItems = events.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const hasMore = currentPage < totalPages
+  const offset = (currentPage - 1) * itemsPerPage
 
-  const loadMore = useCallback(() => dispatch(fetchEvents()), [dispatch])
+  const pagination = useMemo(() => ({
+    page: currentPage,
+    limit: itemsPerPage,
+    total: totalItems,
+    totalPages,
+    offset,
+  }), [currentPage, itemsPerPage, totalItems, totalPages, offset])
+
+  const loadMore = useCallback(async () => {
+    if (hasMore && !isLoading) {
+      setCurrentPage(prev => prev + 1)
+    }
+  }, [hasMore, isLoading])
+
+  const goToPage = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }, [totalPages])
+
+  const resetPagination = useCallback(() => {
+    setCurrentPage(1)
+  }, [])
 
   return {
     pagination,
     hasMore,
     isLoading,
     loadMore,
-    currentPage: pagination
-      ? Math.floor(pagination.offset / pagination.limit) + 1
-      : 1,
-    totalPages: pagination?.total
-      ? Math.ceil(pagination.total / pagination.limit)
-      : 1,
+    goToPage,
+    resetPagination,
+    currentPage,
+    totalPages,
   }
 }
