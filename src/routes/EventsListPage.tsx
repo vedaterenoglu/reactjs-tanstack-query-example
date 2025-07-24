@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
-import { PaginationControls } from '@/components/navigation/PaginationControls'
 import { SearchSection } from '@/components/sections'
-import { useEventsQuery, useEventsByCity } from '@/lib/hooks/tanstack/useEventsQuery'
+import { useEventsByCity, useInfiniteEventsQuery } from '@/lib/hooks/tanstack/useEventsQuery'
+import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll'
 import type { Event } from '@/lib/types/event.types'
 
 /**
@@ -40,38 +40,45 @@ import type { Event } from '@/lib/types/event.types'
 export const EventsListPage = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [isChangingPage, setIsChangingPage] = useState(false)
   
   // URL parameter parsing - Single Source of Truth Pattern
   const citySlugFromUrl = searchParams.get('search') // City filtering via 'search' parameter
   const freeTextSearchFromUrl = searchParams.get('q') || '' // Free-text search via 'q' parameter
   
-  // Select query strategy based on search parameters
-  const allEventsQuery = useEventsQuery()
+  // Select query strategy based on search parameters - following Strategy Pattern
+  const allEventsInfiniteQuery = useInfiniteEventsQuery({}, 18) // 18 items per page
   const cityEventsQuery = useEventsByCity(citySlugFromUrl || '', Boolean(citySlugFromUrl))
   
   // Select the appropriate query result based on search parameters
   const { allEvents, isLoading, error, refetch, hasData } = useMemo(() => {
-    // Priority: City filtering takes precedence over free-text search
-    const query = citySlugFromUrl ? cityEventsQuery : allEventsQuery
-    return {
-      allEvents: query.data?.data || [],
-      isLoading: query.isLoading,
-      error: query.error,
-      refetch: query.refetch,
-      hasData: Boolean(query.data),
+    if (citySlugFromUrl) {
+      // City filtering: use regular query (server-side filtered, no pagination needed)
+      return {
+        allEvents: cityEventsQuery.data?.data || [],
+        isLoading: cityEventsQuery.isLoading,
+        error: cityEventsQuery.error,
+        refetch: cityEventsQuery.refetch,
+        hasData: Boolean(cityEventsQuery.data),
+      }
+    } else {
+      // All events: use infinite query with flattened data
+      const flattenedEvents = allEventsInfiniteQuery.data?.pages.flatMap(page => page.data) || []
+      return {
+        allEvents: flattenedEvents,
+        isLoading: allEventsInfiniteQuery.isLoading,
+        error: allEventsInfiniteQuery.error,
+        refetch: allEventsInfiniteQuery.refetch,
+        hasData: Boolean(allEventsInfiniteQuery.data),
+      }
     }
-  }, [citySlugFromUrl, cityEventsQuery, allEventsQuery])
+  }, [citySlugFromUrl, cityEventsQuery, allEventsInfiniteQuery])
 
-  // Local pagination state management following React 19 patterns
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(12) // Fixed items per page
-  
-  // Calculate pagination values
-  const totalItems = allEvents.length
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
+  // Infinite scroll hook integration - following Observer Pattern
+  const infiniteScroll = useInfiniteScroll(allEventsInfiniteQuery, {
+    rootMargin: '200px', // Trigger loading 200px before reaching bottom
+    loadMoreDelay: 100, // Reduced delay for faster loading
+    enabled: !citySlugFromUrl, // Only enable for all events, not city filtering
+  })
 
   // URL-based search state management following Single Source of Truth Pattern
   const handleSearchChange = useCallback((searchQuery: string) => {
@@ -83,48 +90,43 @@ export const EventsListPage = () => {
       newParams.delete('q')
     }
     
-    // Reset to first page when search changes
-    setCurrentPage(1)
-    
-    setSearchParams(newParams)
-  }, [searchParams, setSearchParams])
-  
-  const handleRefresh = useCallback(() => {
-    void refetch()
-  }, [refetch])
-
-  // Server-side filtering: TanStack Query handles city filtering via API calls
-  // Client-side search and pagination for free-text search
-  const displayEvents = useMemo(() => {
-    // Strategy 1: City filtering is active - use server-filtered events directly
-    if (citySlugFromUrl) {
-      return allEvents || []
+    // Reset infinite scroll when search changes
+    if (!citySlugFromUrl) {
+      infiniteScroll.reset()
     }
     
-    // Strategy 2: Free-text search active - use locally filtered events
+    setSearchParams(newParams)
+  }, [searchParams, setSearchParams, citySlugFromUrl, infiniteScroll])
+  
+  const handleRefresh = useCallback(() => {
+    // Clear search query from URL parameters
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('q')
+    setSearchParams(newParams)
+    
+    // Refetch data to refresh the events
+    void refetch()
+  }, [refetch, searchParams, setSearchParams])
+
+  // Server-side filtering: TanStack Query handles city filtering via API calls
+  // Client-side search works on both all events and city-filtered events
+  const displayEvents = useMemo(() => {
+    let eventsToFilter = allEvents || []
+    
+    // Apply free-text search filtering if search query exists
     if (freeTextSearchFromUrl) {
       const query = freeTextSearchFromUrl.toLowerCase()
-      return allEvents?.filter(event =>
+      eventsToFilter = eventsToFilter.filter(event =>
         event.name?.toLowerCase().includes(query) ||
         event.description?.toLowerCase().includes(query) ||
         event.organizerName?.toLowerCase().includes(query) ||
         event.location?.toLowerCase().includes(query)
-      ) || []
+      )
     }
     
-    // Strategy 3: No search + pagination active - use paginated events
-    if (totalPages > 1) {
-      return allEvents?.slice(startIndex, endIndex) || []
-    }
-    
-    // Strategy 4: No search + no pagination - use all events
-    return allEvents || []
+    return eventsToFilter
   }, [
-    citySlugFromUrl,
     freeTextSearchFromUrl,
-    totalPages,
-    startIndex,
-    endIndex,
     allEvents,
   ])
 
@@ -141,36 +143,17 @@ export const EventsListPage = () => {
     void refetch()
   }, [refetch])
 
-  // Reset pagination when search parameters change - Observer Pattern
+  // Reset infinite scroll when search parameters change - Observer Pattern
   useEffect(() => {
-    setCurrentPage(1)
+    if (!citySlugFromUrl) {
+      infiniteScroll.reset()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [citySlugFromUrl, freeTextSearchFromUrl])
 
-  // Scroll to top when page changes
-  const handlePageChange = useCallback((page: number) => {
-    setIsChangingPage(true)
-    setCurrentPage(page)
-    
-    // Smooth scroll to top of page
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
-
-    // Optional: Focus management for accessibility
-    const mainElement = document.querySelector('main')
-    if (mainElement) {
-      mainElement.focus()
-    }
-    
-    // Reset page transition state
-    setTimeout(() => setIsChangingPage(false), 300)
-  }, [])
-
-  // Determine state flags
+  // Determine state flags for infinite scroll
   const isEmpty = hasData && displayEvents.length === 0
-  const showPagination =
-    totalPages > 1 && hasData && !isEmpty && !freeTextSearchFromUrl && !citySlugFromUrl
+  const showLoadMoreIndicator = infiniteScroll.shouldShowLoader && !citySlugFromUrl
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -202,35 +185,37 @@ export const EventsListPage = () => {
           isEmpty={isEmpty}
           onRefresh={handleRetry}
         >
-          {/* Content with Fade Transition */}
-          <div
-            className={`transition-all duration-500 ease-in-out ${
-              isChangingPage
-                ? 'opacity-40 scale-[0.98] blur-[1px]'
-                : 'opacity-100 scale-100 blur-0'
-            }`}
-          >
-            <AutoResizeEventGrid
-              events={displayEvents}
-              hasResults={displayEvents.length > 0}
-              isLoading={(isLoading && hasData) || isChangingPage}
-              onEventSelect={handleEventClick}
-              filteredCount={displayEvents.length}
-            />
-          </div>
+          {/* Events Grid */}
+          <AutoResizeEventGrid
+            events={displayEvents}
+            hasResults={displayEvents.length > 0}
+            isLoading={isLoading && hasData}
+            onEventSelect={handleEventClick}
+            filteredCount={displayEvents.length}
+          />
 
-          {/* Pagination Controls */}
-          {showPagination && (
-            <div className="mt-8">
-              <PaginationControls
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChange}
-                className="justify-center"
-                showInfo={true}
-              />
+          {/* Infinite Scroll Sentinel Element - Only for all events, not city filtering */}
+          {!citySlugFromUrl && (
+            <div 
+              ref={infiniteScroll.sentinelRef}
+              className="mt-8 p-4 flex justify-center min-h-[100px]"
+            >
+              {showLoadMoreIndicator && (
+                <div className="flex items-center space-x-2 text-muted-foreground">
+                  <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+                  <span>Loading more events...</span>
+                </div>
+              )}
+              {infiniteScroll.canLoadMore && !showLoadMoreIndicator && (
+                <div className="text-muted-foreground text-sm">
+                  Scroll down for more events...
+                </div>
+              )}
+              {infiniteScroll.hasLoadedAll && displayEvents.length > 0 && (
+                <p className="text-muted-foreground text-sm">
+                  You've reached the end of the events list
+                </p>
+              )}
             </div>
           )}
         </EventsStateFrame>
