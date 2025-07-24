@@ -148,7 +148,6 @@ export function useEventForm(initialData?: Partial<CreateEventDto>) {
     value: CreateEventDto[K]
   ) => {
     setFormState(prev => {
-      // eslint-disable-next-line security/detect-object-injection
       const newValues = { ...prev.values, [field]: value }
       
       // Auto-generate slug when name changes
@@ -182,7 +181,6 @@ export function useEventForm(initialData?: Partial<CreateEventDto>) {
         ...prev,
         errors,
         touched: Object.keys(prev.values).reduce((acc, key) => {
-          // eslint-disable-next-line security/detect-object-injection
           acc[key as keyof CreateEventDto] = true
           return acc
         }, {} as Partial<Record<keyof CreateEventDto, boolean>>),
@@ -248,12 +246,12 @@ export function useEventForm(initialData?: Partial<CreateEventDto>) {
     
     // Helper methods
     getFieldError: (field: keyof CreateEventDto) => 
+      // eslint-disable-next-line security/detect-object-injection
       formState.touched[field] ? formState.errors[field] : undefined,
     
     setFieldTouched: (field: keyof CreateEventDto) => {
       setFormState(prev => ({
         ...prev,
-        // eslint-disable-next-line security/detect-object-injection
         touched: { ...prev.touched, [field]: true },
       }))
     },
@@ -340,6 +338,7 @@ export function useMultiStepForm<T extends Record<string, unknown>>(
   const [formData, setFormData] = useState<Partial<T>>({})
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
 
+  // eslint-disable-next-line security/detect-object-injection
   const currentStep = steps[currentStepIndex]
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === steps.length - 1
@@ -435,6 +434,7 @@ export const createFormHook = <T extends Record<string, unknown>>(config: {
     const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({})
 
     const validateField = useCallback((field: keyof T, value: T[keyof T]) => {
+      // eslint-disable-next-line security/detect-object-injection
       const rule = config.validationRules?.[field]
       return rule ? rule(value) : undefined
     }, [])

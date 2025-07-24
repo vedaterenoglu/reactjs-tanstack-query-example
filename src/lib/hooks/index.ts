@@ -134,6 +134,37 @@ export {
   type PerformanceOptimizationResult,
 } from './usePerformanceOptimization'
 
+export {
+  // Pagination and Filtering Hooks
+  usePagination,
+  useFilters,
+  useEventsPagination,
+  createPaginationHook,
+  useTablePagination,
+  type PaginationResult,
+  type FilterResult,
+  type EventsPaginationResult,
+  type TablePaginationResult,
+} from './usePaginationFilter'
+
+export {
+  // Faceted Search Hooks
+  useFacetedSearch,
+  useEventFacetedSearch,
+  type FacetedSearchResult,
+  type EventFacetedSearchResult,
+} from './useFacetedSearch'
+
+export {
+  // Infinite Scroll Hooks
+  useInfiniteScroll,
+  useVirtualInfiniteScroll,
+  useBidirectionalInfiniteScroll,
+  type InfiniteScrollResult,
+  type VirtualInfiniteScrollResult,
+  type BidirectionalInfiniteScrollResult,
+} from './useInfiniteScroll'
+
 // ===== HOOK COLLECTIONS =====
 
 /**
@@ -144,61 +175,74 @@ export {
 // Query Hooks - Direct data access layer
 export const QueryHooks = {
   // Events
-  useEventsQuery,
-  useEventsByCity,
-  useEventsSearch,
-  useEventQuery,
-  useInfiniteEventsQuery,
-  useEventSuspenseQuery,
+  useEventsQuery: useEventsQuery,
+  useEventsByCity: useEventsByCity,
+  useEventsSearch: useEventsSearch,
+  useEventQuery: useEventQuery,
+  useInfiniteEventsQuery: useInfiniteEventsQuery,
+  useEventSuspenseQuery: useEventSuspenseQuery,
   
   // Cities
-  useCitiesQuery,
-  useCitiesSearch,
-  useCityQuery,
-  useCitySuspenseQuery,
-  useCityExists,
+  useCitiesQuery: useCitiesQuery,
+  useCitiesSearch: useCitiesSearch,
+  useCityQuery: useCityQuery,
+  useCitySuspenseQuery: useCitySuspenseQuery,
+  useCityExists: useCityExists,
   
   // Mutations
-  useCreateEvent,
-  useUpdateEvent,
-  useDeleteEvent,
-  useEventMutations,
-  useBatchEventOperations,
+  useCreateEvent: useCreateEvent,
+  useUpdateEvent: useUpdateEvent,
+  useDeleteEvent: useDeleteEvent,
+  useEventMutations: useEventMutations,
+  useBatchEventOperations: useBatchEventOperations,
 } as const
 
 // Business Logic Hooks - Domain-specific logic
 export const BusinessHooks = {
-  usePortfolioData,
-  useCityEventManagement,
-  useEventDiscovery,
-  useDataSynchronization,
+  usePortfolioData: usePortfolioData,
+  useCityEventManagement: useCityEventManagement,
+  useEventDiscovery: useEventDiscovery,
+  useDataSynchronization: useDataSynchronization,
 } as const
 
 // Form Hooks - Form state and validation
 export const FormHooks = {
-  useEventForm,
-  useCitySelectionForm,
-  useMultiStepForm,
+  useEventForm: useEventForm,
+  useCitySelectionForm: useCitySelectionForm,
+  useMultiStepForm: useMultiStepForm,
 } as const
 
 // Performance Hooks - Optimization and caching
 export const PerformanceHooks = {
-  useIntelligentPrefetch,
-  useCacheOptimization,
-  useNetworkOptimization,
-  useAssetOptimization,
-  usePerformanceOptimization,
+  useIntelligentPrefetch: useIntelligentPrefetch,
+  useCacheOptimization: useCacheOptimization,
+  useNetworkOptimization: useNetworkOptimization,
+  useAssetOptimization: useAssetOptimization,
+  usePerformanceOptimization: usePerformanceOptimization,
 } as const
 
 // Utility Hooks - Helper and validation functions
 export const UtilityHooks = {
-  useCityValidation,
-  useCitiesFilter,
-  useEventsWithMeta,
-  useCitiesWithMeta,
-  useEventsPrefetch,
-  useCitiesPrefetch,
-  useCityOperations,
+  useCityValidation: useCityValidation,
+  useCitiesFilter: useCitiesFilter,
+  useEventsWithMeta: useEventsWithMeta,
+  useCitiesWithMeta: useCitiesWithMeta,
+  useEventsPrefetch: useEventsPrefetch,
+  useCitiesPrefetch: useCitiesPrefetch,
+  useCityOperations: useCityOperations,
+} as const
+
+// Pagination Hooks - Pagination and filtering
+export const PaginationHooks = {
+  usePagination: usePagination,
+  useFilters: useFilters,
+  useEventsPagination: useEventsPagination,
+  useTablePagination: useTablePagination,
+  useFacetedSearch: useFacetedSearch,
+  useEventFacetedSearch: useEventFacetedSearch,
+  useInfiniteScroll: useInfiniteScroll,
+  useVirtualInfiniteScroll: useVirtualInfiniteScroll,
+  useBidirectionalInfiniteScroll: useBidirectionalInfiniteScroll,
 } as const
 
 /**
@@ -206,8 +250,9 @@ export const UtilityHooks = {
  * For advanced use cases requiring configuration
  */
 export const HookFactories = {
-  createPortfolioHook,
-  createFormHook,
+  createPortfolioHook: createPortfolioHook,
+  createFormHook: createFormHook,
+  createPaginationHook: createPaginationHook,
 } as const
 
 /**
@@ -240,6 +285,12 @@ export const usePerformanceSuite = () => ({
   cache: useCacheOptimization(),
   network: useNetworkOptimization(),
   assets: useAssetOptimization(),
+})
+
+export const usePaginationSuite = () => ({
+  eventsPagination: useEventsPagination(),
+  facetedSearch: useEventFacetedSearch(),
+  filters: useFilters(),
 })
 
 /**

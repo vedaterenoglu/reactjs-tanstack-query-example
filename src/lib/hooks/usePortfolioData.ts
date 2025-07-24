@@ -35,7 +35,6 @@ export function usePortfolioData() {
 
     // Calculate event distribution
     const eventsByCity = events.reduce((acc, event) => {
-      // eslint-disable-next-line security/detect-object-injection
       acc[event.citySlug] = (acc[event.citySlug] || 0) + 1
       return acc
     }, {} as Record<string, number>)

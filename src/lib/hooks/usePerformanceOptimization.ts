@@ -268,6 +268,7 @@ export function useNetworkOptimization() {
       },
     }
 
+    // eslint-disable-next-line security/detect-object-injection
     const config = baseConfig[queryType]
 
     // Adapt based on network conditions
@@ -390,6 +391,7 @@ export function useAssetOptimization() {
         low: { loading: 'lazy' as const, decoding: 'async' as const },
       }
       
+      // eslint-disable-next-line security/detect-object-injection
       return strategies[priority]
     },
   }), [])
