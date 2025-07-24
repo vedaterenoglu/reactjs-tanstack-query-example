@@ -1,5 +1,12 @@
 import { z } from 'zod'
 
+import type {
+  BaseQueryResult,
+  BaseMutationResult,
+  TanStackQueryError,
+  QueryOptions,
+} from './tanstack-query.types'
+
 /**
  * Event Zod Schemas - Mirroring Portfolio Events API Schema
  *
@@ -126,111 +133,63 @@ export const PageCacheSchema = z.object({
   timestamp: z.number(), // Unix timestamp for cache invalidation
 })
 
-// Redux state schema for events with enhanced pagination
-export const EventsStateSchema = z.object({
-  events: z.array(EventSchema),
-  filteredEvents: z.array(EventSchema),
-  selectedEvent: EventSchema.nullable(),
-  searchQuery: z.string(),
-  cityFilter: z.string().optional(),
-  isLoading: z.boolean(),
-  error: z.string().nullable(),
-  lastFetched: z.number().nullable(),
-  pagination: z
-    .object({
-      limit: z.number(),
-      offset: z.number(),
-      total: z.number().optional(),
-      hasMore: z.boolean().optional(),
-    })
-    .nullable(),
+// TanStack Query hook result types following Single Responsibility Principle
+export type EventsQueryResult = BaseQueryResult<EventsApiResponse, TanStackQueryError>
+export type EventQueryResult = BaseQueryResult<SingleEventApiResponse, TanStackQueryError>
 
-  // Enhanced pagination state
-  currentPage: z.number().int().positive().default(1),
-  itemsPerPage: z.number().int().positive().default(12),
+// Mutation result types for event operations
+export type EventMutationResult<TData = unknown, TVariables = unknown> = BaseMutationResult<
+  TData,
+  TanStackQueryError,
+  TVariables
+>
+
+// Event-specific query options
+export type EventQueryOptions = QueryOptions<EventsApiResponse, TanStackQueryError>
+export type SingleEventQueryOptions = QueryOptions<SingleEventApiResponse, TanStackQueryError>
+
+// Pagination state schema for TanStack Query integration
+export const PaginationStateSchema = z.object({
+  page: z.number().int().positive().default(1),
+  limit: z.number().int().positive().default(20),
+  total: z.number().int().min(0).default(0),
   totalPages: z.number().int().min(0).default(0),
-
-  // Page caching system
-  cachedPages: z.record(z.string(), PageCacheSchema).default({}),
-
-  // Enhanced prefetch state following Strategy Pattern + Interface Segregation
-  prefetchingPage: z.number().int().positive().nullable().default(null),
-  prefetchedPages: z.array(z.number()).default([]),
-
-  // Prefetch queue management (Command Pattern)
-  prefetchQueue: z
-    .array(
-      z.object({
-        page: z.number().int().positive(),
-        priority: z.enum(['high', 'normal', 'low']).default('normal'),
-        strategy: z
-          .enum(['immediate', 'delayed', 'network-aware'])
-          .default('immediate'),
-        timestamp: z.number(),
-        requestId: z.string().uuid(),
-      })
-    )
-    .default([]),
-
-  // Active prefetch tracking (Factory Pattern for AbortController management)
-  activePrefetches: z
-    .record(
-      z.string(),
-      z.object({
-        page: z.number(),
-        startTime: z.number(),
-        abortReason: z.string().optional(),
-      })
-    )
-    .default({}),
-
-  // Network awareness state (Observer Pattern)
-  networkStatus: z
-    .object({
-      isOnline: z.boolean().default(true),
-      connectionSpeed: z.enum(['fast', 'slow', 'unknown']).default('unknown'),
-      dataSaver: z.boolean().default(false),
-      lastChecked: z.number().optional(),
-    })
-    .default(() => ({
-      isOnline: true,
-      connectionSpeed: 'unknown' as const,
-      dataSaver: false,
-    })),
-
-  // Prefetch configuration (Strategy Pattern)
-  prefetchConfig: z
-    .object({
-      maxConcurrentRequests: z.number().int().positive().default(2),
-      networkAwareThreshold: z.number().default(1000), // ms
-      delayMs: z.number().default(500),
-      enabledStrategies: z.array(z.string()).default(['immediate', 'delayed']),
-      prefetchEnabled: z.boolean().default(true),
-    })
-    .default(() => ({
-      maxConcurrentRequests: 2,
-      networkAwareThreshold: 1000,
-      delayMs: 500,
-      enabledStrategies: ['immediate', 'delayed'],
-      prefetchEnabled: true,
-    })),
-
-  // Failed prefetch tracking for retry logic
-  failedPrefetches: z
-    .record(
-      z.string(),
-      z.object({
-        page: z.number(),
-        error: z.string(),
-        retryCount: z.number().default(0),
-        lastAttempt: z.number(),
-      })
-    )
-    .default({}),
-
-  // UI state
-  isChangingPage: z.boolean().default(false),
+  offset: z.number().int().min(0).default(0),
+  hasMore: z.boolean().default(false),
 })
 
-export type EventsState = z.infer<typeof EventsStateSchema>
+export type PaginationState = z.infer<typeof PaginationStateSchema>
+
+// Client-side state schemas (non-server state)
+export const EventsClientStateSchema = z.object({
+  searchQuery: z.string().default(''),
+  cityFilter: z.string().default(''),
+  selectedEventSlug: z.string().optional(),
+  pagination: PaginationStateSchema,
+  filters: z.record(z.string(), z.unknown()).default({}),
+})
+
+export type EventsClientState = z.infer<typeof EventsClientStateSchema>
+
 export type PageCache = z.infer<typeof PageCacheSchema>
+
+// Query Key Factory for Events following TanStack Query best practices
+export const eventQueryKeys = {
+  all: ['events'] as const,
+  lists: () => [...eventQueryKeys.all, 'list'] as const,
+  list: (filters?: EventsQueryParams) => [...eventQueryKeys.lists(), filters] as const,
+  details: () => [...eventQueryKeys.all, 'detail'] as const,
+  detail: (slug: string) => [...eventQueryKeys.details(), slug] as const,
+  search: (query: string) => [...eventQueryKeys.all, 'search', query] as const,
+  byCity: (citySlug: string) => [...eventQueryKeys.all, 'city', citySlug] as const,
+} as const
+
+// Query Key Types for type safety
+export type EventQueryKey = 
+  | typeof eventQueryKeys.all
+  | ReturnType<typeof eventQueryKeys.lists>
+  | ReturnType<typeof eventQueryKeys.list>
+  | ReturnType<typeof eventQueryKeys.details>
+  | ReturnType<typeof eventQueryKeys.detail>
+  | ReturnType<typeof eventQueryKeys.search>
+  | ReturnType<typeof eventQueryKeys.byCity>

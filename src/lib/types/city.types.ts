@@ -5,6 +5,12 @@
 
 import { z } from 'zod'
 
+import type {
+  BaseQueryResult,
+  TanStackQueryError,
+  QueryOptions,
+} from './tanstack-query.types'
+
 // Base validation utilities (from backend sanitization patterns)
 const validateSlug = (val: string, maxLength: number): string => {
   return val
@@ -105,18 +111,20 @@ export const CityDisplaySchema = z.object({
 
 export type CityDisplay = z.infer<typeof CityDisplaySchema>
 
-// Redux state schema
-export const CitiesStateSchema = z.object({
-  cities: z.array(CitySchema),
-  filteredCities: z.array(CitySchema),
-  selectedCity: CitySchema.nullable(),
-  searchQuery: z.string(),
-  isLoading: z.boolean(),
-  error: z.string().nullable(),
-  lastFetched: z.number().nullable(),
+// TanStack Query hook result types following Single Responsibility Principle
+export type CitiesQueryResult = BaseQueryResult<City[], TanStackQueryError>
+
+// City-specific query options
+export type CityQueryOptions = QueryOptions<City[], TanStackQueryError>
+
+// Client-side state schema (non-server state) for TanStack Query integration
+export const CitiesClientStateSchema = z.object({
+  searchQuery: z.string().default(''),
+  selectedCitySlug: z.string().optional(),
+  filters: z.record(z.string(), z.unknown()).default({}),
 })
 
-export type CitiesState = z.infer<typeof CitiesStateSchema>
+export type CitiesClientState = z.infer<typeof CitiesClientStateSchema>
 
 // API Error schema
 export const ApiErrorSchema = z.object({
@@ -152,3 +160,22 @@ export const transformCityToDisplay = (city: City): CityDisplay => {
     imageAlt: city.alt,
   }
 }
+
+// Query Key Factory for Cities following TanStack Query best practices
+export const cityQueryKeys = {
+  all: ['cities'] as const,
+  lists: () => [...cityQueryKeys.all, 'list'] as const,
+  list: (filters?: CitySearchOptions) => [...cityQueryKeys.lists(), filters] as const,
+  details: () => [...cityQueryKeys.all, 'detail'] as const,
+  detail: (slug: string) => [...cityQueryKeys.details(), slug] as const,
+  search: (query: string) => [...cityQueryKeys.all, 'search', query] as const,
+} as const
+
+// Query Key Types for type safety
+export type CityQueryKey = 
+  | typeof cityQueryKeys.all
+  | ReturnType<typeof cityQueryKeys.lists>
+  | ReturnType<typeof cityQueryKeys.list>
+  | ReturnType<typeof cityQueryKeys.details>
+  | ReturnType<typeof cityQueryKeys.detail>
+  | ReturnType<typeof cityQueryKeys.search>
