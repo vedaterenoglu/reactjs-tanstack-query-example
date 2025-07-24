@@ -1,12 +1,11 @@
 import { Calendar } from 'lucide-react'
-import { useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { StateFrame } from '@/components/frames'
 import { CitiesGrid } from '@/components/grids'
 import { SearchSection } from '@/components/sections'
 import { Button } from '@/components/ui/button'
-import { useCitySearch } from '@/lib/hooks'
 import { useCitiesQuery } from '@/lib/hooks/tanstack/useCitiesQuery'
 import type { City } from '@/lib/types/city.types'
 
@@ -71,27 +70,41 @@ export const HomePage = ({
   const error = citiesQuery.error?.message || null
   const hasData = Boolean(citiesQuery.data)
 
-  const { clearSearch } = useCitySearch()
+  // Local search state management following React 19 patterns
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Clear search on component mount to ensure clean initial state
   useEffect(() => {
-    clearSearch()
-  }, [clearSearch])
+    setSearchQuery('')
+  }, [])
 
-  // Memoized data processing following Performance Pattern
+  // Memoized data processing following Performance Pattern with search filtering
+  const filteredCities = useMemo(() => {
+    if (!searchQuery.trim()) return cities
+    
+    const query = searchQuery.toLowerCase()
+    return cities.filter(city =>
+      city.city.toLowerCase().includes(query) ||
+      city.tagLine.toLowerCase().includes(query) ||
+      city.info.toLowerCase().includes(query) ||
+      city.country.toLowerCase().includes(query)
+    )
+  }, [cities, searchQuery])
+
   const displayCities = useMemo(() => {
-    if (!maxCities) return cities
-    return cities.slice(0, maxCities)
-  }, [cities, maxCities])
+    if (!maxCities) return filteredCities
+    return filteredCities.slice(0, maxCities)
+  }, [filteredCities, maxCities])
 
   const hasResults = displayCities.length > 0
+  const isSearchActive = Boolean(searchQuery.trim())
   const showEmptyState = !hasResults && !isLoading && hasData
 
   // Memoized event handlers following Performance Pattern
   const handleRefresh = useCallback(() => {
-    clearSearch() // Clear search text first
+    setSearchQuery('') // Clear search text first
     void citiesQuery.refetch() // Then refresh cities data
-  }, [clearSearch, citiesQuery])
+  }, [citiesQuery])
 
   const handleRetry = useCallback(() => {
     void citiesQuery.refetch()
@@ -170,6 +183,8 @@ export const HomePage = ({
           debounceMs={300}
           autoFocus={false}
           showRefreshButton={true}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
 
         {/* Main Content Section */}
@@ -187,8 +202,8 @@ export const HomePage = ({
               loadingTitle="Loading Destinations"
               loadingMessage="Fetching available cities for you..."
               isEmpty={showEmptyState}
-              isSearchActive={false}
-              searchQuery=""
+              isSearchActive={isSearchActive}
+              searchQuery={searchQuery}
               onRefresh={handleRefresh}
             >
               {/* Cities Grid - Only renders when data is available */}
@@ -196,9 +211,9 @@ export const HomePage = ({
                 cities={displayCities}
                 hasResults={hasResults}
                 isLoading={isLoading && hasData}
-                isSearchActive={false}
-                searchQuery=""
-                filteredCount={displayCities.length}
+                isSearchActive={isSearchActive}
+                searchQuery={searchQuery}
+                filteredCount={filteredCities.length}
                 maxCities={maxCities}
                 gridClasses={gridClasses}
                 onCitySelect={handleCitySelect}
