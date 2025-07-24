@@ -1,3 +1,17 @@
+/**
+ * queryFunctions - TanStack Query function definitions for API integration
+ * 
+ * Provides standardized query functions for TanStack Query hooks to interact
+ * with city and event APIs. Implements proper error handling, type safety,
+ * and consistent parameter patterns for reactive data fetching.
+ * 
+ * Design Patterns Applied:
+ * - Query Function Pattern: Standardized async functions for TanStack Query
+ * - Facade Pattern: Abstracts service layer complexity from query hooks
+ * - Error Handling Pattern: Consistent error propagation for query boundaries
+ * - Type Safety Pattern: Full TypeScript integration with API response types
+ */
+
 import type { City } from '@/lib/types/city.types'
 import type {
   Event,

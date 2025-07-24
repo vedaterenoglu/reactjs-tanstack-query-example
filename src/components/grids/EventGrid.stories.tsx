@@ -1,3 +1,16 @@
+/**
+ * EventGrid.stories - Storybook stories for EventGrid component
+ * 
+ * Demonstrates EventGrid component with various grid states including
+ * loading, search results, and different data configurations using
+ * realistic event data and comprehensive controls.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Multiple stories showcasing different grid states
+ * - Mock Data Pattern: Uses first 8 production events for realistic demos
+ * - State Variation Pattern: Shows loading, search, and normal grid states
+ */
+
 import type { Event } from '@/lib/types/event.types'
 import { events } from '@/mock/events'
 

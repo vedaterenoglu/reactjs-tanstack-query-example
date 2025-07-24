@@ -1,3 +1,16 @@
+/**
+ * CityCard.stories - Storybook stories for CityCard component
+ * 
+ * Provides interactive Storybook stories showcasing CityCard component
+ * variants, states, and interactions with realistic city data and
+ * comprehensive control options.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Multiple stories for different component variants
+ * - Mock Data Pattern: Uses production Austin city data for realistic rendering
+ * - Interactive Pattern: Action handlers for testing component interactions
+ */
+
 import type { City } from '@/lib/types/city.types'
 import { cities } from '@/mock/events'
 

@@ -5,45 +5,15 @@ import { ScrollAnimateWrapper } from '@/components/ui/ScrollAnimateWrapper'
 import type { Event } from '@/lib/types/event.types'
 
 /**
- * EventGrid Component - Semantic events list with results header and scroll animations
- *
- * Current Features:
- * - Semantic <section> with proper ARIA labeling for screen readers
- * - Results header with <h3> showing event count and search context
- * - Loading indicator for partial updates (refresh during search/filter)
- * - Semantic <ul>/<li> list structure instead of generic div grid
- * - ScrollAnimateWrapper with fadeUp animation (0.1 threshold, 600ms duration)
- * - EventCard components with click handling and responsive layout
- * - Load more hint when results exceed maxEvents limit
- * - Conditional rendering based on search/filter state vs all events view
- * - Support for custom grid classes and responsive layouts
- *
+ * EventGrid - Responsive events grid with animations
+ * 
+ * Displays events in a responsive grid layout with scroll animations,
+ * results header, loading states, and event selection handling.
+ * 
  * Design Patterns Applied:
- * - Container/Presentational Pattern: Pure presentational grid with semantic list structure
- * - Composition Pattern: Composes ScrollAnimateWrapper around <ul> of EventCard components
- * - Template Method Pattern: getResultsText() handles different result display strategies
- * - Performance Pattern: Conditional rendering and optimized list structure
- * - Event Handler Pattern: Delegates event selection to parent via onEventSelect prop
- *
- * SOLID Principles:
- * - SRP: Handles events list display, results header, loading states, and load more hints
- * - OCP: Extensible via props (gridClasses, maxEvents, showActionButton, className)
- * - LSP: Can substitute other grid implementations with same EventGridProps interface
- * - ISP: Focused interface accepting only grid display and event interaction props
- * - DIP: Depends on EventCard, ScrollAnimateWrapper, and RefreshCw icon abstractions
- *
- * React 19 Patterns:
- * - Props Interface Pattern: Comprehensive EventGridProps with optional properties
- * - Performance Pattern: Early return when !hasResults, lightweight list rendering
- * - Conditional Rendering: Results header, loading indicator, load more hint
- * - Composition Pattern: Reusable grid layout with animated event cards
- * - Accessibility Pattern: Semantic <section>, <ul>/<li>, proper ARIA labels
- *
- * Semantic HTML Structure:
- * - <section> with role="region" and aria-label="Events grid"
- * - Results header with semantic <h3> element for content hierarchy
- * - <ul> with role="list" containing <li> elements for each event
- * - Proper heading hierarchy (h3 for results within page structure)
+ * - Presentational Component Pattern: Pure UI rendering with props
+ * - Composition Pattern: ScrollAnimateWrapper + EventCard components
+ * - Template Method Pattern: getResultsText for different result displays
  */
 
 interface EventGridProps {

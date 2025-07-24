@@ -1,3 +1,16 @@
+/**
+ * SearchBox.stories - Storybook stories for SearchBox component
+ * 
+ * Provides interactive Storybook stories demonstrating SearchBox component
+ * with different states, configurations, and user interactions including
+ * debouncing, loading states, and clear functionality.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Multiple stories for different search states
+ * - Interactive Pattern: Action handlers for testing search interactions
+ * - State Simulation Pattern: Mock loading and error states for testing
+ */
+
 import { SearchBox } from './SearchBox'
 
 import type { Meta, StoryObj } from '@storybook/react-vite'

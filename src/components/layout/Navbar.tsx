@@ -1,3 +1,17 @@
+/**
+ * Navbar - Navigation header with authentication integration and theme switching
+ * 
+ * Provides a responsive navigation bar with Clerk authentication integration,
+ * theme toggle functionality, and animated branding elements. Features
+ * user authentication state management and consistent styling.
+ * 
+ * Design Patterns Applied:
+ * - Conditional Rendering Pattern: Different auth UI based on sign-in state
+ * - Hook Integration Pattern: Uses Clerk useUser for authentication state
+ * - Composition Pattern: Composes authentication, theme, and navigation elements
+ * - Animation Pattern: CSS transitions and hover effects for interactive elements
+ */
+
 import { SignInButton, UserButton, useUser } from '@clerk/clerk-react'
 import { Link } from 'react-router-dom'
 

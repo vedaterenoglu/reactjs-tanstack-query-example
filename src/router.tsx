@@ -1,3 +1,16 @@
+/**
+ * Router - Application routing configuration
+ * 
+ * Defines React Router v7 routes with lazy loading for code splitting.
+ * Includes protected routes, nested routing structure, and Suspense fallbacks.
+ * 
+ * Design Patterns Applied:
+ * - Lazy Loading Pattern: Code splitting with React.lazy
+ * - Suspense Pattern: Loading fallbacks for async components
+ * - Protected Route Pattern: Authentication-gated routes
+ * - Nested Routing Pattern: Layout wrapper with child routes
+ */
+
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 

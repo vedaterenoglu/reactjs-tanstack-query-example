@@ -13,9 +13,15 @@ import { queryKeys } from '@/lib/query/queryClient'
 import type { City, CitySearchOptions } from '@/lib/types/city.types'
 
 /**
- * Hook for fetching all cities with optional search filtering
- * Follows React 19 Custom Hook Pattern with data logic abstraction
- * Single Responsibility: Manages city list data fetching
+ * useCitiesQuery - TanStack Query hooks for cities data
+ * 
+ * Provides useQuery, useSuspenseQuery, and useCityQuery hooks for fetching
+ * cities data with search capabilities and individual city details.
+ * 
+ * Design Patterns Applied:
+ * - Custom Hook Pattern: Encapsulates TanStack Query logic
+ * - Factory Pattern: Multiple query hook variants
+ * - Memoization Pattern: Optimized query key and params computation
  */
 export function useCitiesQuery(options?: CitySearchOptions) {
   const queryParams = useMemo(() => {

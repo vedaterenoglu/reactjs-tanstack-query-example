@@ -1,6 +1,13 @@
 /**
- * Layout - Main application layout component
- * Contains Navbar, main content area with Outlet, and Footer
+ * Layout - Main application layout structure
+ * 
+ * Provides consistent page layout with Navbar, content area using React Router Outlet,
+ * and Footer. Implements responsive flex layout with environment-based configuration.
+ * 
+ * Design Patterns Applied:
+ * - Layout Pattern: Consistent page structure template
+ * - Outlet Pattern: React Router content placeholder
+ * - Configuration Pattern: Environment-based app name
  */
 
 import { Outlet } from 'react-router-dom'

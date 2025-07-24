@@ -1,3 +1,17 @@
+/**
+ * useCities - Custom hook for cities data management with search and selection
+ * 
+ * Provides a facade over TanStack Query cities operations with integrated
+ * client-side search filtering and city selection state management.
+ * Encapsulates complex query logic behind a clean component API.
+ * 
+ * Design Patterns Applied:
+ * - Facade Pattern: Simplifies TanStack Query complexity for components
+ * - Custom Hook Pattern: Encapsulates cities state management logic
+ * - Search Filter Pattern: Client-side filtering with memoized results
+ * - State Management Pattern: Combined server state (query) and client state (search/selection)
+ */
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import {

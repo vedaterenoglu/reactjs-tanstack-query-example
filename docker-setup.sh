@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Docker Setup Script for ReactJS Redux Toolkit Example
+# Docker Setup Script for ReactJS TanStack Query Events Application
 # This script handles Docker installation, build, and container management
 
 set -e
@@ -51,11 +51,11 @@ build_images() {
     
     # Build production image
     print_status "Building production image..."
-    docker build -t reactjs-redux-toolkit-example:latest .
+    docker build -t reactjs-tanstack-query-events:latest .
     
     # Build development image
     print_status "Building development image..."
-    docker build -f Dockerfile.dev -t reactjs-redux-toolkit-example:dev .
+    docker build -f Dockerfile.dev -t reactjs-tanstack-query-events:dev .
     
     print_success "Docker images built successfully"
 }
@@ -105,7 +105,7 @@ cleanup() {
     docker-compose down --remove-orphans
     
     # Remove images
-    docker rmi reactjs-redux-toolkit-example:latest reactjs-redux-toolkit-example:dev 2>/dev/null || true
+    docker rmi reactjs-tanstack-query-events:latest reactjs-tanstack-query-events:dev 2>/dev/null || true
     
     # Clean up unused Docker resources
     docker system prune -f
@@ -127,8 +127,8 @@ dev_mode() {
 # Production mode
 prod_mode() {
     print_status "Starting in production mode..."
-    docker build -t reactjs-redux-toolkit-example:latest .
-    docker run -d -p 80:80 --name reactjs-redux-toolkit-example-prod reactjs-redux-toolkit-example:latest
+    docker build -t reactjs-tanstack-query-events:latest .
+    docker run -d -p 80:80 --name reactjs-tanstack-query-events-prod reactjs-tanstack-query-events:latest
     print_success "Production environment started"
     
     print_status "Application available at: http://localhost"
@@ -136,7 +136,7 @@ prod_mode() {
 
 # Show help
 show_help() {
-    echo "Docker Setup Script for ReactJS Redux Toolkit Example"
+    echo "Docker Setup Script for ReactJS TanStack Query Events Application"
     echo ""
     echo "Usage: $0 [COMMAND]"
     echo ""

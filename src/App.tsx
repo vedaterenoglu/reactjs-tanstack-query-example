@@ -1,6 +1,12 @@
 /**
  * App - Root application component
- * Sets up providers (Clerk, Redux, Theme) and router configuration
+ * 
+ * Sets up application provider hierarchy (Clerk auth, TanStack Query, Theme) 
+ * and React Router configuration using Provider Pattern.
+ * 
+ * Design Patterns Applied:
+ * - Provider Pattern: Nested providers for dependency injection
+ * - Composition Pattern: Building app through component composition
  */
 
 import { RouterProvider } from 'react-router-dom'

@@ -9,32 +9,16 @@ import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll'
 import type { Event } from '@/lib/types/event.types'
 
 /**
- * EventsListPage Component - Container component for displaying events list
- *
+ * EventsListPage - Events listing with infinite scroll and search
+ * 
+ * Displays paginated events list with infinite scroll, city filtering,
+ * free-text search, and refresh functionality. Uses URL state management.
+ * 
  * Design Patterns Applied:
- * 1. **Container/Presentational Pattern**: This is a container component that:
- *    - Handles data fetching through useEvents hook
- *    - Manages loading, error, and data states
- *    - Delegates presentation to AutoResizeEventGrid component
- *
- * 2. **Custom Hook Pattern**: Uses useEvents for data fetching abstraction
- *
- * 3. **Composition Pattern**: Composes UI from smaller components (EventGrid, EventsStateFrame, LoadingState)
- *
- * 4. **Error Boundary Pattern**: Implements error handling with retry capability
- *
- * SOLID Principles:
- * - **SRP**: Only responsible for orchestrating the events list display
- * - **OCP**: Extensible through composition and props
- * - **LSP**: Can be substituted with other page components
- * - **ISP**: Minimal interface, no unnecessary props
- * - **DIP**: Depends on abstractions (useEvents hook, Event type, EventGrid component)
- *
- * React 19 Patterns:
- * - Suspense-ready with loading states
- * - Error boundaries with graceful degradation
- * - Optimistic UI patterns ready for implementation
- * - Proper semantic HTML structure
+ * - Container Pattern: Orchestrates data fetching and URL state management
+ * - Strategy Pattern: Different query strategies based on search parameters
+ * - Custom Hook Pattern: useInfiniteEventsQuery, useEventsByCity, useInfiniteScroll
+ * - Observer Pattern: useInfiniteScroll for scroll position monitoring
  */
 
 export const EventsListPage = () => {

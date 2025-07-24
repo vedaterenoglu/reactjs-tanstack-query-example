@@ -15,8 +15,8 @@ EXPOSE 3061
 
 # Add labels for better container management
 LABEL maintainer="Vedat Erenoglu <info@vedaterenoglu.com>"
-LABEL description="Events Portfolio - React Redux TypeScript Application (Development)"
-LABEL version="1.0.1"
+LABEL description="ReactJS TanStack Query Events Application (Development)"
+LABEL version="1.0.0"
 
 # Start development server
 CMD ["npm", "run", "dev"]

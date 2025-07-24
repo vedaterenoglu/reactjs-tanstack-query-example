@@ -1,53 +1,57 @@
-# 🔄 State Management Architecture
+# 🔄 Data Management Architecture
 
 ## Overview
 
-The State Management Architecture is built on **Redux Toolkit 2.5.0**, showcasing a complete migration from traditional Redux to modern RTK patterns. It provides predictable state updates, efficient data flow, and powerful developer tools with significantly reduced boilerplate code.
+The Data Management Architecture is built on **TanStack Query 5.62.9**, showcasing modern server state management patterns. It provides intelligent caching, background synchronization, and powerful developer tools with declarative data fetching.
 
 ## 🎯 Core Features
 
-### Redux Toolkit Store Structure
+### TanStack Query Architecture
 
-- **createSlice**: Modern slice creation with automatic action creators
-- **createAsyncThunk**: Built-in async action handling
-- **configureStore**: Zero-config store setup with DevTools
-- **State Persistence**: Redux Persist 6.0.0 integration
+- **useQuery**: Declarative data fetching with automatic caching
+- **useInfiniteQuery**: Infinite scroll pagination with memory efficiency
+- **useMutation**: Optimistic updates with rollback capabilities
+- **Query Persistence**: TanStack Query Persist 5.83.0 integration
 
-### Advanced State Patterns
+### Advanced Query Patterns
 
-- **Normalized State**: Efficient data organization and updates
-- **Derived State**: Computed values through memoized selectors
-- **Loading States**: Granular loading state management
-- **Error Handling**: Comprehensive error state management
+- **Smart Caching**: Stale-while-revalidate with automatic invalidation
+- **Computed Queries**: Derived data through select transformations
+- **Loading States**: Built-in loading, error, and success states
+- **Error Handling**: Automatic retry mechanisms and error boundaries
 
 ### Developer Experience
 
-- **Redux DevTools**: Full debugging support with time-travel
-- **Type Safety**: Complete TypeScript integration
-- **Hot Reloading**: State preservation during development
-- **Predictable Updates**: Pure reducer functions
+- **TanStack Query DevTools**: Full query inspection and cache debugging
+- **Type Safety**: Complete TypeScript integration with query inference
+- **Hot Reloading**: Query state preservation during development
+- **Declarative API**: Simple, intuitive query definitions
 
 ## 🏗️ Technical Implementation
 
-### Store Configuration
+### Query Client Configuration
 
 ```typescript
-// Redux Toolkit store configuration
-export const store = configureStore({
-  reducer: persistedReducer,
-  middleware: getDefaultMiddleware =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-      },
-    }),
-  devTools: process.env.NODE_ENV !== 'production',
+// TanStack Query client configuration
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 30 * 60 * 1000,   // 30 minutes
+      retry: 3,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
 })
 
 // Persistence configuration
-const persistConfig = {
-  key: 'root',
-  version: 1,
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: 'tanstack-query-cache',
   storage,
   whitelist: ['cities', 'events'], // Persist these slices
 }

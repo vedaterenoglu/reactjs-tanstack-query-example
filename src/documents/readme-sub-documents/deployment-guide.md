@@ -1,6 +1,6 @@
 # 🚀 Deployment Guide
 
-Complete deployment instructions for **ReactJS Redux Toolkit Example** application, covering Vercel deployment and local development setup.
+Complete deployment instructions for **ReactJS TanStack Query Events Application**, covering Vercel deployment and local development setup.
 
 ---
 

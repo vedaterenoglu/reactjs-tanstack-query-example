@@ -1,3 +1,16 @@
+/**
+ * CitiesGrid.stories - Storybook stories for CitiesGrid component
+ * 
+ * Demonstrates CitiesGrid component with different states including
+ * loading, search results, and various grid configurations using
+ * realistic city data and interactive controls.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Multiple stories showcasing different grid states
+ * - Mock Data Pattern: Uses first 8 production cities for realistic demos
+ * - State Variation Pattern: Shows loading, search, and normal states
+ */
+
 import type { City } from '@/lib/types/city.types'
 import { cities } from '@/mock/events'
 

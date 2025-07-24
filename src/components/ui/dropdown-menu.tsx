@@ -1,3 +1,17 @@
+/**
+ * DropdownMenu - Comprehensive dropdown menu component system built on Radix UI
+ * 
+ * Provides a complete set of dropdown menu components with consistent styling,
+ * accessibility features, and proper keyboard navigation. Built on Radix UI
+ * primitives with custom Tailwind CSS styling and proper TypeScript interfaces.
+ * 
+ * Design Patterns Applied:
+ * - Compound Component Pattern: Multiple related components working together
+ * - Forwarded Ref Pattern: All components properly forward refs for DOM access
+ * - Composition Pattern: Components compose together to create complex menus
+ * - Factory Pattern: Creates various menu item types from base primitives
+ */
+
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import {
   CheckIcon,

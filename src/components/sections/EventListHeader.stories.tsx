@@ -1,3 +1,16 @@
+/**
+ * EventListHeader.stories - Storybook stories for EventListHeader component
+ * 
+ * Provides comprehensive Storybook stories demonstrating EventListHeader
+ * component in different contexts (city-specific, all events) with
+ * interactive controls and proper mock data.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Individual stories for different component states
+ * - Mock Data Pattern: Uses production-like city data for realistic demos
+ * - Configuration Pattern: Storybook meta configuration with controls
+ */
+
 import type { City } from '@/lib/types/city.types'
 import { cities } from '@/mock/events'
 

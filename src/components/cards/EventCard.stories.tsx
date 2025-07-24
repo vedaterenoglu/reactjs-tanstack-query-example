@@ -1,3 +1,16 @@
+/**
+ * EventCard.stories - Storybook stories for EventCard component
+ * 
+ * Showcases EventCard component with interactive controls and realistic
+ * event data. Demonstrates different variants, states, and user interactions
+ * with comprehensive configuration options.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Multiple stories for different component states
+ * - Mock Data Pattern: Uses production event data for realistic rendering
+ * - Interactive Pattern: Action handlers for testing click interactions
+ */
+
 import type { Event } from '@/lib/types/event.types'
 import { events } from '@/mock/events'
 

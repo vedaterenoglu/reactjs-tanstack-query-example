@@ -1,3 +1,17 @@
+/**
+ * useEventsMutations - TanStack Query mutation hooks for events CRUD operations
+ * 
+ * Provides mutation hooks for creating, updating, and deleting events with
+ * optimistic updates, proper error handling, and automatic cache invalidation.
+ * Implements consistent patterns for all event mutation operations.
+ * 
+ * Design Patterns Applied:
+ * - Custom Hook Pattern: Encapsulates mutation logic for reuse across components
+ * - Optimistic Updates Pattern: Immediate UI updates with rollback on failure
+ * - Command Pattern: Mutation operations as executable commands with undo
+ * - Cache Invalidation Pattern: Strategic cache updates after successful mutations
+ */
+
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 

@@ -20,13 +20,9 @@ COPY . .
 # Set build-time environment variables
 ARG VITE_API_BASE_URL=http://localhost:3060
 ARG VITE_APP_URL=http://localhost:3061
-ARG VITE_STRIPE_PUBLISHABLE_KEY
-ARG VITE_CLERK_PUBLISHABLE_KEY
 
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_URL=$VITE_APP_URL
-ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
-ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
 
 # Build the application
 RUN npm run build
@@ -46,8 +42,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Add labels for better container management
 LABEL maintainer="Vedat Erenoglu <info@vedaterenoglu.com>"
-LABEL description="ReactJS Redux Toolkit Example"
-LABEL version="0.0.1"
+LABEL description="ReactJS TanStack Query Events Application"
+LABEL version="1.0.0"
 
 # Expose port 80
 EXPOSE 80

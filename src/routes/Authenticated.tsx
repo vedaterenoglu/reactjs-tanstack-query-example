@@ -11,41 +11,15 @@ import {
 } from '@/components/ui/card'
 
 /**
- * Authenticated Component - Protected dashboard page for authenticated users
- *
- * Current Features:
- * - Semantic page structure with <header> and <main> sections
- * - Personalized welcome message using Clerk user data
- * - User information card displaying name and email from Clerk
- * - Protected features card with sign out and navigation options
- * - Responsive grid layout (1 column mobile, 2 columns desktop)
- * - Integration with Clerk authentication (useUser hook)
- * - Navigation back to home page and sign out functionality
- *
+ * Authenticated - Protected user dashboard page
+ * 
+ * Displays user information and authentication controls for logged-in users.
+ * Shows personalized welcome message and sign out functionality.
+ * 
  * Design Patterns Applied:
- * - Container/Presentational Pattern: Pure UI component with Clerk integration
- * - Hook Integration Pattern: Uses useUser hook for authentication state
- * - Card Layout Pattern: Information organized in semantic card components
- * - Navigation Pattern: Links and buttons for user actions
- *
- * SOLID Principles:
- * - SRP: Handles authenticated user dashboard display and basic actions only
- * - OCP: Could be extended with additional user features via props
- * - LSP: Can substitute other authenticated page components
- * - ISP: Simple component with no props interface needed
- * - DIP: Depends on Clerk hooks and UI component abstractions
- *
- * React 19 Patterns:
- * - Hook Integration: useUser hook for authentication state access
- * - Component Composition: Header + main content with card layout
- * - Conditional Rendering: User data display with optional chaining
- * - Event Handling: SignOutButton and Link navigation
- *
- * Semantic HTML Structure:
- * - <header> with <h1> and descriptive paragraph
- * - <main> content area with <section> and hidden <h2>
- * - Card components provide structured content areas
- * - Proper heading hierarchy and ARIA labeling
+ * - Presentational Component Pattern: Pure UI with Clerk integration
+ * - Hook Integration Pattern: useUser hook for authentication state
+ * - Card Layout Pattern: Information organized in card components
  */
 export function Authenticated() {
   const { user } = useUser()

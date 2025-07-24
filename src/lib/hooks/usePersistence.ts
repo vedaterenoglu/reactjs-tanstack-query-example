@@ -1,3 +1,17 @@
+/**
+ * usePersistence - Custom hook for TanStack Query cache persistence management
+ * 
+ * Provides comprehensive persistence functionality including cache clearing,
+ * storage health monitoring, and persistence statistics. Enables manual
+ * cache management operations with proper error handling.
+ * 
+ * Design Patterns Applied:
+ * - Custom Hook Pattern: Encapsulates persistence logic for component reuse
+ * - Observer Pattern: State updates for persistence monitoring
+ * - Command Pattern: Clear operations as executable commands
+ * - Health Check Pattern: Storage availability and performance monitoring
+ */
+
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 

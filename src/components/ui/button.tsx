@@ -1,3 +1,17 @@
+/**
+ * Button - Versatile button component with variant support and child composition
+ * 
+ * Provides a flexible button component built on Radix UI Slot and class-variance-authority
+ * for consistent styling variants. Supports composition pattern with asChild prop and
+ * forwarded refs for proper DOM integration.
+ * 
+ * Design Patterns Applied:
+ * - Slot Pattern: Uses Radix Slot for component composition and polymorphic behavior
+ * - Variant Pattern: CVA-based styling system for consistent button appearances
+ * - Forwarded Ref Pattern: Proper ref forwarding for DOM access and integration
+ * - Composition Pattern: asChild prop allows rendering as different elements
+ */
+
 import { Slot } from '@radix-ui/react-slot'
 import { type VariantProps } from 'class-variance-authority'
 import * as React from 'react'

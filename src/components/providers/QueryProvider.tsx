@@ -1,3 +1,17 @@
+/**
+ * QueryProvider - TanStack Query provider with persistence and dev tools
+ * 
+ * Provides TanStack Query client with persistence support for cache durability
+ * across browser sessions. Includes development tools in non-production environments
+ * and proper configuration for query cache management.
+ * 
+ * Design Patterns Applied:
+ * - Provider Pattern: Provides query client context to component tree
+ * - Persistence Pattern: Cache persistence across browser sessions
+ * - Development Tools Pattern: Conditional dev tools inclusion
+ * - Configuration Pattern: Centralized query client configuration
+ */
+
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 

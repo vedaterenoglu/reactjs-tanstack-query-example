@@ -1,3 +1,17 @@
+/**
+ * useEventsQuery - TanStack Query hooks for events data fetching
+ * 
+ * Provides comprehensive React Query hooks for events API integration including
+ * standard queries, infinite queries, suspense queries, and specialized hooks
+ * for city-specific and search-based event fetching with proper caching.
+ * 
+ * Design Patterns Applied:
+ * - Custom Hook Pattern: Encapsulates TanStack Query logic for reuse
+ * - Query Key Pattern: Consistent query key generation for cache management
+ * - Infinite Query Pattern: Pagination support with automatic data merging
+ * - Suspense Pattern: Suspense-compatible queries for loading boundaries
+ */
+
 import {
   useQuery,
   useInfiniteQuery,

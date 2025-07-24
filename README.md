@@ -1,17 +1,17 @@
-# 🎫 ReactJS Redux Toolkit Example
+# 🎫 ReactJS TanStack Query Events Application
 
 <div align="center">
 
 ![React](https://img.shields.io/badge/React-19.1.0-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2.5.0-764ABC?style=for-the-badge&logo=redux&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5.62.9-FF4154?style=for-the-badge&logo=react-query&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-7.0.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1.11-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://choosealicense.com/licenses/mit/)
 [![SOLID Principles](https://img.shields.io/badge/Architecture-SOLID-blue.svg?style=for-the-badge)](https://en.wikipedia.org/wiki/SOLID)
 
-**A production-ready event management platform demonstrating complete Redux → Redux Toolkit migration with modern React patterns and clean architecture principles.**
+**A production-ready event management platform demonstrating TanStack Query implementation with infinite scroll, advanced caching, and modern React patterns.**
 
 </div>
 
@@ -19,7 +19,7 @@
 
 ## 🎯 Project Overview
 
-This is a comprehensive **event booking platform** built with React 19 and TypeScript, showcasing a complete **Redux → Redux Toolkit migration**. The application demonstrates modern state management patterns, payment processing, and advanced development practices. Features include city-based event browsing, detailed event pages, ticket purchasing with Stripe integration, and a fully responsive design system built with Redux Toolkit's powerful features.
+This is a comprehensive **event booking platform** built with React 19 and TypeScript, showcasing **TanStack Query integration** for server state management. The application demonstrates modern data fetching patterns, infinite scroll pagination, payment processing, and advanced development practices. Features include city-based event browsing, detailed event pages, ticket purchasing with Stripe integration, and intelligent caching with background synchronization.
 
 ### 🏗️ Architecture Philosophy
 
@@ -34,11 +34,13 @@ export const EventCard = ({ event }: EventCardProps) => {
   return <Card>{/* Event display logic only */}</Card>
 }
 
-export const useEvents = () => {
+export const useEventsQuery = () => {
   // Only handles events data management - no UI logic
-  const dispatch = useAppDispatch()
-  const events = useAppSelector(selectEvents)
-  return { events, actions: { fetchEvents: () => dispatch(fetchEvents()) } }
+  return useQuery({
+    queryKey: ['events'],
+    queryFn: fetchEvents,
+    staleTime: 5 * 60 * 1000 // 5 minutes
+  })
 }
 ```
 
@@ -133,9 +135,9 @@ export const EventLoadingState = ({ isLoading, onRetry }: EventLoadingProps) => 
 ```typescript
 // Components depend on abstractions (hooks), not concrete implementations
 export const EventsListPage = () => {
-  // Depends on abstraction (useEvents hook), not direct Redux store access
-  const { events, isLoading, actions } = useEvents()
-  const { currentPage, actions: paginationActions } = useEventPagination()
+  // Depends on abstraction (useEventsQuery hook), not direct query client access
+  const { data: events, isLoading, refetch } = useEventsQuery()
+  const { data: infiniteEvents, fetchNextPage } = useInfiniteEventsQuery()
 
   // Can easily swap implementations without changing component
   return <EventGrid events={events} />
@@ -148,21 +150,22 @@ export const EventsListPage = () => {
 
 ```typescript
 // Business logic extracted into reusable hooks
-export const useEvents = () => {
-  const dispatch = useAppDispatch()
-  const state = useAppSelector(selectEventsState)
+export const useEventsQuery = (citySlug?: string) => {
+  return useQuery({
+    queryKey: ['events', { citySlug }],
+    queryFn: () => fetchEventsByCity(citySlug),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!citySlug
+  })
+}
 
-  const actions = useMemo(
-    () => ({
-      fetchByCity: (citySlug: string) =>
-        dispatch(fetchEventsByCity({ citySlug })),
-      selectEvent: (event: Event) => dispatch(setSelectedEvent(event)),
-      clearError: () => dispatch(clearEventsError()),
-    }),
-    [dispatch]
-  )
-
-  return { ...state, actions }
+export const useInfiniteEventsQuery = (citySlug?: string) => {
+  return useInfiniteQuery({
+    queryKey: ['events', 'infinite', citySlug],
+    queryFn: ({ pageParam = 1 }) => fetchEvents({ page: pageParam, citySlug }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPage : undefined
+  })
 }
 ```
 
@@ -407,11 +410,11 @@ export class EventApiService {
 #### **Observer Pattern Implementation**
 
 ```typescript
-// Redux state changes observed by components
+// Query state changes observed by components
 export const EventsGrid = () => {
-  // Component observes state changes and re-renders automatically
-  const events = useAppSelector(selectFilteredEvents)
-  const isLoading = useAppSelector(selectEventsLoading)
+  // Component observes query state changes and re-renders automatically
+  const { data: events, isLoading, error } = useEventsQuery()
+  const { data: infiniteEvents, fetchNextPage, hasNextPage } = useInfiniteEventsQuery()
 
   // Network status observer
   const networkStatus = useNetworkStatus()
@@ -419,7 +422,8 @@ export const EventsGrid = () => {
   return (
     <div>
       {networkStatus.isOffline && <OfflineBanner />}
-      {events.map(event => <EventCard key={event.id} event={event} />)}
+      {events?.map(event => <EventCard key={event.id} event={event} />)}
+      {hasNextPage && <Button onClick={() => fetchNextPage()}>Load More</Button>}
     </div>
   )
 }
@@ -912,8 +916,8 @@ Detailed technical documentation for each major system:
 ### 1️⃣ Clone & Install
 
 ```bash
-git clone https://github.com/vedaterenoglu/reactjs-redux-toolkit-example.git
-cd reactjs-redux-toolkit-example
+git clone https://github.com/vedaterenoglu/reactjs-tanstack-query-example.git
+cd reactjs-tanstack-query-example
 npm install
 ```
 
@@ -954,11 +958,10 @@ src/
 │   └── 📁 utils/              # Utility functions
 ├── 📁 routes/                 # Page components
 ├── 📁 services/               # API services and facades
-├── 📁 store/                  # Redux Toolkit store and slices
-│   ├── 📁 slices/cities/      # City RTK slice (citySlice.ts)
-│   ├── 📁 slices/events/      # Event RTK slice (eventSlice.ts)
-│   ├── hooks.ts               # Typed Redux hooks
-│   └── index.ts               # Store configuration
+├── 📁 lib/hooks/tanstack/     # TanStack Query hooks
+│   ├── useCitiesQuery.ts      # Cities query hooks
+│   ├── useEventsQuery.ts      # Events query and infinite hooks
+│   └── useEventsMutations.ts  # Event mutation hooks
 └── 📁 mock/                   # Development mock data
 ```
 
@@ -972,11 +975,11 @@ src/
 - **TypeScript 5.8.3** - Full type safety and developer experience
 - **Vite 7.0.4** - Lightning-fast build tool and dev server
 
-### **State Management**
+### **Data Management**
 
-- **Redux Toolkit 2.5.0** - Modern Redux with reduced boilerplate
-- **Redux Persist 6.0.0** - State persistence across sessions
-- **React Redux 9.2.0** - React bindings for Redux
+- **TanStack Query 5.62.9** - Powerful server state management
+- **TanStack Query DevTools 5.62.9** - Development tools for debugging
+- **TanStack Query Persist 5.83.0** - Query persistence across sessions
 
 ### **UI & Styling**
 
@@ -1009,8 +1012,8 @@ src/
 
 ### **State Management Patterns**
 
-- ✅ **Redux Toolkit Migration** - Complete migration from traditional Redux
-- ✅ **createSlice & createAsyncThunk** - Modern Redux patterns
+- ✅ **TanStack Query Integration** - Complete server state management
+- ✅ **useQuery & useInfiniteQuery** - Modern data fetching patterns
 - ✅ **Custom Hooks** - Business logic abstraction
 - ✅ **Error Boundaries** - Graceful error handling
 
@@ -1058,7 +1061,7 @@ npm run preview           # Preview production build
 ### **Developer Experience**
 
 - **Hot Reload**: Instant feedback during development
-- **Redux DevTools**: Complete state inspection and time-travel debugging
+- **TanStack Query DevTools**: Complete query inspection and cache debugging
 - **TypeScript Integration**: Excellent IntelliSense and error detection
 - **Modern Tooling**: Vite for fast builds and optimal development experience
 
@@ -1096,58 +1099,81 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 🎯 Extra Features Implementation
 
-### 🔍 RTK Query Integration
+### 🔍 TanStack Query Integration
 
-This project demonstrates **RTK Query** implementation alongside traditional Redux Toolkit patterns, showcasing both approaches for different use cases:
+This project demonstrates **TanStack Query** implementation with advanced caching, infinite scroll, and intelligent background synchronization:
 
-#### **RTK Query Features Implemented**
+#### **TanStack Query Features Implemented**
 
 ```typescript
-// Advanced RTK Query API slice with caching and invalidation
-export const apiSlice = createApi({
-  reducerPath: 'api',
-  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
-  tagTypes: ['Event', 'EventList', 'City', 'CityList'],
-  endpoints: builder => ({
-    getEvents: builder.query<Event[], EventsQueryParams>({
-      query: params => ({ url: '/events', params }),
-      providesTags: ['EventList'],
-      keepUnusedDataFor: 300, // 5 minutes
-    }),
-    getEventBySlug: builder.query<Event, string>({
-      query: slug => `/events/${slug}`,
-      providesTags: (result, error, slug) => [{ type: 'Event', id: slug }],
-      keepUnusedDataFor: 600, // 10 minutes
-    }),
-  }),
+// Advanced query client configuration with intelligent caching
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 30 * 60 * 1000,   // 30 minutes
+      retry: 3,
+      refetchOnWindowFocus: true,
+    },
+  },
+})
+
+// Query hooks with smart caching
+export const useEventsQuery = (params?: EventsQueryParams) => {
+  return useQuery({
+    queryKey: ['events', params],
+    queryFn: () => fetchEvents(params),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export const useInfiniteEventsQuery = (citySlug?: string) => {
+  return useInfiniteQuery({
+    queryKey: ['events', 'infinite', citySlug],
+    queryFn: ({ pageParam = 1 }) => fetchEvents({ page: pageParam, citySlug }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextPage : undefined,
+  })
+}
+```
+
+#### **Key TanStack Query Benefits Demonstrated**
+
+- **🔄 Intelligent Caching**: Automatic stale-while-revalidate with request deduplication
+- **🔄 Background Sync**: Automatic data synchronization on focus/reconnect
+- **⚡ Optimistic Updates**: Immediate UI updates with automatic rollback on errors
+- **♾️ Infinite Scroll**: Memory-efficient infinite queries with virtualization
+- **🎣 Custom Hooks**: Powerful custom query and mutation hooks
+
+#### **Modern Data Fetching Pattern**
+
+The project showcases **declarative data fetching** with intelligent caching:
+
+```typescript
+// Declarative queries with automatic caching
+const { data: events, isLoading } = useEventsQuery({ city: 'austin' })
+const { data: infiniteEvents, fetchNextPage } = useInfiniteEventsQuery('austin')
+
+// Mutations with optimistic updates
+const createEventMutation = useMutation({
+  mutationFn: createEvent,
+  onMutate: async (newEvent) => {
+    // Optimistic update
+    queryClient.setQueryData(['events'], (old) => [...old, newEvent])
+  },
+  onError: (error, variables, context) => {
+    // Rollback on error
+    queryClient.setQueryData(['events'], context.previousEvents)
+  }
 })
 ```
 
-#### **Key RTK Query Benefits Demonstrated**
+#### **When to Use TanStack Query**
 
-- **🔄 Automatic Caching**: Intelligent request deduplication and cache management
-- **🔄 Background Refetching**: Automatic data synchronization on focus/reconnect
-- **⚡ Optimistic Updates**: Immediate UI updates with automatic rollback on errors
-- **🏷️ Tag-based Invalidation**: Smart cache invalidation using entity tags
-- **🎣 Generated Hooks**: Auto-generated hooks (`useGetEventsQuery`, `useGetEventBySlugQuery`)
-
-#### **Hybrid Architecture Pattern**
-
-The project showcases a **hybrid approach** combining both patterns:
-
-```typescript
-// RTK Query for read operations (caching benefits)
-const { data: events, isLoading } = useGetEventsQuery({ city: 'austin' })
-
-// Traditional createAsyncThunk for complex operations (full control)
-const dispatch = useAppDispatch()
-await dispatch(searchEvents(cityName)) // Backend search with Redux state integration
-```
-
-#### **When to Use Each Pattern**
-
-- **RTK Query**: Simple CRUD operations, data fetching with caching needs
-- **createAsyncThunk**: Complex business logic, multi-step operations, custom state management
+- **Server State**: Any data that comes from the server
+- **Caching Needs**: Data that should be cached and synchronized
+- **Real-time Data**: Background refetching and synchronization
+- **Infinite Lists**: Pagination and infinite scroll implementations
 
 ### 📚 Storybook Component Documentation
 
@@ -1223,4 +1249,4 @@ npm run build-storybook  # Build static Storybook for deployment
 
 **⭐ Star this repository if you find it helpful for learning modern React patterns!**
 
-Built with ❤️ using React 19, TypeScript, Redux Toolkit, and modern development practices
+Built with ❤️ using React 19, TypeScript, TanStack Query, and modern development practices

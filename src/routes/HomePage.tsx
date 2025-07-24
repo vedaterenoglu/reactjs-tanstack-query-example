@@ -10,44 +10,15 @@ import { useCitiesQuery } from '@/lib/hooks/tanstack/useCitiesQuery'
 import type { City } from '@/lib/types/city.types'
 
 /**
- * HomePage Container Component - Semantic homepage with local events discovery functionality
- *
- * Current Features:
- * - Page header with title, description, and "View All Events" CTA button
- * - Professional "View All Events" button with Calendar icon and hover animations
- * - Integrated city search functionality with real-time filtering and refresh
- * - Unified state management (loading, error, empty states) via StateFrame
- * - Responsive cities grid with scroll animations and selection
- * - Search clearing on component mount for clean initial state
- * - City selection handling (placeholder for future events navigation)
- *
+ * HomePage - City selection landing page
+ * 
+ * Displays searchable cities grid with navigation to city-specific events.
+ * Includes header with "View All Events" CTA, search functionality, and responsive grid.
+ * 
  * Design Patterns Applied:
- * - Container/Orchestrator Pattern: Pure orchestration of StateFrame, SearchSection, CitiesGrid
- * - Component Composition Pattern: Semantic header + search section + main content with StateFrame
- * - Facade Pattern: Uses useCitiesWithInit to abstract Redux state + API calls + filtering
- * - Strategy Pattern: StateFrame handles different UI states, delegates to specialized components
- * - Event Handler Pattern: Coordinates search refresh, retry, city selection actions
- *
- * SOLID Principles:
- * - SRP: Page-level orchestration, semantic structure, and state coordination only
- * - OCP: Extensible via props (maxCities, gridColumns, className)
- * - LSP: Can substitute other page containers in routing system
- * - ISP: Focused interface with optional maxCities, gridColumns, className props
- * - DIP: Depends on useCitiesWithInit/useCitySearch hooks and child component abstractions
- *
- * React 19 Patterns:
- * - Custom Hook Integration: useCitiesWithInit (cities+search+state), useCitySearch (search actions)
- * - Component Composition: Header → SearchSection → StateFrame(CitiesGrid)
- * - Performance Optimization: useMemo for displayCities/gridClasses, useCallback for handlers
- * - Clean Architecture: Zero business logic, pure coordination of child components
- * - Lifecycle Management: useEffect for search clearing on mount
- *
- * Semantic HTML Structure:
- * - <header> with <h1> page title + description paragraph
- * - SearchSection with <section> and hidden <h2> for accessibility
- * - <main> content area with labeled <section> containing StateFrame
- * - Proper heading hierarchy: h1 (page) → h2 (search/destinations) → h3 (results)
- * - ARIA labels and landmarks for screen reader navigation
+ * - Container Pattern: Orchestrates data fetching and UI state management
+ * - Composition Pattern: Header + SearchSection + StateFrame(CitiesGrid)
+ * - Custom Hook Pattern: useCitiesQuery for TanStack Query integration
  */
 
 interface HomePageProps {

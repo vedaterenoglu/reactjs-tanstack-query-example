@@ -1,3 +1,16 @@
+/**
+ * buttonVariants - Class variance authority configuration for button component styling
+ * 
+ * Defines button variant styles using CVA pattern for consistent button appearances
+ * across the application. Provides multiple variants (default, destructive, outline, etc.)
+ * and sizes (sm, default, lg, icon) with proper Tailwind CSS classes.
+ * 
+ * Design Patterns Applied:
+ * - Variant Pattern: CVA-based styling system for button appearances
+ * - Configuration Pattern: Centralized button styling configuration
+ * - Default Values Pattern: Sensible defaults for variant and size properties
+ */
+
 import { cva } from 'class-variance-authority'
 
 export const buttonVariants = cva(

@@ -1,3 +1,16 @@
+/**
+ * EventListContainer.stories - Storybook stories for EventListContainer component
+ * 
+ * Demonstrates EventListContainer component in different contexts including
+ * city-specific events and all events scenarios with mock data and
+ * interactive navigation controls.
+ * 
+ * Design Patterns Applied:
+ * - Story Pattern: Stories for different container contexts
+ * - Mock Data Pattern: Uses production Austin city data for realistic demos
+ * - Container Pattern: Shows how container orchestrates child components
+ */
+
 import type { City } from '@/lib/types/city.types'
 import { cities } from '@/mock/events'
 

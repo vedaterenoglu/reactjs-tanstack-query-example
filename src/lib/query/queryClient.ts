@@ -1,3 +1,17 @@
+/**
+ * queryClient - TanStack Query client configuration with persistence support
+ * 
+ * Provides configured QueryClient instance with optimized defaults, query key factory,
+ * and persistence utilities. Implements consistent caching strategies and error handling
+ * patterns for the entire application.
+ * 
+ * Design Patterns Applied:
+ * - Singleton Pattern: Single QueryClient instance for the application
+ * - Factory Pattern: Query key factory for consistent cache key generation
+ * - Configuration Pattern: Centralized query client configuration
+ * - Key Generation Pattern: Hierarchical query key structure
+ */
+
 import { QueryClient } from '@tanstack/react-query'
 
 import { persistenceService } from './persistence'

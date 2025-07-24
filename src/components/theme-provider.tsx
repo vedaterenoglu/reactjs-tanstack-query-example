@@ -1,3 +1,17 @@
+/**
+ * ThemeProvider - Context provider for theme management with system preference detection
+ * 
+ * Provides theme context to child components with localStorage persistence,
+ * system theme detection, and automatic DOM class management. Supports light,
+ * dark, and system themes with proper CSS class application.
+ * 
+ * Design Patterns Applied:
+ * - Provider Pattern: Provides theme context to component tree
+ * - Strategy Pattern: Different theme strategies (light/dark/system)
+ * - Observer Pattern: Watches system theme preference changes
+ * - Persistence Pattern: Saves theme preference to localStorage
+ */
+
 import { useEffect, useState } from 'react'
 
 import { ThemeProviderContext, type Theme } from '@/lib/contexts/theme.context'

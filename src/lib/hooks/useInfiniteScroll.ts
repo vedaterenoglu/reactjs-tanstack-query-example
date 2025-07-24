@@ -1,3 +1,17 @@
+/**
+ * useInfiniteScroll - Custom hook for infinite scrolling with TanStack Query integration
+ * 
+ * Provides robust infinite scrolling functionality with configurable behavior,
+ * error handling, retry mechanisms, and performance optimization. Integrates
+ * seamlessly with TanStack Query's useInfiniteQuery for data fetching.
+ * 
+ * Design Patterns Applied:
+ * - Custom Hook Pattern: Encapsulates infinite scroll logic for reuse
+ * - Observer Pattern: Uses Intersection Observer for scroll detection
+ * - Configuration Pattern: Configurable behavior through options
+ * - Error Recovery Pattern: Automatic retry with exponential backoff
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query'
