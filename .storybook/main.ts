@@ -29,8 +29,6 @@ const config: StorybookConfig = {
         include: [
           'react',
           'react-dom',
-          'react-redux',
-          'redux',
           '@storybook/react-vite',
         ],
       },

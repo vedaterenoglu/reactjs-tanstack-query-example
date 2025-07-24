@@ -38,6 +38,5 @@
     "erasableSyntaxOnly": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"],
-  "exclude": ["vitest.config.ts", "src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.spec.ts", "src/**/*.spec.tsx"]
+  "include": ["src"]
 }

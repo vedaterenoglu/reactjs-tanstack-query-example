@@ -1,7 +1,7 @@
 import type { Preview, Decorator } from '@storybook/react-vite'
 import React from 'react'
 
-import { ReduxProvider } from '../src/components/providers/ReduxProvider'
+import { QueryProvider } from '../src/components/providers/QueryProvider'
 
 // Import only essential CSS files to avoid Tailwind processing issues
 import '../src/index.css'
@@ -10,13 +10,13 @@ import '../src/styles/animations.css'
 // Temporarily skip responsive.css due to Tailwind v4 @apply issues
 // import '../src/styles/responsive.css'
 
-// Redux Provider decorator for all stories
-const withReduxProvider: Decorator = Story => {
-  return React.createElement(ReduxProvider, null, React.createElement(Story))
+// TanStack Query Provider decorator for all stories
+const withQueryProvider: Decorator = Story => {
+  return React.createElement(QueryProvider, null, React.createElement(Story))
 }
 
 const preview: Preview = {
-  decorators: [withReduxProvider],
+  decorators: [withQueryProvider],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
     controls: {

@@ -57,10 +57,6 @@ export {
 
 // Pagination and Search Hooks
 export {
-  useFacetedSearch,
-} from './useFacetedSearch'
-
-export {
   useInfiniteScroll,
 } from './useInfiniteScroll'
 
