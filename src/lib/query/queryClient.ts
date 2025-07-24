@@ -1,5 +1,10 @@
 import { QueryClient } from '@tanstack/react-query'
 
+import { persistenceService } from './persistence'
+
+// Get persistence configuration
+const persistenceConfig = persistenceService.getConfig()
+
 // Query key factory for consistent cache key management
 export const queryKeys = {
   all: ['queries'] as const,
@@ -124,6 +129,24 @@ export const resetQueries = async (queryKey: readonly unknown[]) => {
 // Utility function to remove queries
 export const removeQueries = (queryKey: readonly unknown[]) => {
   queryClient.removeQueries({ queryKey })
+}
+
+// Persistence utilities
+export const persistenceUtils = {
+  // Get persistence configuration for providers
+  getPersistenceConfig: () => persistenceConfig,
+  
+  // Clear persisted cache
+  clearPersistedCache: () => persistenceService.clearPersistedCache(),
+  
+  // Get cache health information
+  getCacheHealth: () => persistenceService.getCacheHealth(),
+  
+  // Force cache rehydration
+  rehydrateCache: async () => {
+    // This would trigger a fresh load from persistence
+    await queryClient.invalidateQueries()
+  },
 }
 
 // Export type for use in components

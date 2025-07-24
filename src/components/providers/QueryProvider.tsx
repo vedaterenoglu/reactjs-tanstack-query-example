@@ -1,7 +1,7 @@
-import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 
-import { queryClient } from '@/lib/query/queryClient'
+import { queryClient, persistenceUtils } from '@/lib/query/queryClient'
 
 import type { ReactNode } from 'react'
 
@@ -10,13 +10,37 @@ interface QueryProviderProps {
 }
 
 /**
- * QueryProvider component that wraps the application with TanStack Query client
- * Follows the Provider Pattern for consistent state management across the app
- * Includes DevTools for development environment debugging
+ * Enhanced QueryProvider with Persistence Support
+ * Replaces redux-persist functionality with TanStack Query persistence
+ * Follows Provider Pattern with Single Responsibility for query management
+ * Implements Dependency Inversion - depends on persistence abstractions
  */
 export function QueryProvider({ children }: QueryProviderProps) {
+  const persistenceConfig = persistenceUtils.getPersistenceConfig()
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: persistenceConfig.persister,
+        maxAge: persistenceConfig.maxAge,
+        hydrateOptions: persistenceConfig.hydrateOptions,
+        dehydrateOptions: persistenceConfig.dehydrateOptions,
+        buster: persistenceConfig.buster,
+      }}
+      onSuccess={() => {
+        // Cache rehydrated successfully
+        if (import.meta.env.DEV) {
+          console.warn('Query cache rehydrated successfully')
+        }
+      }}
+      onError={() => {
+        // Handle rehydration errors gracefully
+        console.warn('Failed to rehydrate query cache')
+        // Clear corrupted cache and continue
+        persistenceUtils.clearPersistedCache()
+      }}
+    >
       {children}
       {import.meta.env.DEV && (
         <ReactQueryDevtools
@@ -25,6 +49,6 @@ export function QueryProvider({ children }: QueryProviderProps) {
           position="right"
         />
       )}
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   )
 }

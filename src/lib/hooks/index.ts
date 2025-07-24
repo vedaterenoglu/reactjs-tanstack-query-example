@@ -165,6 +165,15 @@ export {
   type BidirectionalInfiniteScrollResult,
 } from './useInfiniteScroll'
 
+export {
+  // Persistence Hooks
+  usePersistence,
+  usePersistenceMonitor,
+  type PersistenceResult,
+  type PersistenceMonitorResult,
+  type PersistenceStats,
+} from './usePersistence'
+
 // ===== HOOK COLLECTIONS =====
 
 /**
@@ -230,6 +239,8 @@ export const UtilityHooks = {
   useEventsPrefetch: useEventsPrefetch,
   useCitiesPrefetch: useCitiesPrefetch,
   useCityOperations: useCityOperations,
+  usePersistence: usePersistence,
+  usePersistenceMonitor: usePersistenceMonitor,
 } as const
 
 // Pagination Hooks - Pagination and filtering
