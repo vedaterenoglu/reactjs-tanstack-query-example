@@ -5,7 +5,6 @@ import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
 import { useEventsQuery, useEventsByCity } from '@/lib/hooks/tanstack/useEventsQuery'
-import { useEventPagination, useEventSearch } from '@/lib/hooks/useEvents'
 import type { Event } from '@/lib/types/event.types'
 
 /**
@@ -61,18 +60,22 @@ export const EventsListPage = () => {
     }
   }, [searchQueryFromUrl, cityEventsQuery, allEventsQuery])
 
-  // Pagination hook
-  const {
-    pagination,
-    totalPages,
-    goToPage,
-  } = useEventPagination()
+  // Local pagination state management following React 19 patterns
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(12) // Fixed items per page
+  
+  // Calculate pagination values
+  const totalItems = allEvents.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
 
-  // Search hook for local search (not URL search parameter)
-  const {
-    searchQuery: currentSearchQuery,
-    clearSearch,
-  } = useEventSearch()
+  // Local search state for non-URL search functionality
+  const [currentSearchQuery, setCurrentSearchQuery] = useState('')
+  
+  const clearSearch = useCallback(() => {
+    setCurrentSearchQuery('')
+  }, [])
 
   // Server-side filtering: TanStack Query handles filtering via API calls
   // Client-side pagination only for non-search results
@@ -95,8 +98,6 @@ export const EventsListPage = () => {
     
     // Strategy 3: No search + pagination active - use paginated events
     if (totalPages > 1) {
-      const startIndex = pagination.offset
-      const endIndex = startIndex + pagination.limit
       return allEvents?.slice(startIndex, endIndex) || []
     }
     
@@ -106,8 +107,8 @@ export const EventsListPage = () => {
     searchQueryFromUrl,
     currentSearchQuery,
     totalPages,
-    pagination.offset,
-    pagination.limit,
+    startIndex,
+    endIndex,
     allEvents,
   ])
 
@@ -138,7 +139,7 @@ export const EventsListPage = () => {
   // Scroll to top when page changes
   const handlePageChange = useCallback((page: number) => {
     setIsChangingPage(true)
-    goToPage(page)
+    setCurrentPage(page)
     
     // Smooth scroll to top of page
     window.scrollTo({
@@ -154,7 +155,7 @@ export const EventsListPage = () => {
     
     // Reset page transition state
     setTimeout(() => setIsChangingPage(false), 300)
-  }, [goToPage])
+  }, [])
 
   // Determine state flags
   const isEmpty = hasData && displayEvents.length === 0
@@ -201,6 +202,10 @@ export const EventsListPage = () => {
           {showPagination && (
             <div className="mt-8">
               <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
                 onPageChange={handlePageChange}
                 className="justify-center"
                 showInfo={true}

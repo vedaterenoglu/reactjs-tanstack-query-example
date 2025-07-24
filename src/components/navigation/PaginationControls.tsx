@@ -3,9 +3,8 @@
  * Provides previous/next buttons with Redux state management integration
  */
 
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { useEventPagination } from '@/lib/hooks/useEvents'
 
 /**
  * Pagination Controls Component - Traditional React + Redux Pattern
@@ -33,6 +32,26 @@ import { useEventPagination } from '@/lib/hooks/useEvents'
 
 interface PaginationControlsProps {
   /**
+   * Current page number
+   */
+  currentPage: number
+  /**
+   * Total number of pages
+   */
+  totalPages: number
+  /**
+   * Total number of items
+   */
+  totalItems: number
+  /**
+   * Items per page
+   */
+  itemsPerPage: number
+  /**
+   * Called when page changes
+   */
+  onPageChange: (page: number) => void
+  /**
    * Additional CSS classes for styling
    */
   className?: string
@@ -44,57 +63,48 @@ interface PaginationControlsProps {
    * Mobile-optimized layout
    */
   variant?: 'desktop' | 'mobile'
-  /**
-   * Called when page changes (for scroll-to-top, etc.)
-   */
-  onPageChange?: (page: number) => void
 }
 
 /**
- * Custom hook for pagination logic - follows Single Responsibility Principle
- * Extracts all pagination state and actions into reusable hook
+ * Custom hook for pagination logic - receives props and handles UI interactions
  */
-function usePagination(onPageChange?: (page: number) => void) {
-  const {
-    pagination,
-    currentPage,
-    totalPages,
-    hasMore,
-    isLoading,
-    goToPage,
-  } = useEventPagination()
+function usePagination(
+  currentPage: number,
+  totalPages: number,
+  totalItems: number,
+  itemsPerPage: number,
+  onPageChange: (page: number) => void
+) {
+  const [isChanging, setIsChanging] = useState(false)
 
   const canGoPrevious = currentPage > 1
-  const canGoNext = hasMore
-  const isChanging = isLoading
+  const canGoNext = currentPage < totalPages
 
   const paginationInfo = {
     currentPage,
     totalPages,
-    startItem: pagination.offset + 1,
-    endItem: Math.min(pagination.offset + pagination.limit, pagination.total),
+    startItem: (currentPage - 1) * itemsPerPage + 1,
+    endItem: Math.min(currentPage * itemsPerPage, totalItems),
   }
 
   // Memoized action dispatchers
   const handlePreviousPage = useCallback(async () => {
     if (canGoPrevious && !isChanging) {
       const previousPage = currentPage - 1
-      goToPage(previousPage)
-      if (onPageChange) {
-        onPageChange(previousPage)
-      }
+      setIsChanging(true)
+      onPageChange(previousPage)
+      setTimeout(() => setIsChanging(false), 300)
     }
-  }, [canGoPrevious, isChanging, onPageChange, currentPage, goToPage])
+  }, [canGoPrevious, isChanging, onPageChange, currentPage])
 
   const handleNextPage = useCallback(async () => {
     if (canGoNext && !isChanging) {
       const nextPage = currentPage + 1
-      goToPage(nextPage)
-      if (onPageChange) {
-        onPageChange(nextPage)
-      }
+      setIsChanging(true)
+      onPageChange(nextPage)
+      setTimeout(() => setIsChanging(false), 300)
     }
-  }, [canGoNext, isChanging, onPageChange, currentPage, goToPage])
+  }, [canGoNext, isChanging, onPageChange, currentPage])
 
   // Keyboard navigation support
   useEffect(() => {
@@ -236,21 +246,23 @@ function PaginationInfo({ paginationInfo, variant }: PaginationInfoProps) {
  * Implements accessibility, mobile optimization, and keyboard navigation
  */
 export function PaginationControls({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
   className = '',
   showInfo = true,
   variant = 'desktop',
-  onPageChange,
 }: PaginationControlsProps) {
   const {
-    currentPage,
-    totalPages,
     canGoPrevious,
     canGoNext,
     isChanging,
     paginationInfo,
     handlePreviousPage,
     handleNextPage,
-  } = usePagination(onPageChange)
+  } = usePagination(currentPage, totalPages, totalItems, itemsPerPage, onPageChange)
 
   // Don't render if no pages
   if (totalPages <= 1) {
@@ -331,7 +343,13 @@ export function PaginationControls({
  * Extends base PaginationControls with swipe support
  */
 export function MobilePaginationControls(props: PaginationControlsProps) {
-  const pagination = usePagination(props.onPageChange)
+  const pagination = usePagination(
+    props.currentPage,
+    props.totalPages,
+    props.totalItems,
+    props.itemsPerPage,
+    props.onPageChange
+  )
 
   // Touch gesture support
   useEffect(() => {
