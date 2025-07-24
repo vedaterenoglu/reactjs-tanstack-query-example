@@ -124,8 +124,17 @@ export class EventApiService {
         `${this.apiBasePath}/events/${slug}`
       )
 
+      // Check if response is wrapped or direct event object
+      const responseData = response.data
+      
+      // If the response is already an event object (not wrapped), wrap it
+      const dataToValidate = 
+        responseData && typeof responseData === 'object' && 'success' in responseData
+          ? responseData
+          : { success: true, data: responseData }
+
       // Validate single event response
-      const validatedResponse = validateSingleEventResponse(response.data)
+      const validatedResponse = validateSingleEventResponse(dataToValidate)
       return validatedResponse.data
     } catch (error) {
       throw this.handleApiError(error, `Failed to fetch event: ${slug}`)

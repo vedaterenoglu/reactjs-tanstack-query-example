@@ -8,7 +8,7 @@ import { EventHeroSection } from '@/components/events/EventHeroSection'
 import { StateFrame } from '@/components/frames'
 import { BackNavigation } from '@/components/navigation/BackNavigation'
 import { getAppUrl } from '@/lib/config/env'
-import { useEvent } from '@/lib/hooks/useEvents'
+import { useEventQuery } from '@/lib/hooks/tanstack/useEventsQuery'
 import {
   processPayment,
   validatePaymentRequest,
@@ -51,13 +51,15 @@ export const SingleEventPage = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
-  // Custom hook integration following DIP and Facade patterns
-  const { event, isLoading, error } = useEvent(slug)
+  // TanStack Query integration for single event fetching
+  const eventQuery = useEventQuery(slug || '', Boolean(slug))
+  const event = eventQuery.data
+  const isLoading = eventQuery.isLoading
+  const error = eventQuery.error
   
   const retry = useCallback(() => {
-    // TanStack Query handles retries automatically
-    window.location.reload()
-  }, [])
+    void eventQuery.refetch()
+  }, [eventQuery])
 
   // Memoized formatting operations for performance
   const formattedPrice = useMemo(() => {
