@@ -6,7 +6,8 @@ import { StateFrame } from '@/components/frames'
 import { CitiesGrid } from '@/components/grids'
 import { SearchSection } from '@/components/sections'
 import { Button } from '@/components/ui/button'
-import { useCitiesWithInit, useCitySearch } from '@/lib/hooks'
+import { useCitySearch } from '@/lib/hooks'
+import { useCitiesQuery } from '@/lib/hooks/tanstack/useCitiesQuery'
 import type { City } from '@/lib/types/city.types'
 
 /**
@@ -63,17 +64,12 @@ export const HomePage = ({
 }: HomePageProps) => {
   const navigate = useNavigate()
 
-  // Custom hook integration following DIP and Facade patterns
-  const {
-    filteredCities,
-    searchQuery,
-    isLoading,
-    error,
-    hasData,
-    refreshCities,
-    retryOperation,
-    filteredCitiesCount,
-  } = useCitiesWithInit()
+  // TanStack Query integration following DIP and Facade patterns
+  const citiesQuery = useCitiesQuery()
+  const cities = useMemo(() => citiesQuery.data || [], [citiesQuery.data])
+  const isLoading = citiesQuery.isLoading
+  const error = citiesQuery.error?.message || null
+  const hasData = Boolean(citiesQuery.data)
 
   const { clearSearch } = useCitySearch()
 
@@ -84,23 +80,22 @@ export const HomePage = ({
 
   // Memoized data processing following Performance Pattern
   const displayCities = useMemo(() => {
-    if (!maxCities) return filteredCities
-    return filteredCities.slice(0, maxCities)
-  }, [filteredCities, maxCities])
+    if (!maxCities) return cities
+    return cities.slice(0, maxCities)
+  }, [cities, maxCities])
 
   const hasResults = displayCities.length > 0
-  const isSearchActive = Boolean(searchQuery?.trim())
   const showEmptyState = !hasResults && !isLoading && hasData
 
   // Memoized event handlers following Performance Pattern
   const handleRefresh = useCallback(() => {
     clearSearch() // Clear search text first
-    void refreshCities() // Then refresh cities data
-  }, [clearSearch, refreshCities])
+    void citiesQuery.refetch() // Then refresh cities data
+  }, [clearSearch, citiesQuery])
 
   const handleRetry = useCallback(() => {
-    void retryOperation()
-  }, [retryOperation])
+    void citiesQuery.refetch()
+  }, [citiesQuery])
 
   const handleCitySelect = useCallback(
     (city: City) => {
@@ -192,8 +187,8 @@ export const HomePage = ({
               loadingTitle="Loading Destinations"
               loadingMessage="Fetching available cities for you..."
               isEmpty={showEmptyState}
-              isSearchActive={isSearchActive}
-              searchQuery={searchQuery}
+              isSearchActive={false}
+              searchQuery=""
               onRefresh={handleRefresh}
             >
               {/* Cities Grid - Only renders when data is available */}
@@ -201,9 +196,9 @@ export const HomePage = ({
                 cities={displayCities}
                 hasResults={hasResults}
                 isLoading={isLoading && hasData}
-                isSearchActive={isSearchActive}
-                searchQuery={searchQuery}
-                filteredCount={filteredCitiesCount}
+                isSearchActive={false}
+                searchQuery=""
+                filteredCount={displayCities.length}
                 maxCities={maxCities}
                 gridClasses={gridClasses}
                 onCitySelect={handleCitySelect}
