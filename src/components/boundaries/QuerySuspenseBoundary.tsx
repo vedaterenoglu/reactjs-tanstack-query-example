@@ -142,25 +142,7 @@ export const InlineSuspenseBoundary: React.FC<{
   </QuerySuspenseBoundary>
 )
 
-/**
- * Higher-Order Component for wrapping components with QuerySuspenseBoundary
- * Following Higher-Order Component Pattern for reusable suspense boundary logic
- */
-export const withQuerySuspense = <P extends object>(
-  WrappedComponent: React.ComponentType<P>,
-  suspenseProps?: Omit<QuerySuspenseBoundaryProps, 'children'>
-) => {
-  const WithQuerySuspenseComponent = (props: P) => (
-    <QuerySuspenseBoundary {...suspenseProps}>
-      <WrappedComponent {...props} />
-    </QuerySuspenseBoundary>
-  )
-
-  WithQuerySuspenseComponent.displayName = 
-    `withQuerySuspense(${WrappedComponent.displayName || WrappedComponent.name})`
-
-  return WithQuerySuspenseComponent
-}
+// withQuerySuspense HOC moved to QuerySuspenseHooks.tsx to fix react-refresh warnings
 
 /**
  * Combined Error and Suspense Boundary for comprehensive async handling
@@ -193,8 +175,8 @@ export const QueryBoundary: React.FC<QueryBoundaryProps> = ({
     <QuerySuspenseBoundary {...suspenseProps} fallback={fallback}>
       <QueryErrorBoundary
         fallback={errorFallback}
-        onError={onError}
-        resetKeys={resetKeys}
+        onError={onError || undefined}
+        resetKeys={resetKeys || undefined}
         errorTitle={errorTitle}
       >
         {children}
@@ -203,19 +185,4 @@ export const QueryBoundary: React.FC<QueryBoundaryProps> = ({
   )
 }
 
-/**
- * Hook for managing suspense boundary states
- * Following Custom Hook Pattern for suspense boundary integration
- */
-export const useQuerySuspense = () => {
-  const [suspenseKey, setSuspenseKey] = React.useState(0)
-
-  const resetSuspense = React.useCallback(() => {
-    setSuspenseKey(prev => prev + 1)
-  }, [])
-
-  return {
-    suspenseKey,
-    resetSuspense,
-  }
-}
+// useQuerySuspense hook moved to QuerySuspenseHooks.tsx to fix react-refresh warnings

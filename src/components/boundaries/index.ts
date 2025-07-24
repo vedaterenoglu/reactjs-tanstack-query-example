@@ -21,7 +21,11 @@ export {
   CitiesSuspenseBoundary,
   EventDetailSuspenseBoundary,
   InlineSuspenseBoundary,
-  withQuerySuspense,
   QueryBoundary,
-  useQuerySuspense,
 } from './QuerySuspenseBoundary'
+
+// HOCs and Hooks
+export {
+  withQuerySuspense,
+  useQuerySuspense,
+} from './QuerySuspenseHooks'
