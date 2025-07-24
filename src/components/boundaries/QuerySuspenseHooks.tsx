@@ -1,6 +1,8 @@
 import React from 'react'
 
-import { QuerySuspenseBoundary, type QuerySuspenseBoundaryProps } from './QuerySuspenseBoundary'
+import { QuerySuspenseBoundary } from './QuerySuspenseBoundary'
+
+import type { QuerySuspenseBoundaryProps } from './QuerySuspenseBoundary'
 
 /**
  * Higher-Order Component for wrapping components with QuerySuspenseBoundary

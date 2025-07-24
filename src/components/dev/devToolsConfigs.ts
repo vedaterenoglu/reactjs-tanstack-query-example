@@ -7,11 +7,11 @@
  */
 export interface QueryDevToolsConfig {
   initialIsOpen?: boolean
-  position?: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
+  position?: 'bottom' | 'left' | 'right' | 'top' | 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
   panelPosition?: 'bottom' | 'left' | 'right' | 'top'
   closeButtonProps?: Record<string, unknown>
   toggleButtonProps?: Record<string, unknown>
-  errorTypes?: Array<{ name: string; initialIsOpen?: boolean }>
+  errorTypes?: Array<{ name: string; initialIsOpen?: boolean }> | undefined
   styleNonce?: string
   shadowDOMTarget?: ShadowRoot
 }

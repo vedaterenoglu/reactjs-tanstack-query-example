@@ -43,7 +43,7 @@ const ReactQueryDevtools = lazy(() =>
 /**
  * Props for QueryDevTools component
  */
-export interface QueryDevToolsProps extends QueryDevToolsConfig {
+export interface QueryDevToolsProps extends Omit<QueryDevToolsConfig, 'panelPosition' | 'errorTypes'> {
   enabled?: boolean
   showInProduction?: boolean
   fallback?: React.ReactNode
@@ -61,10 +61,8 @@ export const QueryDevTools: React.FC<QueryDevToolsProps> = ({
   fallback = null,
   initialIsOpen = false,
   position = 'bottom-right',
-  panelPosition = 'bottom',
   closeButtonProps,
   toggleButtonProps,
-  errorTypes,
   styleNonce,
   shadowDOMTarget,
 }) => {
@@ -83,13 +81,11 @@ export const QueryDevTools: React.FC<QueryDevToolsProps> = ({
     <Suspense fallback={fallback}>
       <ReactQueryDevtools
         initialIsOpen={initialIsOpen}
-        position={position}
-        panelPosition={panelPosition}
-        closeButtonProps={closeButtonProps}
-        toggleButtonProps={toggleButtonProps}
-        errorTypes={errorTypes}
-        styleNonce={styleNonce}
-        shadowDOMTarget={shadowDOMTarget}
+        position={position as 'bottom' | 'left' | 'right' | 'top'}
+        {...(closeButtonProps && { closeButtonProps })}
+        {...(toggleButtonProps && { toggleButtonProps })}
+        {...(styleNonce && { styleNonce })}
+        {...(shadowDOMTarget && { shadowDOMTarget })}
       />
     </Suspense>
   )

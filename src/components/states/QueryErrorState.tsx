@@ -44,9 +44,9 @@ interface BaseErrorProps {
   retryButtonText?: string
 }
 
-interface QueryErrorStateProps extends BaseErrorProps {
+export interface QueryErrorStateProps extends BaseErrorProps {
   queryResult: UseQueryResult<unknown>
-  onRetry?: () => void
+  onRetry?: (() => void) | undefined
   fallbackTitle?: string
   fallbackMessage?: string
 }

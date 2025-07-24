@@ -12,7 +12,7 @@
  * - Error Recovery Pattern: Automatic retry with exponential backoff
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query'
 
@@ -161,7 +161,7 @@ export function useInfiniteScroll<TData = unknown, TError = Error>(
     observerRef.current = new IntersectionObserver(
       entries => {
         const target = entries[0]
-        if (target.isIntersecting) {
+        if (target?.isIntersecting) {
           void loadMore()
         }
       },
@@ -289,15 +289,18 @@ export function useVirtualInfiniteScroll<TItem extends { id: string | number }>(
     const positions: number[] = [0]
     for (let i = 0; i < itemHeights.length; i++) {
       // eslint-disable-next-line security/detect-object-injection
-      positions.push(positions[i] + itemHeights[i])
+      const currentPosition = positions[i] || 0
+      // eslint-disable-next-line security/detect-object-injection
+      const currentHeight = itemHeights[i] || 0
+      positions.push(currentPosition + currentHeight)
     }
     return positions
   }, [itemHeights])
 
   // Calculate visible range
   const visibleRange = useMemo(() => {
-    const startIndex = positions.findIndex(pos => pos >= scrollTop) - 1
-    const endIndex = positions.findIndex(pos => pos >= scrollTop + containerHeight)
+    const startIndex = positions.findIndex((pos: number) => pos >= scrollTop) - 1
+    const endIndex = positions.findIndex((pos: number) => pos >= scrollTop + containerHeight)
     
     return {
       start: Math.max(0, startIndex - overscan),
@@ -478,5 +481,5 @@ export function useBidirectionalInfiniteScroll<TData = unknown, TError = Error>(
  * Utility Types for Infinite Scroll Consumers
  */
 export type InfiniteScrollResult = ReturnType<typeof useInfiniteScroll>
-export type VirtualInfiniteScrollResult<T> = ReturnType<typeof useVirtualInfiniteScroll<T>>
+export type VirtualInfiniteScrollResult<T extends { id: string | number }> = ReturnType<typeof useVirtualInfiniteScroll<T>>
 export type BidirectionalInfiniteScrollResult = ReturnType<typeof useBidirectionalInfiniteScroll>

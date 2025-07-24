@@ -45,7 +45,7 @@ interface SearchSectionProps {
   debounceMs?: number
   autoFocus?: boolean
   disabled?: boolean
-  searchQuery?: string
+  searchQuery?: string | undefined
   onSearchChange?: (value: string) => void
 }
 
@@ -73,7 +73,7 @@ export const SearchSection = ({
           autoFocus={autoFocus}
           disabled={disabled}
           showRefreshButton={showRefreshButton}
-          searchQuery={searchQuery}
+          searchQuery={searchQuery || ''}
           onSearchChange={onSearchChange}
         />
       </div>

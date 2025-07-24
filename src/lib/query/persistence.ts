@@ -120,9 +120,16 @@ class QueryPersistenceService {
       serialize: config.serialize || JSON.stringify,
       deserialize: config.deserialize || ((data: string) => {
         try {
-          return JSON.parse(data)
+          return JSON.parse(data) as import('@tanstack/query-persist-client-core').PersistedClient
         } catch {
-          return null
+          return { 
+            buster: '',
+            timestamp: Date.now(),
+            clientState: { 
+              queries: [], 
+              mutations: [] 
+            }
+          } as import('@tanstack/query-persist-client-core').PersistedClient
         }
       }),
       buster: config.buster || '',
@@ -161,7 +168,7 @@ class QueryPersistenceService {
       storage: this.storage,
       key: this.config.storageKey,
       serialize: this.config.serialize,
-      deserialize: this.config.deserialize,
+      deserialize: this.config.deserialize as (cachedString: string) => import('@tanstack/query-persist-client-core').PersistedClient,
       throttleTime: 1000, // Throttle persistence operations
     })
   }

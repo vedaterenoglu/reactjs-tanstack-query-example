@@ -27,7 +27,7 @@ import { LoadingState } from '@/components/states/LoadingState'
  * - Performance optimized with proper fallback strategies
  */
 
-interface QuerySuspenseBoundaryProps {
+export interface QuerySuspenseBoundaryProps {
   children: ReactNode
   fallback?: ReactNode
   loadingTitle?: string
@@ -175,9 +175,9 @@ export const QueryBoundary: React.FC<QueryBoundaryProps> = ({
     <QuerySuspenseBoundary {...suspenseProps} fallback={fallback}>
       <QueryErrorBoundary
         fallback={errorFallback}
-        onError={onError || undefined}
-        resetKeys={resetKeys || undefined}
-        errorTitle={errorTitle}
+        onError={onError}
+        resetKeys={resetKeys}
+        errorTitle={errorTitle || undefined}
       >
         {children}
       </QueryErrorBoundary>

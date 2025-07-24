@@ -20,12 +20,25 @@
  * - Observer pattern integration for React state updates
  */
 
-import {
-  AbortControllerUtils,
-  generateRequestId,
-} from './abortControllerFactory'
+// Temporary minimal implementations until abortControllerFactory is restored
+interface ManagedAbortController {
+  isAborted(): boolean
+  abort(reason?: string): void
+}
 
-import type { ManagedAbortController } from './abortControllerFactory'
+const AbortControllerUtils = {
+  createForPrefetch: (): ManagedAbortController => {
+    const controller = new AbortController()
+    return {
+      isAborted: () => controller.signal.aborted,
+      abort: (reason?: string) => controller.abort(reason)
+    }
+  }
+}
+
+const generateRequestId = (page: number): string => {
+  return `prefetch-${page}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
 
 export type PrefetchPriority = 'high' | 'normal' | 'low'
 export type PrefetchStrategy = 'immediate' | 'delayed' | 'network-aware'
@@ -492,10 +505,7 @@ export function createPrefetchCommand(
   executor: () => Promise<void>
 ): PrefetchCommand {
   const requestId = generateRequestId(page)
-  const abortController = AbortControllerUtils.createForPrefetch(
-    page,
-    requestId
-  )
+  const abortController = AbortControllerUtils.createForPrefetch()
 
   return {
     id: requestId,

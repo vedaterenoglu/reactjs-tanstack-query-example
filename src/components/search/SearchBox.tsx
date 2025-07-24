@@ -58,7 +58,7 @@ interface SearchBoxProps {
   className?: string
   showRefreshButton?: boolean
   searchQuery?: string
-  onSearchChange?: (value: string) => void
+  onSearchChange?: ((value: string) => void) | undefined
 }
 
 export const SearchBox = ({

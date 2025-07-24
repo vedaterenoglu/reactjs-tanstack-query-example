@@ -28,14 +28,14 @@ import { ErrorState } from '@/components/states/ErrorState'
  * - Accessibility-first error reporting
  */
 
-interface QueryErrorBoundaryProps {
+export interface QueryErrorBoundaryProps {
   children: ReactNode
   fallback?: ReactNode
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
-  resetKeys?: Array<string | number>
+  onError?: ((error: Error, errorInfo: ErrorInfo) => void) | undefined
+  resetKeys?: Array<string | number> | undefined
   resetOnPropsChange?: boolean
   isolate?: boolean
-  errorTitle?: string
+  errorTitle?: string | undefined
   showRetryButton?: boolean
 }
 
