@@ -8,7 +8,7 @@ import { EventHeroSection } from '@/components/events/EventHeroSection'
 import { StateFrame } from '@/components/frames'
 import { BackNavigation } from '@/components/navigation/BackNavigation'
 import { getAppUrl } from '@/lib/config/env'
-import { useSingleEvent } from '@/lib/hooks/useSingleEvent'
+import { useEvent } from '@/lib/hooks/useEvents'
 import {
   processPayment,
   validatePaymentRequest,
@@ -19,14 +19,14 @@ import {
  *
  * Design Patterns Applied:
  * 1. **Container/Presentational Pattern**: Pure container component that:
- *    - Handles data fetching through useSingleEvent hook
+ *    - Handles data fetching through useEvent hook with TanStack Query
  *    - Manages loading, error, and data states
  *    - Orchestrates extracted presentational components
  *    - Delegates all presentation to specialized components
  *
  * 2. **Compound Component Pattern**: Composes multiple related event components
  *
- * 3. **Custom Hook Pattern**: Uses useSingleEvent for data fetching abstraction
+ * 3. **Custom Hook Pattern**: Uses useEvent for data fetching abstraction
  *
  * 4. **Dependency Injection Pattern**: Injects formatted data and handlers to components
  *
@@ -52,7 +52,12 @@ export const SingleEventPage = () => {
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
   // Custom hook integration following DIP and Facade patterns
-  const { event, isLoading, error, retry } = useSingleEvent(slug)
+  const { event, isLoading, error } = useEvent(slug)
+  
+  const retry = useCallback(() => {
+    // TanStack Query handles retries automatically
+    window.location.reload()
+  }, [])
 
   // Memoized formatting operations for performance
   const formattedPrice = useMemo(() => {
@@ -150,7 +155,7 @@ export const SingleEventPage = () => {
       <BackNavigation onBackClick={handleBackClick} />
 
       <StateFrame
-        error={error}
+        error={error ? error.message : null}
         onRetry={handleRetry}
         errorTitle="Unable to Load Event"
         isLoading={isLoading && !event}
