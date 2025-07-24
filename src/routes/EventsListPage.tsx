@@ -4,7 +4,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
-import { useEventsWithInit, useEventPagination, useEventSearch } from '@/lib/hooks/useEvents'
+import { useEventsQuery, useEventsByCity } from '@/lib/hooks/tanstack/useEventsQuery'
+import { useEventPagination, useEventSearch } from '@/lib/hooks/useEvents'
 import type { Event } from '@/lib/types/event.types'
 
 /**
@@ -41,16 +42,24 @@ export const EventsListPage = () => {
   const [searchParams] = useSearchParams()
   const [isChangingPage, setIsChangingPage] = useState(false)
   
-  const {
-    events: allEvents,
-    isLoading,
-    error,
-    refetch,
-    hasData,
-  } = useEventsWithInit()
-
   // URL parameter parsing - Single Source of Truth Pattern
   const searchQueryFromUrl = searchParams.get('search')
+  
+  // Use different query hooks based on whether we have a search parameter (citySlug)
+  const allEventsQuery = useEventsQuery()
+  const cityEventsQuery = useEventsByCity(searchQueryFromUrl || '', Boolean(searchQueryFromUrl))
+  
+  // Select the appropriate query result based on search parameter
+  const { allEvents, isLoading, error, refetch, hasData } = useMemo(() => {
+    const query = searchQueryFromUrl ? cityEventsQuery : allEventsQuery
+    return {
+      allEvents: query.data?.data || [],
+      isLoading: query.isLoading,
+      error: query.error,
+      refetch: query.refetch,
+      hasData: Boolean(query.data),
+    }
+  }, [searchQueryFromUrl, cityEventsQuery, allEventsQuery])
 
   // Pagination hook
   const {
@@ -59,41 +68,42 @@ export const EventsListPage = () => {
     goToPage,
   } = useEventPagination()
 
-  // Search hook
+  // Search hook for local search (not URL search parameter)
   const {
     searchQuery: currentSearchQuery,
-    search,
     clearSearch,
   } = useEventSearch()
 
-  // Strategy Pattern: Different display strategies based on state
-  // Single Source of Truth: Filtered events take precedence when search is active
+  // Server-side filtering: TanStack Query handles filtering via API calls
+  // Client-side pagination only for non-search results
   const displayEvents = useMemo(() => {
-    let result: typeof allEvents = []
-
-    // Strategy 1: Search query is active - use filtered events
+    // Strategy 1: Search query (citySlug) is active - use server-filtered events directly
+    if (searchQueryFromUrl) {
+      return allEvents || []
+    }
+    
+    // Strategy 2: No search + local search active - use locally filtered events
     if (currentSearchQuery) {
       const query = currentSearchQuery.toLowerCase()
-      result = allEvents?.filter(event =>
+      return allEvents?.filter(event =>
         event.name.toLowerCase().includes(query) ||
         event.description.toLowerCase().includes(query) ||
         event.organizerName.toLowerCase().includes(query) ||
         event.location.toLowerCase().includes(query)
       ) || []
     }
-    // Strategy 2: No search + pagination active - use paginated events
-    else if (totalPages > 1) {
+    
+    // Strategy 3: No search + pagination active - use paginated events
+    if (totalPages > 1) {
       const startIndex = pagination.offset
       const endIndex = startIndex + pagination.limit
-      result = allEvents?.slice(startIndex, endIndex) || []
+      return allEvents?.slice(startIndex, endIndex) || []
     }
-    // Strategy 3: No search + no pagination - use all events
-    else {
-      result = allEvents || []
-    }
-
-    return result
+    
+    // Strategy 4: No search + no pagination - use all events
+    return allEvents || []
   }, [
+    searchQueryFromUrl,
     currentSearchQuery,
     totalPages,
     pagination.offset,
@@ -115,16 +125,15 @@ export const EventsListPage = () => {
   }, [refetch])
 
   // URL Parameter Sync - Observer Pattern
-  // Sync search state with URL parameters (URL as Single Source of Truth)
+  // Handle local search state separately from URL search parameter (citySlug)
   useEffect(() => {
-    // Backend filtering using search parameter
-    if (searchQueryFromUrl) {
-      search(searchQueryFromUrl)
-    } else if (!searchQueryFromUrl && currentSearchQuery) {
-      // URL has no search parameter, clear filters
+    // Only manage local search state, not URL search parameter
+    // URL search parameter (citySlug) is handled by TanStack Query hooks directly
+    if (!searchQueryFromUrl && currentSearchQuery) {
+      // URL has no search parameter, clear local search
       clearSearch()
     }
-  }, [searchQueryFromUrl, currentSearchQuery, search, clearSearch])
+  }, [searchQueryFromUrl, currentSearchQuery, clearSearch])
 
   // Scroll to top when page changes
   const handlePageChange = useCallback((page: number) => {

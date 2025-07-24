@@ -235,7 +235,7 @@ class QueryPersistenceService {
 const defaultPersistenceConfig: PersistenceConfig = {
   storageKey: 'tanstack-query-cache',
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  buster: process.env['NODE_ENV'] === 'development' ? Date.now().toString() : '1.0.0',
+  buster: typeof window !== 'undefined' ? Date.now().toString() : '1.0.0',
   hydrateOptions: {
     defaultOptions: {
       queries: {
