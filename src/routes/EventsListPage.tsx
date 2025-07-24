@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { EventsStateFrame } from '@/components/frames'
 import { AutoResizeEventGrid } from '@/components/grids'
 import { PaginationControls } from '@/components/navigation/PaginationControls'
+import { SearchSection } from '@/components/sections'
 import { useEventsQuery, useEventsByCity } from '@/lib/hooks/tanstack/useEventsQuery'
 import type { Event } from '@/lib/types/event.types'
 
@@ -38,19 +39,21 @@ import type { Event } from '@/lib/types/event.types'
 
 export const EventsListPage = () => {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isChangingPage, setIsChangingPage] = useState(false)
   
   // URL parameter parsing - Single Source of Truth Pattern
-  const searchQueryFromUrl = searchParams.get('search')
+  const citySlugFromUrl = searchParams.get('search') // City filtering via 'search' parameter
+  const freeTextSearchFromUrl = searchParams.get('q') || '' // Free-text search via 'q' parameter
   
-  // Use different query hooks based on whether we have a search parameter (citySlug)
+  // Select query strategy based on search parameters
   const allEventsQuery = useEventsQuery()
-  const cityEventsQuery = useEventsByCity(searchQueryFromUrl || '', Boolean(searchQueryFromUrl))
+  const cityEventsQuery = useEventsByCity(citySlugFromUrl || '', Boolean(citySlugFromUrl))
   
-  // Select the appropriate query result based on search parameter
+  // Select the appropriate query result based on search parameters
   const { allEvents, isLoading, error, refetch, hasData } = useMemo(() => {
-    const query = searchQueryFromUrl ? cityEventsQuery : allEventsQuery
+    // Priority: City filtering takes precedence over free-text search
+    const query = citySlugFromUrl ? cityEventsQuery : allEventsQuery
     return {
       allEvents: query.data?.data || [],
       isLoading: query.isLoading,
@@ -58,7 +61,7 @@ export const EventsListPage = () => {
       refetch: query.refetch,
       hasData: Boolean(query.data),
     }
-  }, [searchQueryFromUrl, cityEventsQuery, allEventsQuery])
+  }, [citySlugFromUrl, cityEventsQuery, allEventsQuery])
 
   // Local pagination state management following React 19 patterns
   const [currentPage, setCurrentPage] = useState(1)
@@ -70,29 +73,42 @@ export const EventsListPage = () => {
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
 
-  // Local search state for non-URL search functionality
-  const [currentSearchQuery, setCurrentSearchQuery] = useState('')
+  // URL-based search state management following Single Source of Truth Pattern
+  const handleSearchChange = useCallback((searchQuery: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    
+    if (searchQuery.trim()) {
+      newParams.set('q', searchQuery.trim())
+    } else {
+      newParams.delete('q')
+    }
+    
+    // Reset to first page when search changes
+    setCurrentPage(1)
+    
+    setSearchParams(newParams)
+  }, [searchParams, setSearchParams])
   
-  const clearSearch = useCallback(() => {
-    setCurrentSearchQuery('')
-  }, [])
+  const handleRefresh = useCallback(() => {
+    void refetch()
+  }, [refetch])
 
-  // Server-side filtering: TanStack Query handles filtering via API calls
-  // Client-side pagination only for non-search results
+  // Server-side filtering: TanStack Query handles city filtering via API calls
+  // Client-side search and pagination for free-text search
   const displayEvents = useMemo(() => {
-    // Strategy 1: Search query (citySlug) is active - use server-filtered events directly
-    if (searchQueryFromUrl) {
+    // Strategy 1: City filtering is active - use server-filtered events directly
+    if (citySlugFromUrl) {
       return allEvents || []
     }
     
-    // Strategy 2: No search + local search active - use locally filtered events
-    if (currentSearchQuery) {
-      const query = currentSearchQuery.toLowerCase()
+    // Strategy 2: Free-text search active - use locally filtered events
+    if (freeTextSearchFromUrl) {
+      const query = freeTextSearchFromUrl.toLowerCase()
       return allEvents?.filter(event =>
-        event.name.toLowerCase().includes(query) ||
-        event.description.toLowerCase().includes(query) ||
-        event.organizerName.toLowerCase().includes(query) ||
-        event.location.toLowerCase().includes(query)
+        event.name?.toLowerCase().includes(query) ||
+        event.description?.toLowerCase().includes(query) ||
+        event.organizerName?.toLowerCase().includes(query) ||
+        event.location?.toLowerCase().includes(query)
       ) || []
     }
     
@@ -104,8 +120,8 @@ export const EventsListPage = () => {
     // Strategy 4: No search + no pagination - use all events
     return allEvents || []
   }, [
-    searchQueryFromUrl,
-    currentSearchQuery,
+    citySlugFromUrl,
+    freeTextSearchFromUrl,
     totalPages,
     startIndex,
     endIndex,
@@ -125,16 +141,10 @@ export const EventsListPage = () => {
     void refetch()
   }, [refetch])
 
-  // URL Parameter Sync - Observer Pattern
-  // Handle local search state separately from URL search parameter (citySlug)
+  // Reset pagination when search parameters change - Observer Pattern
   useEffect(() => {
-    // Only manage local search state, not URL search parameter
-    // URL search parameter (citySlug) is handled by TanStack Query hooks directly
-    if (!searchQueryFromUrl && currentSearchQuery) {
-      // URL has no search parameter, clear local search
-      clearSearch()
-    }
-  }, [searchQueryFromUrl, currentSearchQuery, clearSearch])
+    setCurrentPage(1)
+  }, [citySlugFromUrl, freeTextSearchFromUrl])
 
   // Scroll to top when page changes
   const handlePageChange = useCallback((page: number) => {
@@ -160,16 +170,27 @@ export const EventsListPage = () => {
   // Determine state flags
   const isEmpty = hasData && displayEvents.length === 0
   const showPagination =
-    totalPages > 1 && hasData && !isEmpty && !currentSearchQuery
+    totalPages > 1 && hasData && !isEmpty && !freeTextSearchFromUrl && !citySlugFromUrl
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <header className="mb-8">
+      <header className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Upcoming Events</h1>
         <p className="text-muted-foreground">
           Discover and join exciting events happening in your area
         </p>
       </header>
+
+      {/* Search Section */}
+      <SearchSection
+        onRefresh={handleRefresh}
+        placeholder="Search events by name, description, organizer, or location..."
+        debounceMs={300}
+        autoFocus={false}
+        showRefreshButton={true}
+        searchQuery={freeTextSearchFromUrl}
+        onSearchChange={handleSearchChange}
+      />
 
       <main>
         <EventsStateFrame
