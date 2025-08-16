@@ -14,7 +14,7 @@ export class QueryDebugUtils {
    * Log query cache contents to console
    */
   static logQueryCache(queryClient: QueryClient): void {
-    if (process.env['NODE_ENV'] !== 'development') {
+    if (!import.meta.env.DEV) {
       return
     }
 
@@ -37,7 +37,7 @@ export class QueryDebugUtils {
    * Log mutation cache contents to console
    */
   static logMutationCache(queryClient: QueryClient): void {
-    if (process.env['NODE_ENV'] !== 'development') {
+    if (!import.meta.env.DEV) {
       return
     }
 
@@ -61,7 +61,7 @@ export class QueryDebugUtils {
    * Performance monitoring for queries
    */
   static monitorQueryPerformance(queryClient: QueryClient): void {
-    if (process.env['NODE_ENV'] !== 'development') {
+    if (!import.meta.env.DEV) {
       return
     }
 
@@ -75,7 +75,7 @@ export class QueryDebugUtils {
    * Debug specific query by key
    */
   static debugQuery(queryClient: QueryClient, queryKey: unknown[]): void {
-    if (process.env['NODE_ENV'] !== 'development') {
+    if (!import.meta.env.DEV) {
       return
     }
 
@@ -99,7 +99,7 @@ export class QueryDebugUtils {
  * Following Custom Hook Pattern for debugging functionality
  */
 export const useQueryDebug = () => {
-  const isDevelopment = process.env['NODE_ENV'] === 'development'
+  const isDevelopment = import.meta.env.DEV
 
   if (!isDevelopment) {
     // Return no-op functions in production

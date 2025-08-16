@@ -96,7 +96,7 @@ export class QueryErrorBoundary extends Component<
     }
 
     // Log error for development and monitoring
-    if (process.env['NODE_ENV'] === 'development') {
+    if (import.meta.env.DEV) {
       console.error('🚨 Query Error Boundary Caught Error:', {
         error: error.message,
         stack: error.stack,
@@ -105,7 +105,7 @@ export class QueryErrorBoundary extends Component<
     }
 
     // Report to error monitoring service in production
-    if (process.env['NODE_ENV'] === 'production') {
+    if (import.meta.env.PROD) {
       this.reportErrorToService(error, errorInfo)
     }
   }

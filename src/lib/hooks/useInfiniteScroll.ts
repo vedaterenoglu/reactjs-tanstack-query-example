@@ -65,7 +65,7 @@ export function useInfiniteScroll<TData = unknown, TError = Error>(
   // Refs for scroll detection
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLElement | null>(null)
-  const loadMoreTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const loadMoreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Infinite scroll state
   const [scrollState, setScrollState] = useState<InfiniteScrollState>({

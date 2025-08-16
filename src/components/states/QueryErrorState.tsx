@@ -151,7 +151,7 @@ export const QueryErrorState: React.FC<QueryErrorStateProps> = ({
         </div>
       )}
 
-      {process.env['NODE_ENV'] === 'development' && (
+      {import.meta.env.DEV && (
         <details className="mt-6 text-left max-w-md mx-auto">
           <summary className="cursor-pointer text-sm text-muted-foreground mb-2">
             Debug Information

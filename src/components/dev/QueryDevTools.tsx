@@ -68,7 +68,7 @@ export const QueryDevTools: React.FC<QueryDevToolsProps> = ({
 }) => {
   // Check if DevTools should be rendered
   const shouldRender = React.useMemo(() => {
-    const isDevelopment = process.env['NODE_ENV'] === 'development'
+    const isDevelopment = import.meta.env.DEV
     return enabled && (isDevelopment || showInProduction)
   }, [enabled, showInProduction])
 

@@ -225,7 +225,7 @@ class PrefetchQueueProcessor implements QueueProcessor {
 
   private isRunningState = false
   private isPausedState = false
-  private processingInterval: NodeJS.Timeout | null = null
+  private processingInterval: ReturnType<typeof setInterval> | null = null
   private stats: ProcessorStats
 
   private readonly maxConcurrentRequests: number
