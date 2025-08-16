@@ -18,24 +18,24 @@ import { ProtectedRoute } from '@/components/auth'
 
 import { Layout } from './Layout'
 
-// Lazy load routes for code splitting
-const HomePage = lazy(() =>
-  import('@/routes').then(module => ({ default: module.HomePage }))
+// Lazy load routes for code splitting - import directly for proper chunking
+const HomePage = lazy(() => 
+  import('@/routes/HomePage').then(module => ({ default: module.HomePage }))
 )
-const Authenticated = lazy(() =>
-  import('@/routes').then(module => ({ default: module.Authenticated }))
+const Authenticated = lazy(() => 
+  import('@/routes/Authenticated').then(module => ({ default: module.Authenticated }))
 )
-const EventsListPage = lazy(() =>
-  import('@/routes').then(module => ({ default: module.EventsListPage }))
+const EventsListPage = lazy(() => 
+  import('@/routes/EventsListPage').then(module => ({ default: module.EventsListPage }))
 )
-const SingleEventPage = lazy(() =>
-  import('@/routes').then(module => ({ default: module.SingleEventPage }))
+const SingleEventPage = lazy(() => 
+  import('@/routes/SingleEventPage').then(module => ({ default: module.SingleEventPage }))
 )
-const PaymentSuccessPage = lazy(() =>
-  import('@/routes').then(module => ({ default: module.PaymentSuccessPage }))
+const PaymentSuccessPage = lazy(() => 
+  import('@/routes/PaymentSuccessPage').then(module => ({ default: module.PaymentSuccessPage }))
 )
-const PaymentCancelPage = lazy(() =>
-  import('@/routes').then(module => ({ default: module.PaymentCancelPage }))
+const PaymentCancelPage = lazy(() => 
+  import('@/routes/PaymentCancelPage').then(module => ({ default: module.PaymentCancelPage }))
 )
 
 export const router = createBrowserRouter([

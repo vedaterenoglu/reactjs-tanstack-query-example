@@ -1,9 +1,11 @@
 import { Minus, Plus, ShoppingCart, Loader2, AlertCircle } from 'lucide-react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, lazy, Suspense } from 'react'
 
-import { TestPaymentModal } from '@/components/modals/TestPaymentModal'
 import { Button } from '@/components/ui/button'
 import type { Event } from '@/lib/types/event.types'
+
+// Lazy load the modal since it's only shown when user clicks purchase
+const TestPaymentModal = lazy(() => import('@/components/modals/TestPaymentModal').then(m => ({ default: m.TestPaymentModal })))
 
 /**
  * TicketPurchase Component - Handles ticket quantity selection and purchase
@@ -162,16 +164,20 @@ export const TicketPurchase = ({
         )}
       </Button>
 
-      {/* Test Payment Modal */}
-      <TestPaymentModal
-        isOpen={showTestModal}
-        onClose={handleCloseModal}
-        onConfirm={handleConfirmPurchase}
-        eventName={event.name}
-        quantity={quantity}
-        totalAmount={totalPrice}
-        isProcessing={isProcessingPayment}
-      />
+      {/* Test Payment Modal - Lazy loaded */}
+      {showTestModal && (
+        <Suspense fallback={null}>
+          <TestPaymentModal
+            isOpen={showTestModal}
+            onClose={handleCloseModal}
+            onConfirm={handleConfirmPurchase}
+            eventName={event.name}
+            quantity={quantity}
+            totalAmount={totalPrice}
+            isProcessing={isProcessingPayment}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
