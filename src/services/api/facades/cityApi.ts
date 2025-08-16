@@ -23,8 +23,7 @@ export class CityApiService {
 
   constructor(
     httpClient?: HttpClient,
-    baseUrl: string = import.meta.env['VITE_API_BASE_URL'] ||
-      'http://localhost:3060'
+    baseUrl: string = import.meta.env['VITE_API_BASE_URL']
   ) {
     this.httpClient = httpClient || new FetchAdapter(baseUrl)
   }
